@@ -1,10 +1,13 @@
 package core
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
-
+import (
+    "go.mongodb.org/mongo-driver/bson/primitive"
+    "time"
+)
 
 type Node struct {
 	ID     primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	IP_address   string             `json:"ip_address,omitempty" bson:"ip_address,omitempty"`
 	Node_id  string             `json:"node_id" bson:"node_id,omitempty"`
+    CreatedDate time.Time   `json:"createdDaate"`
 }

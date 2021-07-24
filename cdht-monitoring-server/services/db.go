@@ -7,8 +7,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+    "time"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+    "github.com/gin-gonic/gin"
 )
 
 
@@ -22,7 +24,7 @@ func ConnectDB(collection_name string) *mongo.Collection {
 	// Connect to MongoDB
     ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
     defer cancel()
-    
+
 	client, err := mongo.Connect(ctx, clientOptions)
 
 	if err != nil {
@@ -45,7 +47,7 @@ type ErrorResponse struct {
 
 
 
-func GetError(err error, w http.ResponseWriter) {
+func GetError(err error, c *gin.Context) {
 
 	log.Fatal(err.Error())
 	var response = ErrorResponse{
@@ -55,6 +57,5 @@ func GetError(err error, w http.ResponseWriter) {
 
 	message, _ := json.Marshal(response)
 
-	w.WriteHeader(response.StatusCode)
-	w.Write(message)
+    c.JSON(response.StatusCode, gin.H{"message": message })
 }

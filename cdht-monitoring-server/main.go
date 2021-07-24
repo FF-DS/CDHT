@@ -5,6 +5,7 @@ import (
     "github.com/gin-gonic/gin"
     "github.com/joho/godotenv"
 	"monitoring-server/routers"
+    "os"
 )
 
 
@@ -25,5 +26,5 @@ func main() {
     })
 
     // Init our server
-    router.Run(":5000")
+    router.Run( ":" + os.Getenv("PORT") )
 }

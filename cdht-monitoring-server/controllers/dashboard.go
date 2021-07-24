@@ -5,20 +5,22 @@ import (
 	"monitoring-server/services"
 	"monitoring-server/core"
     "context"
+    "log"
+	"go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/bson/primitive"
+    "time"
 )
 
 
 type DashboardController struct{}
-collection := services.ConnectDB()
-
 
 
 func (h *DashboardController) GetNodes(c *gin.Context) {
-    
-    cur, err := collection("nodes").Find(context.TODO(), bson.M{})
+    collection := services.ConnectDB("nodes")
+    cur, err := collection.Find(context.TODO(), bson.M{})
 
 	if err != nil {
-		helper.GetError(err, w)
+		services.GetError(err, c)
 		return
 	}
 
@@ -51,17 +53,24 @@ func (h *DashboardController) GetNodes(c *gin.Context) {
 
 
 func (h *DashboardController) RegisterNode(c *gin.Context) {
+    collection := services.ConnectDB("nodes")
 
-    var node core.Node = Node(  c.Param("ip_address"), c.Param("node_id") )
-
-
-	result, err := collection.InsertOne(context.TODO(), node)
-
-	if err != nil {
-		helper.GetError(err, w)
-		return
-	}
+    var node core.Node
+    if err := c.ShouldBindJSON(&node); err == nil {
+        node.ID = primitive.NewObjectID()
+        node.CreatedDate = time. Now()
 
 
-    c.JSON(200, gin.H{"message": result})
+        result, err := collection.InsertOne(context.TODO(), node)
+    
+        if err != nil {
+            services.GetError(err, c)
+            return
+        }
+    
+        c.JSON(200, gin.H{"message": result})
+    } else {
+        c.JSON(401, gin.H{"error": err.Error()})
+    }
+
 }
