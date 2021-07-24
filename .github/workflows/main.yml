@@ -1,12 +1,19 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
-  heroku-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v2
-      - name: Deploy to Heroku
-        uses: akhileshns/heroku-deploy@v3.12.12
+      - uses: actions/checkout@v2
+      - uses: akhileshns/heroku-deploy@v3.12.12 # This is the action
         with:
-          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-          heroku_app_name: "cdht-monitoring-web"
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: "cdht-monitoring-web" #Must be unique in Heroku
           heroku_email: "mohammed@tendermap.com"
+          buildpack: "https://github.com/timanovsky/subdir-heroku-buildpack"
+          appdir: "cdht-monitoring-web" # <- This will point to the api folder in your project
