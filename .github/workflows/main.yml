@@ -15,5 +15,5 @@ jobs:
           heroku_api_key: ${{secrets.HEROKU_API_KEY}}
           heroku_app_name: "cdht-monitoring-api"
           heroku_email: "mohammed@tendermap.com"
-          appdir: "cdht-monitoring-api"
+          appdir: "cdht-monitoring-web"
           procfile: "web: npm start"
