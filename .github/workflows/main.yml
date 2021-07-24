@@ -17,3 +17,5 @@ jobs:
           heroku_email: "mohammed@tendermap.com"
           buildpack: "https://github.com/timanovsky/subdir-heroku-buildpack"
           appdir: "cdht-monitoring-web"
+        env:
+          PROJECT_PATH: "cdht-monitoring-web"
