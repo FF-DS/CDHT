@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	// "fmt"
 	"log"
 	"net/http"
 	"os"
@@ -31,7 +31,7 @@ func ConnectDB(collection_name string) *mongo.Collection {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Connected to MongoDB!")
+	// fmt.Println("Connected to MongoDB!")
 
 	collection := client.Database( os.Getenv("DATABASE_NAME") ).Collection(collection_name)
 	return collection

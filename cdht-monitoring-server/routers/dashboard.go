@@ -12,4 +12,5 @@ func DashbaordRoutes(route *gin.Engine){
 	
 	dashboardRoute.GET("/", dashboardController.GetNodes)
 	dashboardRoute.POST("/", dashboardController.RegisterNode)
+	dashboardRoute.GET("/clear", dashboardController.ClearNodeData)
 }
