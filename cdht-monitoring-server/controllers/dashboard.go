@@ -21,7 +21,7 @@ func (h *DashboardController) GetNodes(c *gin.Context) {
     now := time.Now()
     queryTime := now.Add(-10 * time.Minute) // ten minutes ago
 
-    cur, err := collection.Find(context.TODO(), bson.M{"Created_date": bson.M{
+    cur, err := collection.Find(context.TODO(), bson.M{"created_date": bson.M{
         "$gte": primitive.NewDateTimeFromTime( queryTime ),
     }})
 
@@ -63,7 +63,6 @@ func (h *DashboardController) RegisterNode(c *gin.Context) {
         node.ID = primitive.NewObjectID()
         node.Created_date = time.Now()
 
-        log.Println(node)
         result, err := collection.InsertOne(context.TODO(), node)
     
         if err != nil {
@@ -84,7 +83,7 @@ func (h *DashboardController) ClearNodeData(c *gin.Context) {
     now := time.Now()
     oldDataTime := now.Add(-10 * time.Minute) 
 
-    _, err := collection.DeleteMany(context.TODO(),  bson.M{"Created_date": bson.M{
+    _, err := collection.DeleteMany(context.TODO(),  bson.M{"created_date": bson.M{
         "$lt": primitive.NewDateTimeFromTime( oldDataTime ),
     }})
 
