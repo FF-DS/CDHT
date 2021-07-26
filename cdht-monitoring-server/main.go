@@ -18,7 +18,7 @@ func init() {
 func main() {
     // Init gin router
     router := gin.Default()
-	routers.DashbaordRoutes(router) 
+	routers.NodesRoute(router) 
 
     // Handle error response when a route is not defined
     router.NoRoute(func(c *gin.Context) {
