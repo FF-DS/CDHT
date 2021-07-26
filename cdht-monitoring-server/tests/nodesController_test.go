@@ -2,8 +2,6 @@ package tests
 
 import (
 	"os"
-	// "monitoring-server/services"
-	// "log"
 	"net/http/httptest"
 	"testing"
 	"bytes"
@@ -18,6 +16,7 @@ func init() {
     //     log.Fatal("Unable to drop nodes collection")
     // }
 }
+
 
 
 func TestRegisterNodes(t *testing.T) {
