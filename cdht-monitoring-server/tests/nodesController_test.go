@@ -18,6 +18,7 @@ func init() {
 }
 
 
+
 func TestRegisterNodes(t *testing.T) {
 
 	var jsonStr = []byte(`{"IP_address":"123.0.0.1","Node_id":"0876237872873"}`)
