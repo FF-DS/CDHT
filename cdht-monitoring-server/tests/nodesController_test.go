@@ -2,8 +2,6 @@ package tests
 
 import (
 	"os"
-	// "monitoring-server/services"
-	// "log"
 	"net/http/httptest"
 	"testing"
 	"bytes"
