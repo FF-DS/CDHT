@@ -1,11 +1,10 @@
 ## .travis.yml
+before_install: cd cdht-monitoring-server/tests
 language: go
 
 sudo: false
 
 go:
-  - "1.8"
-  - "1.9"
-  - "1.10"
-  - "1.11"
-  - tip
+  - 1.x
+script:
+  - go test -v
