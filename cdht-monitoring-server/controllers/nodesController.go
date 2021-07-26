@@ -12,10 +12,10 @@ import (
 )
 
 
-type DashboardController struct{}
+type NodesController struct{}
 
 
-func (h *DashboardController) GetNodes(c *gin.Context) {
+func (h *NodesController) GetNodes(c *gin.Context) {
     collection := services.ConnectDB("nodes")
     
     now := time.Now()
@@ -55,14 +55,21 @@ func (h *DashboardController) GetNodes(c *gin.Context) {
 }
 
 
-func (h *DashboardController) RegisterNode(c *gin.Context) {
+func (h *NodesController) RegisterNode(c *gin.Context) {
     collection := services.ConnectDB("nodes")
 
     var node core.Node
     if err := c.ShouldBindJSON(&node); err == nil {
         node.ID = primitive.NewObjectID()
+        node.IP_address = c.ClientIP()
         node.Created_date = time.Now()
 
+        if node.Node_id == ""{
+            c.JSON(422, gin.H{"error": "Node id required"})
+            return
+        }
+
+        log.Println(node)
         result, err := collection.InsertOne(context.TODO(), node)
     
         if err != nil {
@@ -77,7 +84,7 @@ func (h *DashboardController) RegisterNode(c *gin.Context) {
 }
 
 
-func (h *DashboardController) ClearNodeData(c *gin.Context) {
+func (h *NodesController) ClearNodeData(c *gin.Context) {
     collection := services.ConnectDB("nodes")
     
     now := time.Now()
