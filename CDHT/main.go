@@ -1,32 +1,94 @@
 package main;
-import "fmt"
+
+import (
+    "io/ioutil"
+    "fmt"
+    "net/http"
+    "log"
+    "time"
+    "bytes"
+    "encoding/json"
+    "crypto/sha1"
+)
+
+
+type NodeData struct {
+    _id string
+    node_id string
+    iP_address string
+    created_date string
+}
+
+type Nodes []NodeData 
+
 
 func main() {
 
-    messages := []string{"hellp","0hellp0","world"}
-    mapper :=make(map[int]string)
+    for {
 
-    testChanges(mapper, messages)
-    fmt.Println( mapper, messages, myport )
-}
+        go gettingRegisteredNodes()
+        go registerNode()
 
-func printStrs(messages ...string) (length int) {
-    for _, mem := range(messages){
-        fmt.Println( mem)
+        time.Sleep(time.Minute)
     }
-    length = len(messages)
-    return
+    
 }
 
 
-func testChanges(mapper map[int]string, messages []string){
-    mapper[0] = "hello man"
-    messages[0] = "hello man"
+func gettingRegisteredNodes() {
+    resp, err := http.Get("https://cdht-monitoring-api.herokuapp.com/nodes")
+
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+       log.Fatalln(err)
+    }
+
+    stringRep := string(body)
+    fmt.Println("\n\n[NODE]: Receiving Nodes...")
+    fmt.Println("-----------------------------------------\n")
+
+
+    
+    // var nodesList Nodes
+    // err = json.Unmarshal(body, &nodesList)
+    // if err != nil {
+    //     log.Fatal(err)
+    // }
+    // fmt.Println(nodesList)
+
+    fmt.Println(stringRep)
 }
 
 
-type PORT int
-const (
-   myport PORT = 12
+func registerNode() {
+    nodeID := sha1.New()
+    nodeID.Write([]byte( time.Now().String()  ))
+    node_id := nodeID.Sum(nil)
 
-)
+    postBody, _ := json.Marshal(map[string]string{
+        "Node_id": string( node_id ),
+    })
+
+    responseBody := bytes.NewBuffer(postBody)
+    resp, err := http.Post("https://cdht-monitoring-api.herokuapp.com/nodes", "application/json", responseBody)
+    
+    if err != nil {
+       log.Fatalf("An Error Occured %v", err)
+    }
+    
+    defer resp.Body.Close()
+
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+       log.Fatalln(err)
+    }
+    
+    fmt.Println("\n\n[NODE]: Registering Node...")
+    fmt.Println("-----------------------------------------\n")
+    fmt.Println(string(body))
+}
+
