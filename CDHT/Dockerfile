@@ -1,11 +1,17 @@
-FROM golang:1.14-alpine AS build
+FROM golang:1.16-alpine
 
-WORKDIR /src/
-COPY main.go go.* /src/
-RUN CGO_ENABLED=0 go build -o /bin/demo
+WORKDIR /Docker/
 
-FROM scratch
-COPY --from=build /bin/demo /bin/demo
-ENTRYPOINT ["/bin/demo"]
+COPY go.mod ./
+# COPY go.sum ./
+RUN go mod download
 
-# RUN apk add ca-certificates
+COPY *.go ./
+
+RUN go build -o /docker-cdht
+
+EXPOSE 443
+
+CMD [ "/docker-cdht" ]
+
+# 
