@@ -24,7 +24,7 @@ WORKDIR /
 
 COPY --from=build /docker-cdht /docker-cdht
 
-EXPOSE 443
+# EXPOSE 443
 
 USER nonroot:nonroot
 

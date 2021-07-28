@@ -47,19 +47,15 @@ func gettingRegisteredNodes() {
        log.Fatalln(err)
     }
 
-    stringRep := string(body)
     fmt.Println("\n\n[NODE]: Receiving Nodes...")
     fmt.Println("-----------------------------------------\n")
-
-
     
-    // var nodesList Nodes
-    // err = json.Unmarshal(body, &nodesList)
-    // if err != nil {
-    //     log.Fatal(err)
-    // }
-    // fmt.Println(nodesList)
-
+    
+    stringRep := string(body)
+    
+    messages := []NodeData{} 
+    json.Unmarshal(body, &messages)
+    fmt.Println(messages)
     fmt.Println(stringRep)
 }
 
