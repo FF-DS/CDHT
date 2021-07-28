@@ -129,7 +129,7 @@ func pingServer(IpAddress string) {
         Port: 1234,
         IP: net.ParseIP(IpAddress),
     }
-    fmt.Printf("[PING] ping server running... \n")
+    
     ser, err := net.ListenUDP("udp", &addr)
     if err != nil {
         fmt.Printf("Some error %v\n", err)
