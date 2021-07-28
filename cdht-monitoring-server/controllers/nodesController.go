@@ -49,9 +49,8 @@ func (h *NodesController) GetNodes(c *gin.Context) {
 	if err := cur.Err(); err != nil {
 		log.Fatal(err)
 	}
-
-
-    c.JSON(200, gin.H{"connected_nodes": connectedNodes })
+ 
+    c.JSON(200, connectedNodes )
 }
 
 
