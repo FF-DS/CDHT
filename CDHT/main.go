@@ -1,175 +1,127 @@
 package main;
 
 import (
-    "io/ioutil"
+    "net"
     "fmt"
-    "net/http"
+    "cdht/NetworkModule"
+    "bufio"
+    "strings"
     "log"
     "time"
-    "bytes"
-    "encoding/json"
-    "crypto/sha1"
-    "net"  
-    "bufio"
 )
 
 
-type NodeData struct {
-    ID string
-    Node_id string
-    IP_address string
-    Created_date string
-}
-
-func getUserInput() string {
-    fmt.Println("Options ")
-    fmt.Println("-----------------------------------")
-    fmt.Println("[1] for registering your Node")
-    fmt.Println("[2] for getting list of Nodes")
-    fmt.Println("[3] for pinging a node")
-    fmt.Println("-----------------------------------")
-    fmt.Print("Enter your option :")
-    var userInput string
-    fmt.Scanln(&userInput)
-    return userInput
-}
-
 func main() {
-
-    fmt.Print("Enter Computer IP: ")
-    var IpAddress string
-    fmt.Scanln(&IpAddress)
-
-    go pingServer(IpAddress)
-
-    for {
-
-        userInput := getUserInput()
-        switch userInput {
-            case "1":
-                go registerNode(IpAddress)
-            case "2":
-                go gettingRegisteredNodes()
-            case "3":
-                go pingClient()
-
-        }
-
-        time.Sleep(time.Minute)
-    }
-
+    fmt.Println("[Network Manager]: Testing")
     
-}
+    go udpServer()
+    go tcpServer()
+    time.Sleep(time.Second * 2)
 
-func gettingRegisteredNodes() {
-    resp, err := http.Get("https://cdht-monitoring-api.herokuapp.com/nodes")
-
-    if err != nil {
-        log.Fatal(err)
-    }
-
-    body, err := ioutil.ReadAll(resp.Body)
-    if err != nil {
-       log.Fatalln(err)
-    }
-
-    fmt.Println("\n\n[NODE]: Receiving Nodes...")
-    fmt.Println("-----------------------------------------")
-    
-    
-    
-    var messages []NodeData
-    err = json.Unmarshal(body, &messages)
-    
-    if err != nil {
-		fmt.Println("error:", err)
-	}
-
-    visited := map[string]bool{}
-
-    for _, node := range messages {
-        if _,exitsts := visited[node.IP_address]; !exitsts {
-            fmt.Println("[NODE-IP] "+ node.IP_address)
-            visited[node.IP_address] = true
-        }
-    }
+    go client()
+    time.Sleep(time.Minute * 5)
 }
 
 
-func registerNode(ipAddress string) {
-    nodeID := sha1.New()
-    nodeID.Write([]byte( time.Now().String()  ))
-    node_id := nodeID.Sum(nil)
+func udpServer(){
+    close_server := make(chan bool)
 
-    postBody, _ := json.Marshal(map[string]string{
-        "Node_id": string( node_id ),
-        "IP_address": string( ipAddress ),
-    })
+    var UDPnetworkManager NetworkModule.NetworkManager
+    UDPnetworkManager.SetIPAddress("", 6000)
+    UDPnetworkManager.StartServer("UDP", close_server, TEST_udp_server)
 
-    responseBody := bytes.NewBuffer(postBody)
-    resp, err := http.Post("https://cdht-monitoring-api.herokuapp.com/nodes", "application/json", responseBody)
-    
-    if err != nil {
-       log.Fatalf("An Error Occured %v", err)
-       return
-    }
-    
-    defer resp.Body.Close()
-    
-    fmt.Println("\n\n[NODE]: Registering Node...")
-    fmt.Println("-----------------------------------------")
-    fmt.Println("Node registered successfully.")
+}
+
+func tcpServer(){
+    close_server := make(chan bool)
+
+    var TCPnetworkManager NetworkModule.NetworkManager
+    TCPnetworkManager.SetIPAddress("", 5400)
+    TCPnetworkManager.StartServer("TCP", close_server, TEST_tcp_server)
+
+}
+
+//10.6.152.221
+
+func client(){
+    fmt.Print("Enter The IP: ")
+    var ipAddrr string
+    fmt.Scanln(&ipAddrr)
+
+    var UDPnetworkManager NetworkModule.NetworkManager
+    UDPnetworkManager.SetIPAddress(ipAddrr, 6000)
+    UDPnetworkManager.Connect("UDP", TEST_udp_client)
+
+    var TCPnetworkManager NetworkModule.NetworkManager
+    TCPnetworkManager.SetIPAddress(ipAddrr, 5400)
+    TCPnetworkManager.Connect("TCP", TEST_tcp_client)
 }
 
 
 
-func pingServer(IpAddress string) {
-    p := make([]byte, 2048)
-    addr := net.UDPAddr{
-        Port: 1234,
-        IP: net.ParseIP(IpAddress),
-    }
-    
-    ser, err := net.ListenUDP("udp", &addr)
-    if err != nil {
-        fmt.Printf("Some error %v\n", err)
-        return
-    }
-    for {
-        _,remoteaddr,err := ser.ReadFromUDP(p)
-        fmt.Printf("Read a message from %v %s \n", remoteaddr, p)
-        if err !=  nil {
-            fmt.Printf("Some error  %v", err)
-            continue
+// ## ------------------ NETWORK MANAGER CONNECTION TESTS ----------------------- ## 
+func TEST_tcp_server(connection interface{}){
+
+    if connection, ok := connection.(net.Conn); ok {
+        fmt.Println("[SERVER][TCP]: Connected with client... ")
+
+        clientReader := bufio.NewReader(connection)
+        clientRequest, _ := clientReader.ReadString('\n')
+        fmt.Println("[SERVER][TCP]:",strings.TrimSpace(clientRequest))
+
+        if _, err := connection.Write([]byte("FROM SERVER.... recieved. \n")); err != nil {
+            log.Printf("failed to send the client request: %v\n", err)
         }
 
-        _,err   = ser.WriteToUDP([]byte("From server: Hello I got your message "), remoteaddr)
-        if err != nil {
-            fmt.Printf("Couldn't send response %v", err)
-        }
+    }else{
+        fmt.Println("[SERVER][TCP][err]: can't decode")
     }
+
+}
+
+
+func TEST_tcp_client(connection interface{}){
+
+    if connection, ok := connection.(net.Conn); ok {
+        fmt.Println("[CLIENT][TCP]: Connected with server... ")
+
+        if _, err := connection.Write([]byte("HELLO SERVER... \n")); err != nil {
+            log.Printf("failed to send the client request: %v\n", err)
+        }
+
+        clientReader := bufio.NewReader(connection)
+        clientRequest, _ := clientReader.ReadString('\n')
+
+        fmt.Println("[CLIENT][TCP]:",strings.TrimSpace(clientRequest))
+    }else{
+        fmt.Println("[CLIENT][TCP][err]: can't decode")
+    }
+
 }
 
 
 
-func pingClient(){
-    fmt.Print("\n\nEnter Node IP to ping: ")
-    var IpAddress string
-    fmt.Scanln(&IpAddress)
-    fmt.Print("\n")
+func TEST_udp_server(packetData interface{}){
+    fmt.Println("[SERVER][UDP]: Connected with client... ")
 
-    p :=  make([]byte, 2048)
-    conn, err := net.Dial("udp", IpAddress+ ":1234")
-    if err != nil {
-        fmt.Printf("Some error %v", err)
-        return
+    if packetData, ok := packetData.(NetworkModule.UDPPacketData); ok {
+        fmt.Println("[SERVER][UDP]: " + string(packetData.Data), packetData )
+    }else{
+        fmt.Println("[SERVER][UDP][err]: can't decode")
     }
-    fmt.Fprintf(conn, "Hi UDP Server, How are you doing?")
-    _, err = bufio.NewReader(conn).Read(p)
-    if err == nil {
-        fmt.Printf("%s\n", p)
-    } else {
-        fmt.Printf("Some error %v\n", err)
+
+}
+
+
+
+func TEST_udp_client(packetData interface{}){
+    fmt.Println("[CLIENT][UDP]: Connected with server... ")
+
+    if packetData, ok := packetData.(NetworkModule.UDPPacketData); ok {
+        fmt.Println("[CLIENT][UDP]: connection data")
+        fmt.Println("[CLIENT][UDP]:", packetData)
+        packetData.UDPsocketConnection.Write( []byte("hello"))
+    }else{
+        fmt.Println("[CLIENT][UDP][err]: can't decode")
     }
-    conn.Close()
 }
