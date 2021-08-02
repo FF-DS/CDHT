@@ -60,7 +60,6 @@ func (h *NodesController) RegisterNode(c *gin.Context) {
     var node core.Node
     if err := c.ShouldBindJSON(&node); err == nil {
         node.ID = primitive.NewObjectID()
-        node.IP_address = c.ClientIP()
         node.Created_date = time.Now()
 
         if node.Node_id == ""{
@@ -68,7 +67,6 @@ func (h *NodesController) RegisterNode(c *gin.Context) {
             return
         }
 
-        log.Println(node)
         result, err := collection.InsertOne(context.TODO(), node)
     
         if err != nil {
