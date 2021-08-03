@@ -11,7 +11,17 @@ import (
 )
 
 
+
 func main() {
+    // fmt.Println(NetworkModule.NotifyNodeExistance())
+    NetworkModule.NotifyNodeExistance()
+
+    time.Sleep(time.Second * 3)
+    fmt.Println(NetworkModule.GetRegisteredNodes())
+}
+
+
+func main_network_manager_test() {
     fmt.Println("[Network Manager]: Testing")
     
     go udpServer()
