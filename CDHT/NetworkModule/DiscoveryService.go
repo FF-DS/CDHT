@@ -15,10 +15,8 @@ import (
 
 
 type NodeData struct {
-    ID string 
     Node_id string 
     IP_address string 
-    Created_date string 
     Ports map[string]string 
 }
 
@@ -78,7 +76,6 @@ func registerNode(nodeData NodeData) {
         fmt.Println(err)
     }
 
-    fmt.Println(postBody)
     responseBody := bytes.NewBuffer(postBody)
     resp, err := http.Post("https://cdht-monitoring-api.herokuapp.com/nodes", "application/json", responseBody)
 

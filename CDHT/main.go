@@ -16,7 +16,7 @@ func main() {
     // fmt.Println(NetworkModule.NotifyNodeExistance())
     NetworkModule.NotifyNodeExistance()
 
-    time.Sleep(time.Second * 3)
+    // time.Sleep(time.Second * 3)
     fmt.Println(NetworkModule.GetRegisteredNodes())
 }
 
