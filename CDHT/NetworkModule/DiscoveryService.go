@@ -7,10 +7,8 @@ import (
     "log"
     "bytes"
     "encoding/json"
-    "crypto/sha1"
     "net"  
-    "github.com/tkanos/gonfig"
-    "math/big"
+    "cdht/Util"
 )
 
 
@@ -21,11 +19,12 @@ type NodeData struct {
 }
 
 
-func NotifyNodeExistance() NodeData {
-    nodeData := getNodeConfig() // get ports
-    nodeData.IP_address = getOutboundIP().String() // ip address
-    nodeData.Node_id = GetNodeId().String() // node id
-
+func NotifyNodeExistance(nodeInfo Util.NodeInfo) NodeData {
+    nodeData := NodeData{
+        Node_id : nodeInfo.Node_id, 
+        IP_address : nodeInfo.IP_address
+        Ports : nodeInfo.Ports,
+    }
     registerNode(nodeData)
 
     return nodeData
@@ -85,50 +84,4 @@ func registerNode(nodeData NodeData) {
     }
     
     defer resp.Body.Close()
-}
-
-
-
-// --------------- Node info functions ---------- //
-
-func getNodeConfig() NodeData {
-    var nodeData NodeData
-    err := gonfig.GetConf("gonfig.json", &nodeData)
-    if err != nil {
-        panic(err)
-    }
-    return nodeData
-}
-
-
-
-func getOutboundIP() net.IP {
-    conn, err := net.Dial("udp", "8.8.8.8:80")
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer conn.Close()
-
-    localAddr := conn.LocalAddr().(*net.UDPAddr)
-
-    return localAddr.IP
-}
-
-
-
-// ------------------ Get node id ----------------- //
-
-func GetNodeId() *big.Int {
-    nodeIdentification := getOutboundIP().String() + ":" + getNodeConfig().Ports["JOIN"]
-
-    hashFunction := sha1.New()
-    hashFunction.Write([]byte(nodeIdentification))
-    sha := hashFunction.Sum(nil)
-
-    two, m, hashedID := big.NewInt(2), big.NewInt(160),  (&big.Int{}).SetBytes(sha)
-    
-    hashedID.SetBytes(sha) 
-    modulo := two.Exp( two, m, nil)
-
-    return hashedID.Mod(hashedID, modulo) 
 }

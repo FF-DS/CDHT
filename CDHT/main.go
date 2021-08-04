@@ -1,9 +1,11 @@
-package main;
+package main
 
 import (
     "net"
     "fmt"
     "cdht/NetworkModule"
+    "cdht/RoutingModule"
+    "cdht/Util"
     "bufio"
     "strings"
     "log"
@@ -13,13 +15,34 @@ import (
 
 
 func main() {
-    // fmt.Println(NetworkModule.NotifyNodeExistance())
-    NetworkModule.NotifyNodeExistance()
+    // nodeDatas := NetworkModule.GetRegisteredNodes()
+    // if len(nodeDatas) == 0{
+    //     fmt.Println("No node avaiable wait till node is registered...")
+    //     NetworkModule.NotifyNodeExistance()
+    //     fmt.Println("Node registered.")
+    // }
 
-    // time.Sleep(time.Second * 3)
-    fmt.Println(NetworkModule.GetRegisteredNodes())
+
+    var nodeInfo Util.NodeInfo
+    nodeInfo.GetNodeInfo()
+    fmt.Println(nodeInfo)
+
+
+    fingerTableRoute := RoutingModule.NewFingerTable(nodeInfo, 2, 20);
+    go fingerTableRoute.StartServices()
+
+    time.Sleep(time.Second * 5)
+    
+    go fingerTableRoute.RunFixFingerAlg()
+
+
+    time.Sleep(time.Minute * 35)
+    fmt.Println(fingerTableRoute)
 }
 
+
+
+// ## ------------------ TESTS ----------------------- ## 
 
 func main_network_manager_test() {
     fmt.Println("[Network Manager]: Testing")
@@ -51,7 +74,6 @@ func tcpServer(){
 
 }
 
-//10.6.152.221
 
 func client(){
     fmt.Print("Enter The IP: ")
