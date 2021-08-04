@@ -1,25 +1,84 @@
-package main;
+package main
 
 import (
     "net"
     "fmt"
+    "math/big"
     "cdht/NetworkModule"
+    "cdht/RoutingModule"
+    "cdht/Util"
     "bufio"
     "strings"
     "log"
     "time"
+    "strconv"
 )
 
 
 
 func main() {
-    // fmt.Println(NetworkModule.NotifyNodeExistance())
-    NetworkModule.NotifyNodeExistance()
+    var currNodeInfo Util.NodeInfo
+    currNodeInfo.GetNodeInfo()
 
-    // time.Sleep(time.Second * 3)
-    fmt.Println(NetworkModule.GetRegisteredNodes())
+    M_VAL := testChangeFingerTableID(&currNodeInfo)
+
+    fmt.Println("-----------------Current node Info--------------------")
+    fmt.Printf("Node ID    : %s \n", currNodeInfo.Node_id.String())
+    fmt.Printf("M          : %s \n", currNodeInfo.M.String())
+    fmt.Printf("IP Address : %s \n", currNodeInfo.IP_address)
+    fmt.Println("Ports      : ", currNodeInfo.Ports)
+    fmt.Println("------------------------------------------------------")
+    
+    fmt.Println("[TEST]: starting figer fix")
+
+    availableNodeInfo := Util.NodeInfo {
+        IP_address : currNodeInfo.IP_address,
+        // Ports : map[string]string{ "JOIN_RSP" : "8989", "JOIN_REQ" : "9898",},
+        Ports : map[string]string{ "JOIN_RSP" : "6010", "JOIN_REQ" : "2705",},
+    }
+
+
+    fingerTableRoute := RoutingModule.NewFingerTable( currNodeInfo, availableNodeInfo, 2, M_VAL);
+    fingerTableRoute.InitFingerService()
+
+    go fingerTableRoute.RunFixFingerAlg()
+    
+    
+    time.Sleep(time.Second * 10)
+
+
+    successorTablerRoute := RoutingModule.NewSuccessorTable( currNodeInfo, &fingerTableRoute)
+    successorTablerRoute.InitSuccessorService()
+
+    go successorTablerRoute.RunStablize()
+
+
+    time.Sleep(time.Minute * 35)
 }
 
+
+func testChangeFingerTableID(nodeInfo *Util.NodeInfo) int{
+    var nodeId, m string
+    fmt.Print("Enter Node Id: ")
+    fmt.Scanln(&nodeId)
+
+    fmt.Print("Enter M: ")
+    fmt.Scanln(&m)
+
+    NodeId, ok := new(big.Int).SetString(nodeId, 10)
+    if !ok { fmt.Println("SetString: error node id") }
+
+    M, ok := new(big.Int).SetString(m, 10)
+    if !ok { fmt.Println("SetString: error m") }
+
+    nodeInfo.Node_id = NodeId
+    nodeInfo.M = M
+
+    i, _ := strconv.Atoi(m)
+    return i
+}
+
+// ## ------------------ TESTS ----------------------- ## 
 
 func main_network_manager_test() {
     fmt.Println("[Network Manager]: Testing")
@@ -37,7 +96,7 @@ func udpServer(){
     close_server := make(chan bool)
 
     var UDPnetworkManager NetworkModule.NetworkManager
-    UDPnetworkManager.SetIPAddress("", 6000)
+    UDPnetworkManager.SetIPAddress("", "6000")
     UDPnetworkManager.StartServer("UDP", close_server, TEST_udp_server)
 
 }
@@ -46,12 +105,11 @@ func tcpServer(){
     close_server := make(chan bool)
 
     var TCPnetworkManager NetworkModule.NetworkManager
-    TCPnetworkManager.SetIPAddress("", 5400)
+    TCPnetworkManager.SetIPAddress("", "5400")
     TCPnetworkManager.StartServer("TCP", close_server, TEST_tcp_server)
 
 }
 
-//10.6.152.221
 
 func client(){
     fmt.Print("Enter The IP: ")
@@ -59,11 +117,11 @@ func client(){
     fmt.Scanln(&ipAddrr)
 
     var UDPnetworkManager NetworkModule.NetworkManager
-    UDPnetworkManager.SetIPAddress(ipAddrr, 6000)
+    UDPnetworkManager.SetIPAddress(ipAddrr, "6000")
     UDPnetworkManager.Connect("UDP", TEST_udp_client)
 
     var TCPnetworkManager NetworkModule.NetworkManager
-    TCPnetworkManager.SetIPAddress(ipAddrr, 5400)
+    TCPnetworkManager.SetIPAddress(ipAddrr, "5400")
     TCPnetworkManager.Connect("TCP", TEST_tcp_client)
 }
 
