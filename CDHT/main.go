@@ -1,137 +1,137 @@
-package main;
+package main
 
 import (
-    "net"
     "fmt"
-    "cdht/NetworkModule"
-    "bufio"
-    "strings"
-    "log"
+    "math/big"
+    "cdht/Util"
     "time"
+    "strconv"
 )
 
 
-
 func main() {
-    // fmt.Println(NetworkModule.NotifyNodeExistance())
-    NetworkModule.NotifyNodeExistance()
+    go runFirstNode();
 
-    // time.Sleep(time.Second * 3)
-    fmt.Println(NetworkModule.GetRegisteredNodes())
+    // go runSecondNode();
+
+    time.Sleep(time.Minute * 35)
 }
 
 
-func main_network_manager_test() {
-    fmt.Println("[Network Manager]: Testing")
+func runFirstNode() {
+    node := Util.Node{
+        Port : "9898",
+        JumpSpacing : 2,
+        FingerTableLength : 4,
+    }
+    testChangeNodeInfo(&node)
+    node.CurrentNodeInfo()
+
+    node.CreateRing()
     
-    go udpServer()
-    go tcpServer()
-    time.Sleep(time.Second * 2)
+    
+    go func() {
+        for {
+            time.Sleep(time.Second)
+            node.CheckPredecessor()
+            node.CheckSeccessors()
 
-    go client()
-    time.Sleep(time.Minute * 5)
-}
+            node.Stablize()
+            node.CurrentSuccessorTableInfo()
 
+            node.FixFinger()
+            node.CurrentFingerTableInfo()
 
-func udpServer(){
-    close_server := make(chan bool)
-
-    var UDPnetworkManager NetworkModule.NetworkManager
-    UDPnetworkManager.SetIPAddress("", 6000)
-    UDPnetworkManager.StartServer("UDP", close_server, TEST_udp_server)
-
-}
-
-func tcpServer(){
-    close_server := make(chan bool)
-
-    var TCPnetworkManager NetworkModule.NetworkManager
-    TCPnetworkManager.SetIPAddress("", 5400)
-    TCPnetworkManager.StartServer("TCP", close_server, TEST_tcp_server)
-
-}
-
-//10.6.152.221
-
-func client(){
-    fmt.Print("Enter The IP: ")
-    var ipAddrr string
-    fmt.Scanln(&ipAddrr)
-
-    var UDPnetworkManager NetworkModule.NetworkManager
-    UDPnetworkManager.SetIPAddress(ipAddrr, 6000)
-    UDPnetworkManager.Connect("UDP", TEST_udp_client)
-
-    var TCPnetworkManager NetworkModule.NetworkManager
-    TCPnetworkManager.SetIPAddress(ipAddrr, 5400)
-    TCPnetworkManager.Connect("TCP", TEST_tcp_client)
-}
-
-
-
-// ## ------------------ NETWORK MANAGER CONNECTION TESTS ----------------------- ## 
-func TEST_tcp_server(connection interface{}){
-
-    if connection, ok := connection.(net.Conn); ok {
-        fmt.Println("[SERVER][TCP]: Connected with client... ")
-
-        clientReader := bufio.NewReader(connection)
-        clientRequest, _ := clientReader.ReadString('\n')
-        fmt.Println("[SERVER][TCP]:",strings.TrimSpace(clientRequest))
-
-        if _, err := connection.Write([]byte("FROM SERVER.... recieved. \n")); err != nil {
-            log.Printf("failed to send the client request: %v\n", err)
+            node.CurrentSuccessorsInfo()
         }
-
-    }else{
-        fmt.Println("[SERVER][TCP][err]: can't decode")
-    }
+    }()
 
 }
 
 
-func TEST_tcp_client(connection interface{}){
+func runSecondNode() {
+    var port string
+    fmt.Print("Enter Node Port: ")
+    fmt.Scanln(&port)
 
-    if connection, ok := connection.(net.Conn); ok {
-        fmt.Println("[CLIENT][TCP]: Connected with server... ")
 
-        if _, err := connection.Write([]byte("HELLO SERVER... \n")); err != nil {
-            log.Printf("failed to send the client request: %v\n", err)
+    remoteNode := Util.NodeRPC{ Node_address : "127.0.0.1:" + port }
+    remoteNode.Connect()
+    printRemoteNodeInfo(&remoteNode)
+
+
+    fmt.Print("Enter Your Port: ")
+    fmt.Scanln(&port)
+
+    node := Util.Node{
+        Port : port,
+        JumpSpacing : 2,
+        FingerTableLength : 4,
+    }
+    testChangeNodeInfo(&node)
+    node.CurrentNodeInfo()
+    
+    node.Join( &remoteNode)
+    
+    go func() {
+        for {
+            time.Sleep(time.Second)
+
+            node.CheckPredecessor()
+            node.CheckSeccessors()
+
+            node.Stablize()
+            node.CurrentSuccessorTableInfo()
+
+            node.FixFinger()
+            node.CurrentFingerTableInfo()
+
+            node.CurrentSuccessorsInfo()
         }
-
-        clientReader := bufio.NewReader(connection)
-        clientRequest, _ := clientReader.ReadString('\n')
-
-        fmt.Println("[CLIENT][TCP]:",strings.TrimSpace(clientRequest))
-    }else{
-        fmt.Println("[CLIENT][TCP][err]: can't decode")
-    }
-
+    }()
 }
 
 
-
-func TEST_udp_server(packetData interface{}){
-    fmt.Println("[SERVER][UDP]: Connected with client... ")
-
-    if packetData, ok := packetData.(NetworkModule.UDPPacketData); ok {
-        fmt.Println("[SERVER][UDP]: " + string(packetData.Data), packetData )
-    }else{
-        fmt.Println("[SERVER][UDP][err]: can't decode")
-    }
-
-}
-
-
-
-func TEST_udp_client(packetData interface{}){
-    fmt.Println("[CLIENT][UDP]: Connected with server... ")
-
-    if packetData, ok := packetData.(NetworkModule.UDPPacketData); ok {
-        fmt.Println("[CLIENT][UDP]: connection data")
-        fmt.Println("[CLIENT][UDP]:", packetData)
-        packetData.UDPsocketConnection.Write( []byte("hello"))
-    }else{
-        fmt.Println("[CLIENT][UDP][err]: can't decode")
+func check(){
+    remoteNode := Util.NodeRPC{ Node_address : "127.0.0.1:9898" }
+    err, remote := remoteNode.Connect()
+    for {
+        err, remote = remoteNode.GetNodeInfo()
+        
+        if err != nil {
+            fmt.Println("error")
+        }
+        printRemoteNodeInfo(remote)
     }
 }
+
+
+func printRemoteNodeInfo(remoteNode *Util.NodeRPC) {
+    fmt.Println("-----------------Remote node Info------------------------------")
+    fmt.Printf("Node ID : %s \n", remoteNode.Node_id.String())
+    fmt.Printf("M       : %s \n", remoteNode.M.String())
+    fmt.Printf("Address : %s \n", remoteNode.Node_address)
+    fmt.Println("---------------------------------------------------------------")
+}
+
+func testChangeNodeInfo(node *Util.Node) {
+    var nodeId, m string
+    fmt.Print("Enter Node Id: ")
+    fmt.Scanln(&nodeId)
+
+    fmt.Print("Enter M: ")
+    fmt.Scanln(&m)
+
+    NodeId, ok := new(big.Int).SetString(nodeId, 10)
+    if !ok { fmt.Println("SetString: error node id") }
+
+    M, ok := new(big.Int).SetString(m, 10)
+    if !ok { fmt.Println("SetString: error m") }
+
+    node.Node_id = NodeId
+    node.M = M
+
+    i, _ := strconv.Atoi(m)
+    node.FingerTableLength = i
+}
+

@@ -1,11 +1,8 @@
 {
-  "ID": "",
-  "Node_id": "",
-  "IP_address": "",
-  "Created_date": "",
   "Ports": {
-    "JOIN": "500",
-    "SUCCESSOR": "2405",
-    "PREDECESSOR": "3564"
+    "JOIN_RSP": "8989",
+    "JOIN_REQ": "9898",
+    "PRED_RSP": "7890",
+    "SUCC_REQ": "5782"
   }
 }
