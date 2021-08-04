@@ -7,7 +7,6 @@ import (
     "log"
     "bytes"
     "encoding/json"
-    "net"  
     "cdht/Util"
 )
 
@@ -21,8 +20,8 @@ type NodeData struct {
 
 func NotifyNodeExistance(nodeInfo Util.NodeInfo) NodeData {
     nodeData := NodeData{
-        Node_id : nodeInfo.Node_id, 
-        IP_address : nodeInfo.IP_address
+        Node_id : nodeInfo.Node_id.String(), 
+        IP_address : nodeInfo.IP_address,
         Ports : nodeInfo.Ports,
     }
     registerNode(nodeData)

@@ -10,6 +10,7 @@ import (
 	"net"
 	"log"
 	"strconv"
+	"sort"
 )
 
 type FingerTableEntry struct {
@@ -153,13 +154,10 @@ func (fingerTableRoute *FingerTableRoute) routeToClosestNode() {
 			currNode_id, _ := new(big.Int).SetString(currNodeId, 10)
 			currDistance := calculateManhanttanDistance(packet.ReceiverNodeId, currNode_id)
 
-			if currDistance.Cmp(minDistance) <= 0 {
+			if currDistance.Cmp(minDistance) == -1  &&  currDistance.Cmp( big.NewInt(int64(0)) ) > 0 {
 				minDistance = currDistance
 				currChoosenNodeID = currNodeId
 			}
-			// else if currDistance.Cmp(minDistance) == 0  && currNode_id.Cmp(currChoosenNodeID) > 0 {
-			// 	currChoosenNodeID = currNodeId
-			// }
 		}
 
 
@@ -379,7 +377,9 @@ func (fingerTableRoute *FingerTableRoute) sortFingerTableKeys() []string {
 	}
 
 	sort.SliceStable(strKeys, func(index_1, index_2 int) bool {
-		return new(big.Int).SetString(strKeys[index_1], 10).Cmp( new(big.Int).SetString(strKeys[index_2], 10) ) < 0 
+		nodeIdOne, _ :=  new(big.Int).SetString(strKeys[index_1], 10)
+		nodeIdTwo, _ := new(big.Int).SetString(strKeys[index_2], 10)
+		return nodeIdOne.Cmp(nodeIdTwo) < 0 
 	})
 
 	return strKeys
@@ -388,7 +388,7 @@ func (fingerTableRoute *FingerTableRoute) sortFingerTableKeys() []string {
 
 
 func calculateManhanttanDistance(nodeIdOne *big.Int, nodeIdTwo *big.Int) *big.Int {
-	return nodeIdTwo.Abs( nodeIdTwo.Sub(nodeIdOne, nodeIdTwo) )
+	return nodeIdTwo.Sub(nodeIdOne, nodeIdTwo)
 }
 
 
