@@ -66,6 +66,7 @@ func (fingerTableRoute *FingerTableRoute) StartServices() {
 	go fingerTableRoute.joinResponseHandler()
 	go fingerTableRoute.availableServerRequestHandler()
 	go fingerTableRoute.resolvePacketRequest()
+	go fingerTableRoute.registerNodeAsAvaiable() 
 
 }
 
@@ -257,6 +258,17 @@ func (fingerTableRoute *FingerTableRoute) availableServerRequestHandler() {
 }
 
 
+// ### [Service] notify c&c it's existance
+func (fingerTableRoute *FingerTableRoute) registerNodeAsAvaiable() {
+	for {
+		if len(fingerTableRoute.routeConn) > 0 {
+			NetworkModule.NotifyNodeExistance( fingerTableRoute.currentNodeInfo )
+			fmt.Println("[C&C]: Registering node to c&c server...")
+		}
+
+		time.Sleep(time.Minute * 3)
+	}
+}
 
 
 // ************************ finger Table conn function functions ************************
@@ -276,7 +288,7 @@ func (fingerTableRoute *FingerTableRoute) fingerTableConnectionHandler(connectio
 
 		fingerTableRoute.routeConn[ firstJoinReqPacket.FingerTableID.String() ] = FingerTableEntry{ readPacketFromCurrNodeChannel, firstJoinReqPacket.SenderNodeId }
 
-		
+
 
 		for {
 			select {
