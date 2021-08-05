@@ -28,7 +28,7 @@ func (nodeInfo *NodeInfo) GetNodeInfo() NodeInfo {
 
 
 func (nodeInfo *NodeInfo) generateNodeId() {	
-    nodeIdentification := nodeInfo.IP_address + ":" + nodeInfo.Ports["JOIN"]
+    nodeIdentification := nodeInfo.IP_address + ":" + nodeInfo.Ports["JOIN_RESP"]
 
     hashFunction := sha1.New()
     hashFunction.Write([]byte(nodeIdentification))
@@ -36,7 +36,7 @@ func (nodeInfo *NodeInfo) generateNodeId() {
 
     two, m, hashedID := big.NewInt(2), big.NewInt(160),  (&big.Int{}).SetBytes(sha)
     
-    hashedID.SetBytes(sha) 
+    // hashedID.SetBytes(sha) 
     modulo := two.Exp( two, m, nil)
 
     nodeInfo.Node_id = hashedID.Mod(hashedID, modulo)

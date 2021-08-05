@@ -30,7 +30,7 @@ func NotifyNodeExistance(nodeInfo Util.NodeInfo) NodeData {
 }
 
 
-func GetRegisteredNodes() ([]NodeData) {
+func GetRegisteredNodes(currentNodeId string) ([]NodeData) {
     resp, err := http.Get("https://cdht-monitoring-api.herokuapp.com/nodes")
 
     if err != nil {
@@ -55,7 +55,7 @@ func GetRegisteredNodes() ([]NodeData) {
 
 	var nodeList []NodeData 
     for _, node := range messages {
-        if _,exitsts := visited[node.Node_id]; !exitsts {
+        if _,exitsts := visited[node.Node_id]; !exitsts && node.Node_id != currentNodeId {
             visited[node.Node_id] = true
 			nodeList = append(nodeList, node)
         }
@@ -74,8 +74,8 @@ func registerNode(nodeData NodeData) {
         fmt.Println(err)
     }
 
-    responseBody := bytes.NewBuffer(postBody)
-    resp, err := http.Post("https://cdht-monitoring-api.herokuapp.com/nodes", "application/json", responseBody)
+    requestBody := bytes.NewBuffer(postBody)
+    resp, err := http.Post("https://cdht-monitoring-api.herokuapp.com/nodes", "application/json", requestBody)
 
     if err != nil {
        log.Fatalf("An Error Occured %v", err)

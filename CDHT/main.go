@@ -25,7 +25,11 @@ func main() {
 
     var nodeInfo Util.NodeInfo
     nodeInfo.GetNodeInfo()
-    fmt.Println(nodeInfo)
+    fmt.Println("-----------------Current node Info--------------------")
+    fmt.Printf("Node ID: %s \n", nodeInfo.Node_id.String())
+    fmt.Printf("iP Address: %s \n", nodeInfo.IP_address)
+    fmt.Println("Ports: ", nodeInfo.Ports)
+    fmt.Println("------------------------------------------------------")
 
 
     fingerTableRoute := RoutingModule.NewFingerTable(nodeInfo, 2, 20);

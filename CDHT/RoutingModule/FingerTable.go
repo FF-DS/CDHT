@@ -93,6 +93,9 @@ func (fingerTableRoute *FingerTableRoute) RunFixFingerAlg() {
 		fmt.Println("[FixFInger]:  starting fixfinger..... ")
 		fingerTableRoute.fixFingerAlg()
 		time.Sleep(time.Second * 10)
+		fmt.Println("[FixFInger]: result.... ")
+		fmt.Println(fingerTableRoute.routeConn)
+		fmt.Println("[FixFInger]: --------------")
 	}
 }
 
@@ -117,8 +120,8 @@ func (fingerTableRoute *FingerTableRoute) fixFingerAlg() {
 			Ports : fingerTableRoute.currentNodeInfo.Ports,
 		}
 
-		fmt.Println("[FixFInger]:  looking for %s..... ",findNodeId.String())
-		fmt.Println(joinReqPacket)
+		fmt.Printf("[FixFInger]: [Entry-%d] looking for %s..... \n",id,findNodeId.String())
+		// fmt.Println(joinReqPacket)
 
 
 		if len( fingerTableRoute.routeConn) != 0 {
@@ -139,10 +142,13 @@ func (fingerTableRoute *FingerTableRoute) fixFingerAlg() {
 
 // ### [Service]
 func (fingerTableRoute *FingerTableRoute) routeToClosestNode() {
-	fmt.Println("[SERVICES]:  starting [routeToClosestNode] services.....\n[SERVICES]:  listning for packets..... ")
+	fmt.Println("[SERVICES][routeToClosestNode]: starting  services.....\n[SERVICES][routeToClosestNode]:  listning for packets..... ")
 	for {
 
 		packet :=  <-fingerTableRoute.routeToClosestNodeChannel
+
+		fmt.Printf("[SERVICES][routeToClosestNode]: Packet received with nodeId %s and IPaddress %s\n", packet.SenderNodeId.String(), packet.SenderIp)
+
 
 		minDistance := &big.Int{}
 		minDistance.Exp(big.NewInt( int64(fingerTableRoute.jumpSpacing) ), fingerTableRoute.currentNodeInfo.M , nil)
@@ -161,32 +167,38 @@ func (fingerTableRoute *FingerTableRoute) routeToClosestNode() {
 			}
 		}
 
-
+		
 		if fingerTableRoute.currentNodeInfo.Node_id != packet.SenderNodeId  &&  calculateManhanttanDistance(packet.ReceiverNodeId, fingerTableRoute.currentNodeInfo.Node_id).Cmp(minDistance) <= 0 {
+			fmt.Printf("[SERVICES][routeToClosestNode]: resolving the packet on current node Node_id: %d\n", fingerTableRoute.currentNodeInfo.Node_id)
 			fingerTableRoute.resolvePacketChannel <- packet
+		}else{
+			fmt.Printf("[SERVICES][routeToClosestNode]: forwarding the packet to node with node id Node_id: %d\n", currChoosenNodeID)
+			fingerTableRoute.routeConn[currChoosenNodeID].routeChannel <- packet
 		}
 
 		
-		fingerTableRoute.routeConn[currChoosenNodeID].routeChannel <- packet
 	}
 }
 
 
 // ### [Service]
 func (fingerTableRoute *FingerTableRoute) routeToAnyAvailibleNode(){
-	fmt.Println("[SERVICES]:  starting [routeToAnyAvailibleNode] services.....\n[SERVICES]:  listning for packets..... ")
+	fmt.Println("[SERVICES][routeToAnyAvailibleNode]: starting services.....\n[SERVICES][routeToAnyAvailibleNode]:  listning for packets..... ")
 	for {
+		availibleNodes := NetworkModule.GetRegisteredNodes( fingerTableRoute.currentNodeInfo.Node_id.String() )
 
-		availibleNodes := NetworkModule.GetRegisteredNodes()
 		if len(availibleNodes) == 0 {
-			fmt.Println("[FINGER TABLE ROUTE]: No availible node, sleeping for 10sec....")
+			fmt.Println("[SERVICES][routeToAnyAvailibleNode]: No availible node, sleeping for 10sec and trying again ....")
 			time.Sleep(time.Second * 10)
-			continue
+			continue;
 		}
 
 
 		joinReqPacket :=  <-fingerTableRoute.routeToAnyAvailibleNodeChannel
+		fmt.Printf("[SERVICES][routeToAnyAvailibleNode]: packet received with node id %s and ip %s\n", joinReqPacket.SenderIp, joinReqPacket.SenderIp)
+
 		availibleNode := availibleNodes[0]
+
 
 		var connAvailble NetworkModule.NetworkManager
 
@@ -200,12 +212,14 @@ func (fingerTableRoute *FingerTableRoute) routeToAnyAvailibleNode(){
 				enc := gob.NewEncoder(connection) 
 
 				if err := enc.Encode(&joinReqPacket); err != nil {
-					log.Printf("[FINGER TABLE ROUTE]: Failed to send the join request: %v ... \n", err)
+					log.Printf("[SERVICES][routeToAnyAvailibleNode]: Failed to send the join request packet: %v ... \n", err)
 				}
+
+				log.Printf("[SERVICES][routeToAnyAvailibleNode]: packet with node_id: %s and ip_address: %s is sent to node with node_id: %s and ip_address: %s \n", joinReqPacket.SenderNodeId, joinReqPacket.SenderIp, availibleNode.Node_id, availibleNode.IP_address)
 				connection.Close()
 
 			}else{
-				fmt.Println("[FINGER TABLE ROUTE]: Can't decode the connection socket...")
+				fmt.Println("[SERVICES][routeToAnyAvailibleNode]: Can't decode the connection socket...")
 			}
 			
 		})
@@ -222,8 +236,8 @@ func (fingerTableRoute *FingerTableRoute) routeToAnyAvailibleNode(){
 
 // ### [Service]
 func (fingerTableRoute *FingerTableRoute) joinResponseHandler() {
-	fmt.Println("[SERVICES]:  starting [joinResponseHandler] services.....\n[SERVICES]:  listning for packets..... ")
-
+	fmt.Printf("[SERVICES][joinResponseHandler]:  starting services.....\n[SERVICES][joinResponseHandler]:  listning for packets on port: %s..... \n",  fingerTableRoute.currentNodeInfo.Ports["JOIN_RESP"])
+	
 	var joinResponseServer NetworkModule.NetworkManager
 	Port, _  := strconv.Atoi( fingerTableRoute.currentNodeInfo.Ports["JOIN_RESP"] )
 	joinResponseServer.SetIPAddress( fingerTableRoute.currentNodeInfo.IP_address, Port )
@@ -235,7 +249,7 @@ func (fingerTableRoute *FingerTableRoute) joinResponseHandler() {
 
 // ### [Service]
 func (fingerTableRoute *FingerTableRoute) availableServerRequestHandler() {
-	fmt.Println("[SERVICES]:  starting [availableServerRequestHandler] services.....\n[SERVICES]:  listning for packets..... ")
+	fmt.Printf("[SERVICES][availableServerRequestHandler]:  starting  services.....\n[SERVICES][availableServerRequestHandler]:  listning for packets on port: %s..... \n", fingerTableRoute.currentNodeInfo.Ports["JOIN_REQ"])
 
 	var joinResponseServer NetworkModule.NetworkManager
 	Port, _  := strconv.Atoi( fingerTableRoute.currentNodeInfo.Ports["JOIN_REQ"] )
@@ -248,10 +262,12 @@ func (fingerTableRoute *FingerTableRoute) availableServerRequestHandler() {
 				packet := &Util.FingerTablePacket{}
 				dec.Decode(packet)
 
+				fmt.Printf("[SERVICES][availableServerRequestHandler]: packet with NodeId: %s and IP address: %s \n", packet.SenderIp, packet.SenderNodeId)
+
 				fingerTableRoute.routeToClosestNodeChannel <- *packet
 
 			}else{
-				fmt.Println("[FINGER TABLE ROUTE]: Can't decode the connection socket...")
+				fmt.Println("[SERVICES][availableServerRequestHandler]: Can't decode the connection socket...")
 			}
 	})
 
@@ -274,7 +290,7 @@ func (fingerTableRoute *FingerTableRoute) registerNodeAsAvaiable() {
 // ************************ finger Table conn function functions ************************
 
 func (fingerTableRoute *FingerTableRoute) fingerTableConnectionHandler(connection interface{}) {
-	fmt.Println("[NODE]:  node connection created [fingerTableConnectionHandler] starting.....\n[NODE]:  listning for packets..... ")
+	fmt.Println("[NODE][fingerTableConnectionHandler]: node connection created  starting.....\n[NODE][fingerTableConnectionHandler]:  listning for packets..... ")
 
 	if connection, ok := connection.(net.Conn); ok { 
 		
@@ -284,12 +300,17 @@ func (fingerTableRoute *FingerTableRoute) fingerTableConnectionHandler(connectio
 		go readPacketFromSocket(connection, readPacketFromSocketChannel)
 
 		firstJoinReqPacket :=  <-readPacketFromSocketChannel
-		fingerTableRoute.routeConn[ firstJoinReqPacket.FingerTableID.String() ].routeChannel <- Util.FingerTablePacket{ Type: "CLOSE_CONN"  } 
+		
+		if fingerTableEntry, exists := fingerTableRoute.routeConn[ firstJoinReqPacket.FingerTableID.String() ]; exists {
+			fingerTableEntry.routeChannel <- Util.FingerTablePacket{ Type: "CLOSE_CONN"  }	
+		} 
+			
 
 		fingerTableRoute.routeConn[ firstJoinReqPacket.FingerTableID.String() ] = FingerTableEntry{ readPacketFromCurrNodeChannel, firstJoinReqPacket.SenderNodeId }
 
-
-
+		fmt.Println("[NODE][fingerTableConnectionHandler]: packet recieved")
+		fmt.Println(firstJoinReqPacket)
+		
 		for {
 			select {
 				case packet := <-readPacketFromCurrNodeChannel:
@@ -322,9 +343,12 @@ func (fingerTableRoute *FingerTableRoute) fingerTableConnectionHandler(connectio
 
 // ### [Service]
 func  (fingerTableRoute *FingerTableRoute) resolvePacketRequest(){
-	fmt.Println("[SERVICES]:  starting [resolvePacketRequest] services.....\n[SERVICES]:  listning for packets..... ")
+	fmt.Println("[SERVICES][resolvePacketRequest]:  starting services.....\n[SERVICES][resolvePacketRequest]:  listning for packets..... ")
 	for {
 		packetReq:= <-fingerTableRoute.resolvePacketChannel
+
+		fmt.Printf("[SERVICES][resolvePacketRequest]: packet recieved with node_id: %s and ip_address: %s \n", packetReq.SenderNodeId, packetReq.SenderIp)
+
 
 		var connToServer NetworkModule.NetworkManager
 
@@ -350,14 +374,15 @@ func  (fingerTableRoute *FingerTableRoute) resolvePacketRequest(){
 				enc := gob.NewEncoder(connection) 
 
 				if err := enc.Encode(&joinRespPacket); err != nil {
-					log.Printf("[FINGER TABLE ROUTE]: Failed to send the join request: %v ... \n", err)
+					log.Printf("[SERVICES][resolvePacketRequest]: Failed to send the join request: %v ... \n", err)
 				}
 				connection.Close()
 
 			}else{
-				fmt.Println("[FINGER TABLE ROUTE]: Can't decode the connection socket...")
+				fmt.Println("[SERVICES][resolvePacketRequest]: Can't decode the connection socket...")
 			}
-			
+
+			fmt.Printf("[SERVICES][resolvePacketRequest]: packet is send to node_id: %s and ip_address: %s \n", packetReq.SenderNodeId, packetReq.SenderIp)
 		})
 
 	}
