@@ -1,6 +1,6 @@
 {
   "Ports": {
-    "JOIN_RESP": "5010",
-    "JOIN_REQ": "2405"
+    "JOIN_RESP": "5310",
+    "JOIN_REQ": "2705"
   }
 }
