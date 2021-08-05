@@ -15,14 +15,6 @@ import (
 
 
 func main() {
-    // nodeDatas := NetworkModule.GetRegisteredNodes()
-    // if len(nodeDatas) == 0{
-    //     fmt.Println("No node avaiable wait till node is registered...")
-    //     NetworkModule.NotifyNodeExistance()
-    //     fmt.Println("Node registered.")
-    // }
-
-
     var nodeInfo Util.NodeInfo
     nodeInfo.GetNodeInfo()
     fmt.Println("-----------------Current node Info--------------------")
@@ -30,6 +22,14 @@ func main() {
     fmt.Printf("iP Address: %s \n", nodeInfo.IP_address)
     fmt.Println("Ports: ", nodeInfo.Ports)
     fmt.Println("------------------------------------------------------")
+
+
+    nodeDatas := NetworkModule.GetRegisteredNodes(nodeInfo.Node_id.String())
+    if len(nodeDatas) == 0{
+        fmt.Println("No node avaiable wait till node is registered...")
+        NetworkModule.NotifyNodeExistance(nodeInfo)
+        fmt.Println("Node registered.")
+    }
 
 
     fingerTableRoute := RoutingModule.NewFingerTable(nodeInfo, 2, 20);
