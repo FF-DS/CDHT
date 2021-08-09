@@ -33,8 +33,8 @@ func main() {
 
     availableNodeInfo := Util.NodeInfo {
         IP_address : currNodeInfo.IP_address,
-        Ports : map[string]string{ "JOIN_RSP" : "8989", "JOIN_REQ" : "9898",},
-        // Ports : map[string]string{ "JOIN_RSP" : "6010", "JOIN_REQ" : "2705",},
+        // Ports : map[string]string{ "JOIN_RSP" : "8989", "JOIN_REQ" : "9898",},
+        Ports : map[string]string{ "JOIN_RSP" : "6010", "JOIN_REQ" : "2705",},
     }
 
 

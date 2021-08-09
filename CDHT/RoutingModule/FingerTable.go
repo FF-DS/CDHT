@@ -305,9 +305,9 @@ func (fingerTableRoute *FingerTableRoute) calculateNextFingerId(i int)  *big.Int
 
 
 
-// [HELPER] : sort the map keys
+// [HELPER] : reverse sort the map keys
 
-func (fingerTableRoute *FingerTableRoute) sortFingerTableKeys() []*big.Int {
+func (fingerTableRoute *FingerTableRoute) revSortFingerTableKeys() []*big.Int {
 	keys := []*big.Int{}
 	
 	for key,_ := range fingerTableRoute.routeConn  {
@@ -315,7 +315,7 @@ func (fingerTableRoute *FingerTableRoute) sortFingerTableKeys() []*big.Int {
 		keys = append(keys, nodeId )
 	}
 
-	sort.SliceStable(keys,  func(index_1, index_2 int) bool  { return keys[index_1].Cmp( keys[index_2] ) < 0 } )
+	sort.SliceStable(keys,  func(index_1, index_2 int) bool  { return keys[index_1].Cmp( keys[index_2] ) > 0 } )
 	return keys
 }
 
@@ -336,13 +336,13 @@ func between(start, middle, end *big.Int) bool {
 // [HELPER]
 
 func (fingerTableRoute *FingerTableRoute) currentBestNodeHelper(reqPacket Util.FingerTablePacket) TableEntry {
-	sortedKeys := fingerTableRoute.sortFingerTableKeys()
+	sortedKeys := fingerTableRoute.revSortFingerTableKeys()
 
 	for _, fingerId := range sortedKeys {
 		tableEntry := fingerTableRoute.routeConn[ fingerId.String() ]
 		isActive:= tableEntry.Ping()
 
-		if between( reqPacket.SenderNodeId, reqPacket.FingerTableID, fingerId) && isActive{
+		if between( reqPacket.SenderNodeId, fingerId, reqPacket.FingerTableID) && isActive{
 			return fingerTableRoute.routeConn[ fingerId.String() ]
 		}
 	}
