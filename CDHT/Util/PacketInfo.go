@@ -13,14 +13,14 @@ type Packet struct {
 	ReceiverNodeId *big.Int
 }
 
+
 type FingerTablePacket struct {
 	Type  string
-	SenderIp string
-	ReceiverIp string
-	SenderNodeId *big.Int
-	ReceiverNodeId *big.Int
+
 	FingerTableID  *big.Int
-	Ports map[string]string
+	SenderNodeId *big.Int
+
+	ConnNode NodeInfo
 }
 
 

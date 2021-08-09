@@ -21,14 +21,15 @@ type NodeInfo struct {
 
 func (nodeInfo *NodeInfo) GetNodeInfo() NodeInfo {
 	nodeInfo.getNodeConfig();
-	nodeInfo.setOutboundIP();
+	// nodeInfo.setOutboundIP();
+    nodeInfo.IP_address = "127.0.0.1"
 	nodeInfo.generateNodeId();
 	return *nodeInfo
 }
 
 
 func (nodeInfo *NodeInfo) generateNodeId() {	
-    nodeIdentification := nodeInfo.IP_address + ":" + nodeInfo.Ports["JOIN_RESP"]
+    nodeIdentification := nodeInfo.IP_address + ":" + nodeInfo.Ports["JOIN_REQ"]
 
     hashFunction := sha1.New()
     hashFunction.Write([]byte(nodeIdentification))

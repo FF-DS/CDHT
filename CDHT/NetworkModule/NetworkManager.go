@@ -3,7 +3,8 @@ package NetworkModule
 import (
 	"net"
 	"fmt"
-	// "strconv"
+    "encoding/gob"
+    "cdht/Util"
 )
 
 // Network class
@@ -17,8 +18,8 @@ import (
 type NetworkManager struct {
 	socketConnection net.Conn
 	ipAddr string
+	port string
 	conn_type string
-	port int
 	status string
 }
 
@@ -45,18 +46,26 @@ func init() {
 }
 
 
+// ## ------------------------------- init ----------------------------- ##
+
+func NewNetworkManager(ipAddr string, port string) NetworkManager {
+	var networkMnger NetworkManager
+	networkMnger.SetIPAddress(ipAddr, port)
+
+	return networkMnger
+}
 
 
 
 
 // ## ------------------------------- public methods ----------------------------- ##
 
-func (network *NetworkManager) SetIPAddress(ipAddr string, port int){
+func (network *NetworkManager) SetIPAddress(ipAddr string, port string){
 	network.ipAddr = ipAddr
 	network.port = port
 }
 
-func (network *NetworkManager) GetIPAddress() (ipAddr string, port int){
+func (network *NetworkManager) GetIPAddress() (ipAddr string, port string){
 	ipAddr = network.ipAddr
 	port = network.port
 	return 
@@ -67,7 +76,7 @@ func (network *NetworkManager) GetStatus() (string) {
 }
 
 
-func (network *NetworkManager) StartServer(conn_type string, close_server chan bool, handle_request func(interface{})) (bool){
+func (network *NetworkManager) StartServer(conn_type string, close_server chan bool, handle_request func(interface{})) bool {
 	network.conn_type = conn_type
 	switch conn_type {
 		case "UDP":
@@ -78,7 +87,7 @@ func (network *NetworkManager) StartServer(conn_type string, close_server chan b
 	return false
 }
 
-func (network *NetworkManager) Connect(conn_type string,handle_request func(interface{})) (bool){
+func (network *NetworkManager) Connect(conn_type string,handle_request func(interface{})) bool {
 	network.conn_type = conn_type
 	switch conn_type {
 		case "UDP":
@@ -90,12 +99,48 @@ func (network *NetworkManager) Connect(conn_type string,handle_request func(inte
 }
 
 
-func (network *NetworkManager) CloseConn() (bool){
+func (network *NetworkManager) CloseConn() bool {
 	network.socketConnection.Close()
 	network.status = "CLOSED"
 	return true;
 }
 
+
+
+// ---------- methods only for tcp connection object ------------------ //
+
+func (network *NetworkManager) CreateTCPConnection() bool{
+	socketConnection, err := net.Dial("tcp4", fmt.Sprintf("%s:%s", network.ipAddr, network.port) ) 
+	if err != nil {
+		panic(err)
+		return false;
+	}
+	network.socketConnection = socketConnection
+	return true;
+}
+
+
+func (network *NetworkManager) SendPacket(packet Util.FingerTablePacket) bool {
+	enc := gob.NewEncoder(network.socketConnection) 
+
+	if err := enc.Encode(&packet); err != nil {
+		return false;
+	}
+	return true
+}
+
+
+func (network *NetworkManager) RecievePacket() Util.FingerTablePacket {
+	dec := gob.NewDecoder(network.socketConnection)
+	packet := &Util.FingerTablePacket{}
+
+	if err := dec.Decode(packet); err != nil {
+		return *packet
+	}
+	return *packet
+}
+
+// ---------- [end] methods only for tcp connection object ------------------ //
 
 
 
@@ -105,8 +150,8 @@ func (network *NetworkManager) CloseConn() (bool){
 // *** This function will accept a channel which will control whether the server should close or connect &
 // *** a handler function which will be called with the packet data (the packet data struct) 
 // *** 
-func (network *NetworkManager) startUdpServer(close_server chan bool, handle_request func(interface{}) ) (bool){
-	localAddress, err := net.ResolveUDPAddr("udp4", fmt.Sprintf("%s:%d", network.ipAddr, network.port))
+func (network *NetworkManager) startUdpServer(close_server chan bool, handle_request func(interface{}) )  bool {
+	localAddress, err := net.ResolveUDPAddr("udp4", fmt.Sprintf("%s:%s", network.ipAddr, network.port))
 	// localAddress, err := net.ResolveUDPAddr("udp",  ":"+strconv.Itoa(network.port))
 	network.status = "LISTENING"
 
@@ -149,8 +194,8 @@ func (network *NetworkManager) startUdpServer(close_server chan bool, handle_req
 // *** a handler function which will be called with the tcp connection socket, then the function will be respossible
 // *** for reading data from the socket, for maintaing the connection or sending data via the socket 
 // *** 
-func (network *NetworkManager) startTcpServer(close_server chan bool, handle_request func(interface{}) ) (bool){
-	connListner, err := net.Listen("tcp4", fmt.Sprintf("%s:%d", network.ipAddr, network.port) )
+func (network *NetworkManager) startTcpServer(close_server chan bool, handle_request func(interface{}) )  bool {
+	connListner, err := net.Listen("tcp4", fmt.Sprintf("%s:%s", network.ipAddr, network.port) )
 	// connListner, err := net.Listen("tcp", ":"+strconv.Itoa(network.port) )
 	network.status = "LISTENING"
 
@@ -181,8 +226,8 @@ func (network *NetworkManager) startTcpServer(close_server chan bool, handle_req
 // *** the handler function will be respossible for reading data from the socket, for maintaing the connection or sending data via the socket 
 // *** 
 
-func (network *NetworkManager) tcpConnection(handle_request func(interface{})) (bool) {
-	socketConnection, err := net.Dial("tcp4", fmt.Sprintf("%s:%d", network.ipAddr, network.port) ) 
+func (network *NetworkManager) tcpConnection(handle_request func(interface{}))  bool {
+	socketConnection, err := net.Dial("tcp4", fmt.Sprintf("%s:%s", network.ipAddr, network.port) ) 
 	if err != nil {
 		panic(err)
 		return false;
@@ -198,8 +243,8 @@ func (network *NetworkManager) tcpConnection(handle_request func(interface{})) (
 // *** the handler function will be respossible for reading data from the socket, for maintaing the connection or sending data via the socket 
 // *** 
 
-func (network *NetworkManager) udpConnection(handle_request func(interface{}) ) (bool) {
-	connServerAddress, err := net.ResolveUDPAddr("udp4", fmt.Sprintf("%s:%d", network.ipAddr, network.port) )
+func (network *NetworkManager) udpConnection(handle_request func(interface{}) )  bool {
+	connServerAddress, err := net.ResolveUDPAddr("udp4", fmt.Sprintf("%s:%s", network.ipAddr, network.port) )
 	socketConnection, err := net.DialUDP("udp4", nil, connServerAddress)
 	network.status = "CONNECTED"
 
