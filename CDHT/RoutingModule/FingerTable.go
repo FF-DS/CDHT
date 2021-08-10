@@ -9,6 +9,7 @@ import (
 	"net"
 	"log"
 	"sort"
+	"time"
 )
 
 
@@ -84,7 +85,9 @@ func (fingerTableRoute *FingerTableRoute) SetJumpSpacing(jumpSpace int) {
 
 
 func (fingerTableRoute *FingerTableRoute) RunFixFingerAlg() {
-	// for {
+	for {
+		time.Sleep(time.Second * 10)
+
 		fmt.Println("[FigerFix]: started....")
 
 		if len(fingerTableRoute.routeConn) != 0 {
@@ -98,8 +101,7 @@ func (fingerTableRoute *FingerTableRoute) RunFixFingerAlg() {
 			fmt.Printf(" Finger Entry : %s | Node Id : %s  IP_ADD : %s  REQ_PORT : %s\n",id, entry.CurrNodeInfo.Node_id, entry.CurrNodeInfo.IP_address, entry.CurrNodeInfo.Ports["JOIN_REQ"])
 		}
 	
-	// 	time.Sleep(time.Second * 10)
-	// }
+	}
 }
 
 

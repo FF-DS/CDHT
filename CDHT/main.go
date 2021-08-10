@@ -44,12 +44,6 @@ func main() {
     time.Sleep(time.Second * 10)
     fingerTableRoute.RunFixFingerAlg()
 
-    time.Sleep(time.Second * 10)
-    fingerTableRoute.RunFixFingerAlg()
-
-
-    time.Sleep(time.Second * 10)
-    fingerTableRoute.RunFixFingerAlg()
 
     time.Sleep(time.Minute * 35)
 }
