@@ -112,7 +112,6 @@ func (network *NetworkManager) CloseConn() bool {
 func (network *NetworkManager) CreateTCPConnection() bool{
 	socketConnection, err := net.Dial("tcp4", fmt.Sprintf("%s:%s", network.ipAddr, network.port) ) 
 	if err != nil {
-		panic(err)
 		return false;
 	}
 	network.socketConnection = socketConnection
@@ -156,20 +155,18 @@ func (network *NetworkManager) startUdpServer(close_server chan bool, handle_req
 	network.status = "LISTENING"
 
 	if err != nil {
-		panic(err)
 		return false
 	}
 	
 	connListner, err := net.ListenUDP("udp4", localAddress)
 	if err != nil {
-		panic(err)
 		return false
 	}
 	
 	defer connListner.Close()
 
 	if err != nil {
-		panic(err)
+		return false
 	}
 
     for {
@@ -181,7 +178,7 @@ func (network *NetworkManager) startUdpServer(close_server chan bool, handle_req
 				length, add, err := connListner.ReadFromUDP(inputBytes)
 
 				if err != nil {
-					panic(err)
+					return false
 				}
 
 				go handle_request( UDPPacketData{ Data:inputBytes[:length],  Address: add } )
@@ -199,8 +196,8 @@ func (network *NetworkManager) startTcpServer(close_server chan bool, handle_req
 	// connListner, err := net.Listen("tcp", ":"+strconv.Itoa(network.port) )
 	network.status = "LISTENING"
 
-	if err != nil {
-		panic(err)
+	if err != nil {		
+		return false
 	}
 
 	defer connListner.Close()
@@ -213,7 +210,6 @@ func (network *NetworkManager) startTcpServer(close_server chan bool, handle_req
 			default:
 				conn, err := connListner.Accept()
 				if err != nil {
-					panic(err)
 					return false
 				}
 				go handle_request(conn)
@@ -229,7 +225,6 @@ func (network *NetworkManager) startTcpServer(close_server chan bool, handle_req
 func (network *NetworkManager) tcpConnection(handle_request func(interface{}))  bool {
 	socketConnection, err := net.Dial("tcp4", fmt.Sprintf("%s:%s", network.ipAddr, network.port) ) 
 	if err != nil {
-		panic(err)
 		return false;
 	}
 	network.status = "CONNECTED"
@@ -249,7 +244,6 @@ func (network *NetworkManager) udpConnection(handle_request func(interface{}) ) 
 	network.status = "CONNECTED"
 
     if err != nil {
-		panic(err)
         return false
     }
 	go handle_request(  UDPPacketData{ UDPsocketConnection: socketConnection,  Address: connServerAddress }  )
