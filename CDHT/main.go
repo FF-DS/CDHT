@@ -39,10 +39,18 @@ func main() {
 
 
     fingerTableRoute := RoutingModule.NewFingerTable( currNodeInfo, availableNodeInfo, 2, M_VAL);
-    fingerTableRoute.StartServices()
+    fingerTableRoute.InitFingerService()
 
+    go fingerTableRoute.RunFixFingerAlg()
+    
+    
     time.Sleep(time.Second * 10)
-    fingerTableRoute.RunFixFingerAlg()
+
+
+    successorTablerRoute := RoutingModule.NewSuccessorTable( currNodeInfo, &fingerTableRoute)
+    successorTablerRoute.InitSuccessorService()
+
+    go successorTablerRoute.RunStablize()
 
 
     time.Sleep(time.Minute * 35)

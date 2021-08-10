@@ -51,7 +51,7 @@ func NewFingerTable( currentNodeInfo Util.NodeInfo, availableNodeInfo Util.NodeI
 }
 
 
-func (fingerTableRoute *FingerTableRoute) StartServices() {
+func (fingerTableRoute *FingerTableRoute) InitFingerService() {
 	fmt.Println("[SERVICES]:  starting services..... ")
 
 	go fingerTableRoute.joinRespListnerService()

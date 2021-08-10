@@ -1,6 +1,8 @@
 {
   "Ports": {
     "JOIN_RSP": "8989",
-    "JOIN_REQ": "9898"
+    "JOIN_REQ": "9898",
+    "PRED_RSP": "7890",
+    "SUCC_REQ": "5782"
   }
 }
