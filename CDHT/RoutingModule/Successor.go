@@ -38,10 +38,14 @@ func (succTable *SuccessorTableRoute) InitSuccessorService(){
 }
 
 
-func (succTable *SuccessorTableRoute) RunStablize(){
+func (succTable *SuccessorTableRoute) RunStablize(loop bool){
 	for {
 		time.Sleep(time.Second * 10)
 		succTable.stablize()
+
+		if !loop {
+			return
+		}
 	}
 }
 
@@ -63,12 +67,14 @@ func (succTable *SuccessorTableRoute) stablize(){
 			succTable.fingerTable.GetFingerTableState()[ succID ] = entry
 		}
 	}
+	fmt.Printf("-----------------------------NODE [%s]---------------------------\n", succTable.currentNodeInfo.Node_id)
 	fmt.Println("[stablizeHelper]: ROUTING table")
-	fmt.Println("		SUCC :", succTable.fingerTable.GetFingerTableState()[ succID ])
-	fmt.Println("		PRED :", succTable.predeccessor)
+	fmt.Printf("		SUCC Entry : Node Id : %s  IP_ADD : %s  REQ_PORT : %s\n", succTable.fingerTable.GetFingerTableState()[ succID ].CurrNodeInfo.Node_id, succTable.fingerTable.GetFingerTableState()[ succID ].CurrNodeInfo.IP_address, succTable.fingerTable.GetFingerTableState()[ succID ].CurrNodeInfo.Ports["SUCC_REQ"])
+	fmt.Printf("		PRED Entry : Node Id : %s  IP_ADD : %s  REQ_PORT : %s\n", succTable.predeccessor.CurrNodeInfo.Node_id, succTable.predeccessor.CurrNodeInfo.IP_address, succTable.predeccessor.CurrNodeInfo.Ports["SUCC_REQ"])
+
+	fmt.Println("------------------------------------------------------------------")
+
 }
-
-
 
 // [HELPER]
 func (succTable *SuccessorTableRoute) stablizeHelper(contactNode Util.NodeInfo, succPackt Util.FingerTablePacket)  (Util.NodeInfo, bool) {
@@ -83,7 +89,7 @@ func (succTable *SuccessorTableRoute) stablizeHelper(contactNode Util.NodeInfo, 
 	recvPkt := networkMnger.RecievePacket()
 	
 	if recvPkt.Type == "SUCC_FWD" {
-		fmt.Printf("[stablizeHelper]: Successor Join request for [%s] forwarded to Node_ID: %s | IP_ADD: %s | PORT: %s\n", succPackt.SenderNodeId, recvPkt.ConnNode.Node_id, recvPkt.ConnNode.IP_address, recvPkt.ConnNode.Ports["SUCC_REQ"] )
+		// fmt.Printf("[stablizeHelper]: Successor Join request for [%s] forwarded to Node_ID: %s | IP_ADD: %s | PORT: %s\n", succPackt.SenderNodeId, recvPkt.ConnNode.Node_id, recvPkt.ConnNode.IP_address, recvPkt.ConnNode.Ports["SUCC_REQ"] )
 		return succTable.stablizeHelper( recvPkt.ConnNode, succPackt)
 	}
 	
@@ -111,9 +117,11 @@ func predecessorNotificationHandler(connection interface{}){
 
 		if err:= dec.Decode(packet); err != nil {
 			fmt.Println("[predecessorNotification][Error]: Unable to decode packet.")
-		}else{
-			fmt.Println("[predecessorNotification][PING]: ping received from")
+			return
 		}
+		// else{
+			// fmt.Println("[predecessorNotification][PING]: ping received from")
+		// }
 	}else{
 		fmt.Println("[predecessorNotification][Error]: Can't decode the connection socket...")
 	}
@@ -176,7 +184,7 @@ func (succTable *SuccessorTableRoute) calculateSuccId()  *big.Int {
 }
 
 func (succTable *SuccessorTableRoute) createTableEntry(nodeInfo Util.NodeInfo) (TableEntry, bool) {
-	fmt.Println("[Successor]: createTableEntry.")
+	// fmt.Println("[Successor]: createTableEntry.")
 
 	networkMnger := NetworkModule.NewNetworkManager(nodeInfo.IP_address, nodeInfo.Ports["JOIN_RSP"])
 
@@ -185,6 +193,6 @@ func (succTable *SuccessorTableRoute) createTableEntry(nodeInfo Util.NodeInfo) (
 		return TableEntry{ EmptyEntry:true }, false
 	}	
 		
-	fmt.Printf("[Successor]: successor is updated with node id %s \n", nodeInfo.Node_id.String() )
+	// fmt.Printf("[Successor]: successor is updated with node id %s \n", nodeInfo.Node_id.String() )
 	return TableEntry{ CurrNodeInfo:nodeInfo,  ConnManager: networkMnger }, true
 }

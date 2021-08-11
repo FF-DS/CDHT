@@ -25,17 +25,40 @@ type FingerTableRoute struct {
 	
 	routeToClosestNodeChannel (chan Util.FingerTablePacket) 
 	resolvePacketChannel (chan Util.FingerTablePacket) 
+	availableNodeExist bool
 }
 
 
 
 // #------------------------------ Init ------------------------# //
 
+func CreateRing(currentNodeInfo Util.NodeInfo, jumpSpacing int, fingerTableLength int) FingerTableRoute {
+	fingerTableRoute := FingerTableRoute{
+		currentNodeInfo : currentNodeInfo,
+		availableNodeExist : false,
+
+		jumpSpacing : jumpSpacing,
+		fingerTableLength : fingerTableLength,
+		
+		routeConn : make(map[string]TableEntry),
+		closeRequestServer :  make(chan bool),
+
+		routeToClosestNodeChannel: make(chan Util.FingerTablePacket, 100),
+		resolvePacketChannel: make(chan Util.FingerTablePacket, 100), 
+
+	}
+
+	return fingerTableRoute
+}
+
+
+
 func NewFingerTable( currentNodeInfo Util.NodeInfo, availableNodeInfo Util.NodeInfo, jumpSpacing int, fingerTableLength int) FingerTableRoute {
 
 	fingerTableRoute := FingerTableRoute{
 		currentNodeInfo : currentNodeInfo,
 		availableNodeInfo : availableNodeInfo,
+		availableNodeExist : true,
 
 		jumpSpacing : jumpSpacing,
 		fingerTableLength : fingerTableLength,
@@ -84,23 +107,27 @@ func (fingerTableRoute *FingerTableRoute) SetJumpSpacing(jumpSpace int) {
 }
 
 
-func (fingerTableRoute *FingerTableRoute) RunFixFingerAlg() {
+func (fingerTableRoute *FingerTableRoute) RunFixFingerAlg( loop bool) {
 	for {
 		time.Sleep(time.Second * 10)
 
 		fmt.Println("[FigerFix]: started....")
 
-		if len(fingerTableRoute.routeConn) != 0 {
-			fmt.Println("[FigerFix]: currently there is an existing finger table... ")
-		}
-
+		// if len(fingerTableRoute.routeConn) != 0 {
+		// 	fmt.Println("[FigerFix]: currently there is an existing finger table... ")
+		// }
 		fingerTableRoute.fixFingerAlg()
-	
-		fmt.Println("Routing Table:")
+		fmt.Printf("-----------------------------NODE [%s]---------------------------\n", fingerTableRoute.currentNodeInfo.Node_id)
+		fmt.Println("Finger Routing Table:")
 		for id, entry := range fingerTableRoute.routeConn {
-			fmt.Printf(" Finger Entry : %s | Node Id : %s  IP_ADD : %s  REQ_PORT : %s\n",id, entry.CurrNodeInfo.Node_id, entry.CurrNodeInfo.IP_address, entry.CurrNodeInfo.Ports["JOIN_REQ"])
+			fmt.Printf("		Finger Entry : %s | Node Id : %s  IP_ADD : %s  REQ_PORT : %s\n",id, entry.CurrNodeInfo.Node_id, entry.CurrNodeInfo.IP_address, entry.CurrNodeInfo.Ports["JOIN_REQ"])
 		}
-	
+		fmt.Println("------------------------------------------------------------------")
+		
+
+		if !loop {
+			return
+		}
 	}
 }
 
@@ -125,21 +152,30 @@ func (fingerTableRoute *FingerTableRoute) fixFingerAlg() {
 	for id := 0; id < fingerTableRoute.fingerTableLength; id++ {
 		findNodeId := fingerTableRoute.calculateNextFingerId(id)
 
-		joinReqPacket :=  Util.FingerTablePacket{ Type : "JOIN_REQ", FingerTableID : findNodeId, SenderNodeId: fingerTableRoute.currentNodeInfo.Node_id }
-		fingerTableRoute.routeConn[ findNodeId.String() ] = fingerTableRoute.findNode(joinReqPacket)
+		joinReqPacket :=  Util.FingerTablePacket{ Type : "JOIN_REQ", FingerTableID : findNodeId, SenderNodeId: fingerTableRoute.currentNodeInfo.Node_id, SenderConnNode : fingerTableRoute.currentNodeInfo }
+		entry := fingerTableRoute.findNode(joinReqPacket)
+
+		if  !entry.EmptyEntry  {
+			fingerTableRoute.routeConn[ findNodeId.String() ] = entry
+		}
 	}
 }
 
 
 // [FIND NODE]
 func (fingerTableRoute *FingerTableRoute) findNode(joinReqPacket Util.FingerTablePacket) TableEntry {
+	fmt.Println( fingerTableRoute.availableNodeExist, fingerTableRoute.availableNodeInfo)
 
-	if currBestNode := fingerTableRoute.currentBestNodeHelper( joinReqPacket ); !currBestNode.EmptyEntry {
-		fmt.Printf("[Find-Node]: routed to BEST available node ID: %s\n",currBestNode.CurrNodeInfo.Node_id)
+	if currBestNode := fingerTableRoute.closestPrecedingNode( joinReqPacket ); !currBestNode.EmptyEntry {
+		// fmt.Printf("[Find-Node]: routed to BEST available node ID: %s\n",currBestNode.CurrNodeInfo.Node_id)
 		return 	fingerTableRoute.findClosestPredecessorHelper( joinReqPacket, currBestNode.CurrNodeInfo )
+
+	}else if fingerTableRoute.availableNodeExist {
+		// fmt.Printf("[Find-Node]: routed to ANY available with IP_ADD: %s | PORT:  %s\n", fingerTableRoute.availableNodeInfo.IP_address, fingerTableRoute.availableNodeInfo.Ports["JOIN_REQ"])
+		return fingerTableRoute.findClosestPredecessorHelper( joinReqPacket, fingerTableRoute.availableNodeInfo )
 	}
-	fmt.Printf("[Find-Node]: routed to ANY available with IP_ADD: %s | PORT:  %s\n", fingerTableRoute.availableNodeInfo.IP_address, fingerTableRoute.availableNodeInfo.Ports["JOIN_REQ"])
-	return fingerTableRoute.findClosestPredecessorHelper( joinReqPacket, fingerTableRoute.availableNodeInfo )
+
+	return TableEntry{ EmptyEntry:true }
 }
 
 
@@ -157,7 +193,7 @@ func (fingerTableRoute *FingerTableRoute) findClosestPredecessorHelper(joinReqPa
 	recvPkt := networkMnger.RecievePacket()
 	
 	if recvPkt.Type == "JOIN_FRW" {
-		fmt.Printf("[FindClosestPredecessorHelper]: Join request for [%s] forwarded to Node_ID: %s | IP_ADD: %s | PORT: %s\n", joinReqPacket.FingerTableID, recvPkt.ConnNode.Node_id, recvPkt.ConnNode.IP_address, recvPkt.ConnNode.Ports["JOIN_REQ"] )
+		// fmt.Printf("[FindClosestPredecessorHelper]: Join request for [%s] forwarded to Node_ID: %s | IP_ADD: %s | PORT: %s\n", joinReqPacket.FingerTableID, recvPkt.ConnNode.Node_id, recvPkt.ConnNode.IP_address, recvPkt.ConnNode.Ports["JOIN_REQ"] )
 		return fingerTableRoute.findClosestPredecessorHelper( joinReqPacket, recvPkt.ConnNode)
 	}
 
@@ -167,7 +203,7 @@ func (fingerTableRoute *FingerTableRoute) findClosestPredecessorHelper(joinReqPa
 		return TableEntry{ EmptyEntry:true }
 	}	
 
-	fmt.Printf("[FindClosestPredecessorHelper]: Best location for [%s] is Found at Node_ID: %s | IP_ADD: %s | PORT: %s\n", joinReqPacket.FingerTableID, recvPkt.ConnNode.Node_id, recvPkt.ConnNode.IP_address, recvPkt.ConnNode.Ports["JOIN_REQ"] )
+	// fmt.Printf("[FindClosestPredecessorHelper]: Best location for [%s] is Found at Node_ID: %s | IP_ADD: %s | PORT: %s\n", joinReqPacket.FingerTableID, recvPkt.ConnNode.Node_id, recvPkt.ConnNode.IP_address, recvPkt.ConnNode.Ports["JOIN_REQ"] )
 	return TableEntry{ CurrNodeInfo:recvPkt.ConnNode,  ConnManager: networkMnger }
 }
 
@@ -193,17 +229,22 @@ func (fingerTableRoute *FingerTableRoute) joinRespListnerService() {
 // [FUNCTION-HANDLER][JOIN RESPONSE SERVICE]
 func (fingerTableRoute *FingerTableRoute) fingerTableEntryServiceHandler(connection interface{}) {
 	if connection, ok := connection.(net.Conn); ok { 
-				 
-		dec := gob.NewDecoder(connection)
-		packet := &Util.FingerTablePacket{}
+		
+		// for {
 
-		if err:= dec.Decode(packet); err != nil {
-			fmt.Println("[fingerTableEntryServiceHandler][Error]: Unable to decode packet.")
-		}
-
-		if packet.Type != "PING" {
-			fingerTableRoute.resolvePacketChannel <- *packet
-		}
+			dec := gob.NewDecoder(connection)
+			packet := &Util.FingerTablePacket{}
+			
+			// fmt.Println("[----] Ping packet received ", packet)
+			if err:= dec.Decode(packet); err != nil {
+				fmt.Println("[fingerTableEntryServiceHandler][Error]: Unable to decode packet.")
+				return
+			}
+	
+			if packet.Type != "PING" {
+				fingerTableRoute.resolvePacketChannel <- *packet
+			}
+		// }
 
 	}else{
 		fmt.Println("[fingerTableEntryServiceHandler][Error]: Can't decode the connection socket...")
@@ -232,16 +273,7 @@ func (fingerTableRoute *FingerTableRoute) requestListnerServiceHandler(connectio
 			fmt.Println("[requestListnerServiceHandler][Error]: Unable to decode packet.")
 		}
 
-		currBestNode := fingerTableRoute.currentBestNodeHelper( *packet )
-		fmt.Printf("[requestListnerServiceHandler]: Best location for [%s] is Found at Node_ID: %s \n", packet.FingerTableID, currBestNode.CurrNodeInfo.Node_id )
-
-		if currBestNode.EmptyEntry || between( packet.SenderNodeId, packet.FingerTableID, fingerTableRoute.currentNodeInfo.Node_id){
-			fmt.Printf("[requestListnerServiceHandler]: Best location is overrided by current node [%s] \n", fingerTableRoute.currentNodeInfo.Node_id )
-
-			sendPacketToSocket(connection, Util.FingerTablePacket{ Type : "JOIN_ACC", ConnNode: fingerTableRoute.currentNodeInfo })
-		}else{
-			sendPacketToSocket(connection, Util.FingerTablePacket{ Type : "JOIN_FRW", ConnNode: currBestNode.CurrNodeInfo })
-		}
+		sendPacketToSocket(connection, fingerTableRoute.findSuccessor(packet) )
 
 		connection.Close()
 	}else{
@@ -258,7 +290,7 @@ func (fingerTableRoute *FingerTableRoute) resolvePacketService() {
 	for {
 		packet := <- fingerTableRoute.resolvePacketChannel
 
-		currBestNode := fingerTableRoute.currentBestNodeHelper( packet )
+		currBestNode := fingerTableRoute.closestPrecedingNode( packet )
 		
 		if currBestNode.EmptyEntry || between( packet.SenderNodeId, packet.FingerTableID, fingerTableRoute.currentNodeInfo.Node_id){
 
@@ -277,7 +309,7 @@ func (fingerTableRoute *FingerTableRoute) resolvePacketService() {
 func (fingerTableRoute *FingerTableRoute) routeToClosestNodeService() {
 	for {
 		packet := <- fingerTableRoute.routeToClosestNodeChannel
-		currBestNode := fingerTableRoute.currentBestNodeHelper( packet )
+		currBestNode := fingerTableRoute.closestPrecedingNode( packet )
 		currBestNode.SendPacket(packet)
 	}
 }
@@ -337,22 +369,64 @@ func between(start, middle, end *big.Int) bool {
 
 // [HELPER]
 
-func (fingerTableRoute *FingerTableRoute) currentBestNodeHelper(reqPacket Util.FingerTablePacket) TableEntry {
+func (fingerTableRoute *FingerTableRoute) closestPrecedingNode(reqPacket Util.FingerTablePacket) TableEntry {
 	sortedKeys := fingerTableRoute.revSortFingerTableKeys()
-
+	// fmt.Println(sortedKeys)
 	for _, fingerId := range sortedKeys {
 		tableEntry := fingerTableRoute.routeConn[ fingerId.String() ]
 		isActive:= tableEntry.Ping()
 
-		if between( reqPacket.SenderNodeId, fingerId, reqPacket.FingerTableID) && isActive{
+		if between( fingerTableRoute.currentNodeInfo.Node_id, fingerId, reqPacket.FingerTableID) && isActive{
 			return fingerTableRoute.routeConn[ fingerId.String() ]
+
+		}else if !isActive {
+			delete( fingerTableRoute.routeConn, fingerId.String())
 		}
+	}
+
+	if successor, ok := fingerTableRoute.routeConn[ fingerTableRoute.calculateNextFingerId( int(0) ).String()  ]; ok {
+		return successor
 	}
 
 	return TableEntry{ EmptyEntry:true };
 }
 
 
+// [HELPER]
+
+func (fingerTableRoute *FingerTableRoute) findSuccessor(packet *Util.FingerTablePacket) Util.FingerTablePacket {
+	currBestNode := fingerTableRoute.closestPrecedingNode( *packet )
+	// fmt.Printf("[requestListnerServiceHandler]: Best location for [%s] is Found at Node_ID: %s \n", packet.FingerTableID, currBestNode.CurrNodeInfo.Node_id )
+
+	successor, successor_exists := fingerTableRoute.routeConn[ fingerTableRoute.calculateNextFingerId( int(0) ).String() ];
+	
+	if successor_exists && between( fingerTableRoute.currentNodeInfo.Node_id, packet.FingerTableID, successor.CurrNodeInfo.Node_id){
+		// fmt.Printf("[requestListnerServiceHandler]: Best location is overrided by successor node [%s] \n",  successor.CurrNodeInfo.Node_id )
+		return Util.FingerTablePacket{ Type : "JOIN_ACC", ConnNode:  successor.CurrNodeInfo, SenderConnNode : fingerTableRoute.currentNodeInfo }
+
+	}else if currBestNode.EmptyEntry || currBestNode.CurrNodeInfo.Node_id.Cmp( packet.SenderNodeId ) == 0 {	
+		return fingerTableRoute.initBootNodeRouteTable(packet)
+
+	}else{
+		return Util.FingerTablePacket{ Type : "JOIN_FRW", ConnNode: currBestNode.CurrNodeInfo, SenderConnNode : fingerTableRoute.currentNodeInfo }
+	}
+}
+
+
+// [HELPER]
+
+func (fingerTableRoute *FingerTableRoute) initBootNodeRouteTable(packet *Util.FingerTablePacket) Util.FingerTablePacket { 
+	fingerTableRoute.availableNodeInfo = packet.SenderConnNode
+	fingerTableRoute.availableNodeExist = true
+
+	// fmt.Printf("[--INIT--]: CurrNode : %s  PacketNode : %s FingerTableNode : %s \n", fingerTableRoute.currentNodeInfo.Node_id.String(), packet.SenderNodeId.String(), packet.FingerTableID.String())
+	if between( packet.SenderNodeId, packet.FingerTableID, fingerTableRoute.currentNodeInfo.Node_id){
+		// fmt.Println("INIT Boot self sent")
+		return Util.FingerTablePacket{ Type : "JOIN_ACC", ConnNode:  fingerTableRoute.currentNodeInfo, SenderConnNode : fingerTableRoute.currentNodeInfo }
+	}
+
+	return Util.FingerTablePacket{ Type : "JOIN_ACC", ConnNode: packet.SenderConnNode, SenderConnNode : fingerTableRoute.currentNodeInfo }
+}
 
 
 // [HELPER]

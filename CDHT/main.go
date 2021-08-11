@@ -31,30 +31,41 @@ func main() {
     
     fmt.Println("[TEST]: starting figer fix")
 
-    availableNodeInfo := Util.NodeInfo {
-        IP_address : currNodeInfo.IP_address,
-        // Ports : map[string]string{ "JOIN_RSP" : "8989", "JOIN_REQ" : "9898",},
-        Ports : map[string]string{ "JOIN_RSP" : "6010", "JOIN_REQ" : "2705",},
-    }
-
-
-    fingerTableRoute := RoutingModule.NewFingerTable( currNodeInfo, availableNodeInfo, 2, M_VAL);
+    // fingerTableRoute := RoutingModule.NewFingerTable( 
+    //     currNodeInfo, 
+    //     Util.NodeInfo {
+    //         IP_address : currNodeInfo.IP_address,
+    //         Ports : map[string]string{ "JOIN_RSP" : "8989", "JOIN_REQ" : "9898",},
+    //     }, 
+    //     2, M_VAL,
+    // );
+    fingerTableRoute := RoutingModule.CreateRing( currNodeInfo, 2, M_VAL);
     fingerTableRoute.InitFingerService()
-
-    go fingerTableRoute.RunFixFingerAlg()
     
-    
-    time.Sleep(time.Second * 10)
-
-
     successorTablerRoute := RoutingModule.NewSuccessorTable( currNodeInfo, &fingerTableRoute)
     successorTablerRoute.InitSuccessorService()
+    
 
-    go successorTablerRoute.RunStablize()
+    // go fingerTableRoute.RunFixFingerAlg(true) 
+    // go successorTablerRoute.RunStablize(true)
+    // go startTestFix( successorTablerRoute, fingerTableRoute)
+
+    for {
+        fingerTableRoute.RunFixFingerAlg(false) 
+        successorTablerRoute.RunStablize(false)
+    }
 
 
     time.Sleep(time.Minute * 35)
 }
+
+func startTestFix(successorTablerRoute RoutingModule.SuccessorTableRoute, fingerTableRoute RoutingModule.FingerTableRoute) {
+    for {
+        fingerTableRoute.RunFixFingerAlg(false) 
+        successorTablerRoute.RunStablize(false)
+    }
+}
+
 
 
 func testChangeFingerTableID(nodeInfo *Util.NodeInfo) int{
