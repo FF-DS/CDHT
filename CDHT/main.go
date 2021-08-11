@@ -48,7 +48,6 @@ func main() {
 
     // go fingerTableRoute.RunFixFingerAlg(true) 
     // go successorTablerRoute.RunStablize(true)
-    // go startTestFix( successorTablerRoute, fingerTableRoute)
 
     for {
         fingerTableRoute.RunFixFingerAlg(false) 
@@ -58,14 +57,6 @@ func main() {
 
     time.Sleep(time.Minute * 35)
 }
-
-func startTestFix(successorTablerRoute RoutingModule.SuccessorTableRoute, fingerTableRoute RoutingModule.FingerTableRoute) {
-    for {
-        fingerTableRoute.RunFixFingerAlg(false) 
-        successorTablerRoute.RunStablize(false)
-    }
-}
-
 
 
 func testChangeFingerTableID(nodeInfo *Util.NodeInfo) int{

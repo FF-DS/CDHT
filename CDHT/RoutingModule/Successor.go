@@ -111,17 +111,19 @@ func (succTable *SuccessorTableRoute) predecessorNotificationListner(){
 
 func predecessorNotificationHandler(connection interface{}){
 	if connection, ok := connection.(net.Conn); ok { 
-				 
-		dec := gob.NewDecoder(connection)
-		packet := &Util.FingerTablePacket{}
-
-		if err:= dec.Decode(packet); err != nil {
-			fmt.Println("[predecessorNotification][Error]: Unable to decode packet.")
-			return
-		}
-		// else{
-			// fmt.Println("[predecessorNotification][PING]: ping received from")
-		// }
+		// for {
+			dec := gob.NewDecoder(connection)
+			packet := &Util.FingerTablePacket{}
+	
+			if err:= dec.Decode(packet); err != nil {
+				fmt.Println("[predecessorNotification][Error]: Unable to decode packet.")
+				return
+			}
+			// else{
+				// fmt.Println("[predecessorNotification][PING]: ping received from")
+			// }
+		// }	 
+		
 	}else{
 		fmt.Println("[predecessorNotification][Error]: Can't decode the connection socket...")
 	}
@@ -149,8 +151,8 @@ func (succTable *SuccessorTableRoute) successorReqHandler(connection interface{}
 
 		if err:= dec.Decode(packet); err != nil {
 			fmt.Println("[successorReqHandler][Error]: Unable to decode packet.")
-
-		}else if succTable.predeccessor.EmptyEntry || !succTable.predeccessor.Ping() || packet.SenderNodeId.Cmp( succTable.predeccessor.CurrNodeInfo.Node_id ) >= 0 {
+//  || !succTable.predeccessor.Ping()
+		}else if succTable.predeccessor.EmptyEntry || packet.SenderNodeId.Cmp( succTable.predeccessor.CurrNodeInfo.Node_id ) >= 0 {
 			// update predecessor table
 			networkMnger := NetworkModule.NewNetworkManager( packet.ConnNode.IP_address, packet.ConnNode.Ports["PRED_RSP"] )
 			if status := networkMnger.CreateTCPConnection(); !status {
