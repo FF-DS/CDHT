@@ -86,7 +86,7 @@ func (succTable *SuccessorTableRoute) stablizeHelper(contactNode Util.NodeInfo, 
 	recvPkt := networkMnger.RecievePacket()
 	
 	if recvPkt.Type == "SUCC_FWD" {
-		fmt.Printf("[stablizeHelper]: Successor Join request for [%s] forwarded to Node_ID: %s | IP_ADD: %s | PORT: %s\n", succPackt.SenderNodeId, recvPkt.ConnNode.Node_id, recvPkt.ConnNode.IP_address, recvPkt.ConnNode.Ports["SUCC_REQ"] )
+		// fmt.Printf("[stablizeHelper]: Successor Join request for [%s] forwarded to Node_ID: %s | IP_ADD: %s | PORT: %s\n", succPackt.SenderNodeId, recvPkt.ConnNode.Node_id, recvPkt.ConnNode.IP_address, recvPkt.ConnNode.Ports["SUCC_REQ"] )
 		return succTable.stablizeHelper( recvPkt.ConnNode, succPackt)
 	}
 	
@@ -114,9 +114,10 @@ func predecessorNotificationHandler(connection interface{}){
 
 		if err:= dec.Decode(packet); err != nil {
 			fmt.Println("[predecessorNotification][Error]: Unable to decode packet.")
-		}else{
-			fmt.Println("[predecessorNotification][PING]: ping received from")
 		}
+		// else{
+		// 	fmt.Println("[predecessorNotification][PING]: ping received from")
+		// }
 	}else{
 		fmt.Println("[predecessorNotification][Error]: Can't decode the connection socket...")
 	}
@@ -179,15 +180,15 @@ func (succTable *SuccessorTableRoute) calculateSuccId()  *big.Int {
 }
 
 func (succTable *SuccessorTableRoute) createTableEntry(nodeInfo Util.NodeInfo) (TableEntry, bool) {
-	fmt.Println("[Successor]: createTableEntry.")
+	// fmt.Println("[Successor]: createTableEntry.")
 
 	networkMnger := NetworkModule.NewNetworkManager(nodeInfo.IP_address, nodeInfo.Ports["JOIN_RSP"])
 
 	if status := networkMnger.CreateTCPConnection(); !status {
-		fmt.Println("[Successor][Error]: Unable to receive join response packet.")
+		// fmt.Println("[Successor][Error]: Unable to receive join response packet.")
 		return TableEntry{ EmptyEntry:true }, false
 	}	
 		
-	fmt.Printf("[Successor]: successor is updated with node id %s \n", nodeInfo.Node_id.String() )
+	// fmt.Printf("[Successor]: successor is updated with node id %s \n", nodeInfo.Node_id.String() )
 	return TableEntry{ CurrNodeInfo:nodeInfo,  ConnManager: networkMnger }, true
 }
