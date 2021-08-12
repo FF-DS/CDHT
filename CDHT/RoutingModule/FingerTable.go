@@ -28,7 +28,6 @@ type FingerTableRoute struct {
 }
 
 
-
 // #------------------------------ Init ------------------------# //
 
 func NewFingerTable( currentNodeInfo Util.NodeInfo, availableNodeInfo Util.NodeInfo, jumpSpacing int, fingerTableLength int) FingerTableRoute {
