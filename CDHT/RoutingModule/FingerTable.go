@@ -95,10 +95,13 @@ func (fingerTableRoute *FingerTableRoute) RunFixFingerAlg() {
 
 		fingerTableRoute.fixFingerAlg()
 	
-		fmt.Println("Routing Table:")
+		fmt.Printf("-----------------------------NODE [%s]---------------------------\n", fingerTableRoute.currentNodeInfo.Node_id)
+		fmt.Println("Finger Routing Table:")
 		for id, entry := range fingerTableRoute.routeConn {
-			fmt.Printf(" Finger Entry : %s | Node Id : %s  IP_ADD : %s  REQ_PORT : %s\n",id, entry.CurrNodeInfo.Node_id, entry.CurrNodeInfo.IP_address, entry.CurrNodeInfo.Ports["JOIN_REQ"])
+			fmt.Printf("		Finger Entry : %s | Node Id : %s  IP_ADD : %s  REQ_PORT : %s\n",id, entry.CurrNodeInfo.Node_id, entry.CurrNodeInfo.IP_address, entry.CurrNodeInfo.Ports["JOIN_REQ"])
 		}
+		fmt.Println("------------------------------------------------------------------")
+		
 	
 	}
 }

@@ -63,9 +63,12 @@ func (succTable *SuccessorTableRoute) stablize(){
 			succTable.fingerTable.GetFingerTableState()[ succID ] = entry
 		}
 	}
+	fmt.Printf("-----------------------------NODE [%s]---------------------------\n", succTable.currentNodeInfo.Node_id)
 	fmt.Println("[stablizeHelper]: ROUTING table")
-	fmt.Println("		SUCC :", succTable.fingerTable.GetFingerTableState()[ succID ])
-	fmt.Println("		PRED :", succTable.predeccessor)
+	fmt.Printf("		SUCC Entry : Node Id : %s  IP_ADD : %s  REQ_PORT : %s\n", succTable.fingerTable.GetFingerTableState()[ succID ].CurrNodeInfo.Node_id, succTable.fingerTable.GetFingerTableState()[ succID ].CurrNodeInfo.IP_address, succTable.fingerTable.GetFingerTableState()[ succID ].CurrNodeInfo.Ports["SUCC_REQ"])
+	fmt.Printf("		PRED Entry : Node Id : %s  IP_ADD : %s  REQ_PORT : %s\n", succTable.predeccessor.CurrNodeInfo.Node_id, succTable.predeccessor.CurrNodeInfo.IP_address, succTable.predeccessor.CurrNodeInfo.Ports["SUCC_REQ"])
+
+	fmt.Println("------------------------------------------------------------------")
 }
 
 
