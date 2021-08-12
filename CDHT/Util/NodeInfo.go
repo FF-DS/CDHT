@@ -4,7 +4,6 @@ import (
     "log"
     "crypto/sha1"
     "net"  
-    "github.com/tkanos/gonfig"
     "math/big"
 )
 
@@ -14,7 +13,7 @@ import (
 type NodeInfo struct {
 	Node_id *big.Int 
     IP_address string 
-    Ports map[string]string 
+    Port string
 	M *big.Int 
 }
 
@@ -29,7 +28,7 @@ func (nodeInfo *NodeInfo) GetNodeInfo() NodeInfo {
 
 
 func (nodeInfo *NodeInfo) generateNodeId() {	
-    nodeIdentification := nodeInfo.IP_address + ":" + nodeInfo.Ports["JOIN_REQ"]
+    nodeIdentification := nodeInfo.IP_address + ":" + nodeInfo.Port
 
     hashFunction := sha1.New()
     hashFunction.Write([]byte(nodeIdentification))
@@ -43,6 +42,7 @@ func (nodeInfo *NodeInfo) generateNodeId() {
     nodeInfo.Node_id = hashedID.Mod(hashedID, modulo)
     nodeInfo.M = m
 }
+
 
 func (nodeInfo *NodeInfo)  setOutboundIP() {
     conn, err := net.Dial("udp", "8.8.8.8:80")
@@ -64,4 +64,10 @@ func (nodeInfo *NodeInfo)  getNodeConfig() {
     }
 }
 
+
+// join 
+
+// stablize
+
+// fix finger
 
