@@ -19,9 +19,6 @@ type FingerTablePacket struct {
 
 	FingerTableID  *big.Int
 	SenderNodeId *big.Int
-
-	ConnNode NodeInfo
-	SenderConnNode NodeInfo
 }
 
 
