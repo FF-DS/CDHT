@@ -17,7 +17,7 @@ type NodeRPC struct {
 	Node_id *big.Int 
 	M *big.Int 
 
-	defaultArgs *Args
+	DefaultArgs *Args
 }
 
 
@@ -30,19 +30,26 @@ func (node *NodeRPC) Connect() (error, *NodeRPC) {
     } 
 	
 	node.handle = client
-	node.defaultArgs = &Args{}
+	node.DefaultArgs = &Args{}
 
-	var remoteNode NodeRPC
-	err = node.handle.Call("Node.GetNodeInfo", node.defaultArgs, &remoteNode)
+	err = node.handle.Call("Node.GetNodeInfo", node.DefaultArgs, &node)
     
 	if err != nil {
         log.Println("Node.GetNodeInfo:", err)
 		return err, nil
     }
 
-	node.M = remoteNode.M;
-	node.Node_id = remoteNode.Node_id
+	return nil, node
+}
 
+
+func (node *NodeRPC) GetNodeInfo() (error, *NodeRPC) {
+	err := node.handle.Call("Node.GetNodeInfo", node.DefaultArgs, node)
+    
+	if err != nil {
+        log.Println("Node.GetNodeInfo:", err)
+		return err, nil
+    }
 	return nil, node
 }
 
@@ -62,7 +69,7 @@ func (node *NodeRPC) FindSuccessor(nodeId *big.Int) (error, *NodeRPC) {
 func (node *NodeRPC) GetSuccessor() (error, *NodeRPC) {
 	var successor NodeRPC
 
-	err := node.handle.Call("Node.GetSuccessor", node.defaultArgs, &successor)
+	err := node.handle.Call("Node.GetSuccessor", node.DefaultArgs, &successor)
     if err != nil {
         log.Println("Node.GetSuccessor:", err)
 		return err, nil
@@ -74,7 +81,7 @@ func (node *NodeRPC) GetSuccessor() (error, *NodeRPC) {
 func (node *NodeRPC) GetPredecessor() (error, *NodeRPC) {
 	var predecessor NodeRPC
 
-	err := node.handle.Call("Node.GetPredecessor", node.defaultArgs, &predecessor)
+	err := node.handle.Call("Node.GetPredecessor", node.DefaultArgs, &predecessor)
     if err != nil {
         log.Println("Node.GetPredecessor:", err)
 		return err,  nil
@@ -97,3 +104,11 @@ func (node *NodeRPC) Notify(predecessor *NodeRPC) (error, *NodeRPC) {
 }
 
 
+func (node *NodeRPC) Close() {
+	if node.handle == nil {
+		return 
+	}
+
+	node.DefaultArgs = nil
+	node.handle.Close()
+}

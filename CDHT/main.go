@@ -2,12 +2,11 @@ package main
 
 import (
     "fmt"
-    // "math/big"
+    "math/big"
     "cdht/Util"
     "time"
-    // "strconv"
+    "strconv"
 )
-
 
 
 func main() {
@@ -20,39 +19,78 @@ func main() {
 
 
 func runFirstNode() {
-    var node Util.Node
-    node.CreateRing("9898")
-
-    for {
-        time.Sleep(time.Second * 5)
-        node.CurrentSuccessorTableInfo()
-        node.CheckPredecessor()
-        node.Stablize()
+    node := Util.Node{
+        Port : "9898",
+        JumpSpacing : 2,
+        FingerTableLength : 4,
     }
+    testChangeNodeInfo(&node)
+    node.CurrentNodeInfo()
+
+    node.CreateRing()
+    
+    
+    go func() {
+        for {
+            time.Sleep(time.Second * 5)
+            node.CheckPredecessor()
+            node.Stablize()
+            node.CurrentSuccessorTableInfo()
+            node.FixFinger()
+            node.CurrentFingerTableInfo()
+        }
+    }()
 
 }
 
 
 func runSecondNode() {
-    remoteNode := Util.NodeRPC{ Node_address : "127.0.0.1:9898" }
+    var port string
+    fmt.Print("Enter Node Port: ")
+    fmt.Scanln(&port)
+
+
+    remoteNode := Util.NodeRPC{ Node_address : "127.0.0.1:" + port }
     remoteNode.Connect()
     printRemoteNodeInfo(&remoteNode)
 
 
-    var port string
-    fmt.Print("Enter Port: ")
+    fmt.Print("Enter Your Port: ")
     fmt.Scanln(&port)
 
-    var node Util.Node
-    node.Join( &remoteNode, port)
+    node := Util.Node{
+        Port : port,
+        JumpSpacing : 2,
+        FingerTableLength : 4,
+    }
+    testChangeNodeInfo(&node)
+    node.CurrentNodeInfo()
     
+    node.Join( &remoteNode)
+    
+    go func() {
+        for {
+            time.Sleep(time.Second * 5)
+            node.CheckPredecessor()
+            node.Stablize()
+            node.CurrentSuccessorTableInfo()
+            node.FixFinger()
+            node.CurrentFingerTableInfo()
+        }
+    }()
+}
 
 
+func check(){
+    remoteNode := Util.NodeRPC{ Node_address : "127.0.0.1:9898" }
+    err, remote := remoteNode.Connect()
     for {
-        time.Sleep(time.Second * 5)
-        node.CurrentSuccessorTableInfo()
-        node.CheckPredecessor()
-        node.Stablize()
+        err, remote = remoteNode.GetNodeInfo()
+        
+        if err != nil {
+            fmt.Println("error")
+        }
+        printRemoteNodeInfo(remote)
     }
 }
 
@@ -65,24 +103,24 @@ func printRemoteNodeInfo(remoteNode *Util.NodeRPC) {
     fmt.Println("---------------------------------------------------------------")
 }
 
-// func testChangeFingerTableID(nodeInfo *Util.NodeInfo) int{
-//     var nodeId, m string
-//     fmt.Print("Enter Node Id: ")
-//     fmt.Scanln(&nodeId)
+func testChangeNodeInfo(node *Util.Node) {
+    var nodeId, m string
+    fmt.Print("Enter Node Id: ")
+    fmt.Scanln(&nodeId)
 
-//     fmt.Print("Enter M: ")
-//     fmt.Scanln(&m)
+    fmt.Print("Enter M: ")
+    fmt.Scanln(&m)
 
-//     NodeId, ok := new(big.Int).SetString(nodeId, 10)
-//     if !ok { fmt.Println("SetString: error node id") }
+    NodeId, ok := new(big.Int).SetString(nodeId, 10)
+    if !ok { fmt.Println("SetString: error node id") }
 
-//     M, ok := new(big.Int).SetString(m, 10)
-//     if !ok { fmt.Println("SetString: error m") }
+    M, ok := new(big.Int).SetString(m, 10)
+    if !ok { fmt.Println("SetString: error m") }
 
-//     nodeInfo.Node_id = NodeId
-//     nodeInfo.M = M
+    node.Node_id = NodeId
+    node.M = M
 
-//     i, _ := strconv.Atoi(m)
-//     return i
-// }
+    i, _ := strconv.Atoi(m)
+    node.FingerTableLength = i
+}
 
