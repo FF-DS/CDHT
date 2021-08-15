@@ -8,6 +8,10 @@ import (
     "os"
 )
 
+const (
+    node_name string = "mann"
+)
+
 
 func init() {
     if err := godotenv.Load(); err != nil {

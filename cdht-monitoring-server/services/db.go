@@ -50,7 +50,7 @@ func DropCollection(collection_name string) bool {
 	clientOptions := options.Client().ApplyURI( os.Getenv("DATABASE_CONN_URL") )
 
 	// Connect to MongoDB
-    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
     defer cancel()
 
 	client, err := mongo.Connect(ctx, clientOptions)
