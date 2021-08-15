@@ -8,9 +8,11 @@ const axiosAPI = axios.create({
 
 const apiRequest = (method, url, request) => {
   const headers = {
-    authorization: "Bearer " + localStorage.getItem("accessToken"),
-    "Content-Type": "application/x-www-form-urlencoded",
-    // "Content-Type": "application/json",
+    // authorization: "Bearer " + localStorage.getItem("accessToken"),
+    // "Content-Type": "application/x-www-form-urlencoded",
+    // "Access-Control-Allow-Origin": "*",
+
+    "Content-Type": "application/json",
   };
 
   return axiosAPI({

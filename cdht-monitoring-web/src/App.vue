@@ -57,7 +57,7 @@ export default {
 
   created() {
     console.log("This is the test area for setup");
-    API.get("node").then((res) => {
+    API.get("nodes/").then((res) => {
       console.log(res);
     });
   },
