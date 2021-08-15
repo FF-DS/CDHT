@@ -19,6 +19,7 @@ type NodeRPC struct {
 	M *big.Int 
 
 	DefaultArgs *Args
+	ticker *time.Ticker
 }
 
 
@@ -32,20 +33,23 @@ func (node *NodeRPC) Connect() (error, *NodeRPC) {
 	
 	node.handle = client
 	node.DefaultArgs = &Args{}
-
+	
 	err = node.handle.Call("Node.GetNodeInfo", node.DefaultArgs, &node)
     
 	if err != nil {
-        log.Println("Node.GetNodeInfo:", err)
+		log.Println("Node.GetNodeInfo:", err)
 		return err, nil
     }
-
+	
+	node.ticker = time.NewTicker(time.Second * 15)
 	go node.autoClose()
 	return nil, node
 }
 
 
 func (node *NodeRPC) GetNodeInfo() (error, *NodeRPC) {
+	node.resetConnTimeOut();
+
 	err := node.handle.Call("Node.GetNodeInfo", node.DefaultArgs, node)
     
 	if err != nil {
@@ -57,6 +61,8 @@ func (node *NodeRPC) GetNodeInfo() (error, *NodeRPC) {
 
 
 func (node *NodeRPC) FindSuccessor(nodeId *big.Int) (error, *NodeRPC) {
+	node.resetConnTimeOut();
+
 	var successor NodeRPC
 
 	err := node.handle.Call("Node.FindSuccessor", nodeId, &successor)
@@ -69,6 +75,8 @@ func (node *NodeRPC) FindSuccessor(nodeId *big.Int) (error, *NodeRPC) {
 
 
 func (node *NodeRPC) GetSuccessor() (error, *NodeRPC) {
+	node.resetConnTimeOut();
+
 	var successor NodeRPC
 
 	err := node.handle.Call("Node.GetSuccessor", node.DefaultArgs, &successor)
@@ -81,6 +89,8 @@ func (node *NodeRPC) GetSuccessor() (error, *NodeRPC) {
 
 
 func (node *NodeRPC) GetPredecessor() (error, *NodeRPC) {
+	node.resetConnTimeOut();
+
 	var predecessor NodeRPC
 
 	err := node.handle.Call("Node.GetPredecessor", node.DefaultArgs, &predecessor)
@@ -94,6 +104,8 @@ func (node *NodeRPC) GetPredecessor() (error, *NodeRPC) {
 
 
 func (node *NodeRPC) Notify(predecessor *NodeRPC) (error, *NodeRPC) {
+	node.resetConnTimeOut();
+	
 	var successor NodeRPC
 
 	err := node.handle.Call("Node.Notify", predecessor, &successor)
@@ -107,7 +119,7 @@ func (node *NodeRPC) Notify(predecessor *NodeRPC) (error, *NodeRPC) {
 
 
 func (node *NodeRPC) Close() {
-	if node.handle == nil {
+	if node == nil || node.handle == nil {
 		return 
 	}
 
@@ -116,11 +128,15 @@ func (node *NodeRPC) Close() {
 }
 
 func (node *NodeRPC) autoClose(){
-	ticker := time.NewTicker(time.Second * 15)
-	defer ticker.Stop()
+	defer node.ticker.Stop()
 
-	<-ticker.C
+	<-node.ticker.C
 	node.handle.Close()
 	node.DefaultArgs = nil
-	log.Println("connection closed...", node.Node_address)
+	// log.Println("connection closed...", node.Node_address)
+}
+
+func (node *NodeRPC) resetConnTimeOut(){
+	node.ticker.Stop()
+	node.ticker = time.NewTicker(time.Second * 10)
 }

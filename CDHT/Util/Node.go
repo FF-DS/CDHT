@@ -236,6 +236,7 @@ func (node *Node) FixFinger(){
         node.FindSuccessor( node.calculateFingerId(i), &entry)
 
         if checkNode(&entry) != nil {
+            node.fingerTableEntry[i].Close()
             node.fingerTableEntry[i] = &entry
         } 
     }
@@ -292,7 +293,9 @@ func (node *Node) Stablize() {
 // [RPC]
 func (node *Node) Notify(pred *NodeRPC, curr *NodeRPC) error {
     if checkNode( node.predecessor ) == nil || between( node.predecessor.Node_id, pred.Node_id, node.Node_id) {
-        node.predecessor.Close()
+        if node.predecessor != nil {
+            node.predecessor.Close()
+        }
 
         copyNodeData(pred, node.predecessor)
     }
@@ -398,17 +401,16 @@ func copyNodeData(old *NodeRPC, new *NodeRPC) {
 
 func checkNode(node *NodeRPC) *NodeRPC {
     if node == nil || node.Node_id == nil {
-        fmt.Println("check node empty", node)
         return nil
     }
-    _, nodeRPC := node.Connect()
 
-    // var nodeRPC *NodeRPC
-    // if node.DefaultArgs == nil {
-    //     fmt.Println("CHECK connection")
-    // }else{
-    //     _, nodeRPC = node.GetNodeInfo()
-    // }
+    var nodeRPC *NodeRPC
+    if node.DefaultArgs == nil {
+        // fmt.Println("CHECK connection")
+        _, nodeRPC = node.Connect()
+    }else{
+        _, nodeRPC = node.GetNodeInfo()
+    }
     
     return nodeRPC
 }

@@ -32,7 +32,7 @@ func runFirstNode() {
     
     go func() {
         for {
-            time.Sleep(time.Second * 5)
+            time.Sleep(time.Second)
             node.CheckPredecessor()
             node.Stablize()
             node.CurrentSuccessorTableInfo()
@@ -70,7 +70,7 @@ func runSecondNode() {
     
     go func() {
         for {
-            time.Sleep(time.Second * 5)
+            time.Sleep(time.Second)
             node.CheckPredecessor()
             node.Stablize()
             node.CurrentSuccessorTableInfo()
