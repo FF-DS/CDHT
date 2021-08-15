@@ -4,6 +4,7 @@ import (
     "net/rpc"
     "log"
 	"math/big"
+	"time"
 )
 
 type Args struct {
@@ -39,6 +40,7 @@ func (node *NodeRPC) Connect() (error, *NodeRPC) {
 		return err, nil
     }
 
+	go node.autoClose()
 	return nil, node
 }
 
@@ -111,4 +113,14 @@ func (node *NodeRPC) Close() {
 
 	node.DefaultArgs = nil
 	node.handle.Close()
+}
+
+func (node *NodeRPC) autoClose(){
+	ticker := time.NewTicker(time.Second * 15)
+	defer ticker.Stop()
+
+	<-ticker.C
+	node.handle.Close()
+	node.DefaultArgs = nil
+	log.Println("connection closed...", node.Node_address)
 }

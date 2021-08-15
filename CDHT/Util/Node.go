@@ -328,9 +328,9 @@ func (node *Node) CurrentFingerTableInfo() {
     for i := 0; i < len(node.fingerTableEntry); i++ {
         entry := checkNode( node.fingerTableEntry[i] )
         if entry != nil {
-            fmt.Printf(" [%d]. entry ID: |%s| Node ID : %s  Address : %s \n", i, node.calculateFingerId(i).String(), entry.Node_id.String(), entry.Node_address)
+            fmt.Printf(" [%d]. Entry ID: |%s| Node ID : %s  Address : %s \n", i, node.calculateFingerId(i).String(), entry.Node_id.String(), entry.Node_address)
         }else{
-            fmt.Printf(" [%d]. entry ID: |%s| NOT AVAILABLE \n", i, node.calculateFingerId(i).String())
+            fmt.Printf(" [%d]. Entry ID: |%s| NOT AVAILABLE \n", i, node.calculateFingerId(i).String())
         }
     }
     fmt.Println("---------------------------------------------------------")
@@ -351,7 +351,7 @@ func (node *Node) CurrentSuccessorTableInfo() {
     }else{
         fmt.Printf(" [PRED] | NOT AVAILABLE \n")
     }
-    
+
     fmt.Println("-----------------------------------------------------------")
 }
 
@@ -401,14 +401,14 @@ func checkNode(node *NodeRPC) *NodeRPC {
         fmt.Println("check node empty", node)
         return nil
     }
+    _, nodeRPC := node.Connect()
 
-    var nodeRPC *NodeRPC
-    if node.DefaultArgs == nil {
-        _, nodeRPC = node.Connect()
-        fmt.Println("CHECK connection")
-    }else{
-        _, nodeRPC = node.GetNodeInfo()
-    }
+    // var nodeRPC *NodeRPC
+    // if node.DefaultArgs == nil {
+    //     fmt.Println("CHECK connection")
+    // }else{
+    //     _, nodeRPC = node.GetNodeInfo()
+    // }
     
     return nodeRPC
 }
