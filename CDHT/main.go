@@ -34,10 +34,15 @@ func runFirstNode() {
         for {
             time.Sleep(time.Second)
             node.CheckPredecessor()
+            node.CheckSeccessors()
+
             node.Stablize()
             node.CurrentSuccessorTableInfo()
+
             node.FixFinger()
             node.CurrentFingerTableInfo()
+
+            node.CurrentSuccessorsInfo()
         }
     }()
 
@@ -71,11 +76,17 @@ func runSecondNode() {
     go func() {
         for {
             time.Sleep(time.Second)
+
             node.CheckPredecessor()
+            node.CheckSeccessors()
+
             node.Stablize()
             node.CurrentSuccessorTableInfo()
+
             node.FixFinger()
             node.CurrentFingerTableInfo()
+
+            node.CurrentSuccessorsInfo()
         }
     }()
 }

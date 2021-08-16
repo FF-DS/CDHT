@@ -21,11 +21,12 @@ type Node struct {
 
     predecessor *NodeRPC
     successor *NodeRPC
+    currentSuccessors Successors
 
     fingerTableEntry map[int]*NodeRPC
-    JumpSpacing int
     FingerTableLength int
-    
+
+    JumpSpacing int
     defaultArgs *Args
 }
 
@@ -99,6 +100,7 @@ func (node *Node) initializeNode() {
     node.defaultArgs = &Args{}
     node.predecessor = &NodeRPC{}
     node.successor = &NodeRPC{}
+    node.currentSuccessors = Successors{}
     node.fingerTableEntry = make(map[int]*NodeRPC)
 }
 
@@ -286,21 +288,41 @@ func (node *Node) Stablize() {
 
     var curr NodeRPC
     node.GetNodeInfo(node.defaultArgs, &curr)
-    node.successor.Notify(&curr)
+    _, nextSuccessors := node.successor.Notify(&curr)
+
+    if nextSuccessors != nil {
+        node.updateSuccessors( *nextSuccessors )
+    }
+}
+
+
+func (node *Node) updateSuccessors(nextSuccessors Successors){
+    node.currentSuccessors = Successors{}
+    succ := NodeRPC{}
+    copyNodeData(node.successor, &succ)
+    node.currentSuccessors = append(node.currentSuccessors, succ)
+    for i, succ := range nextSuccessors {
+        if i == 4 { break }
+        node.currentSuccessors = append(node.currentSuccessors, succ)
+    }
 }
 
 
 // [RPC]
-func (node *Node) Notify(pred *NodeRPC, curr *NodeRPC) error {
+func (node *Node) Notify(pred *NodeRPC, currSuccessors *Successors) error {
     if checkNode( node.predecessor ) == nil || between( node.predecessor.Node_id, pred.Node_id, node.Node_id) {
         if node.predecessor != nil {
             node.predecessor.Close()
         }
 
-        copyNodeData(pred, node.predecessor)
+        if checkNode(pred) != nil &&  checkNode(node.predecessor) != nil {
+            copyNodeData(pred, node.predecessor)
+        }else{
+            node.predecessor = checkNode(node.predecessor)
+        }
     }
 
-    node.GetNodeInfo(node.defaultArgs, curr)
+    currSuccessors.UpdateSuccessors( node.currentSuccessors)
     return nil
 }   
 
@@ -310,10 +332,16 @@ func (node *Node) CheckPredecessor() {
 }
 
 
+func (node *Node) CheckSeccessors() {
+    if checkNode(node.successor) != nil {
+        return
+    }
 
-
-
-
+    for  checkNode(node.successor) == nil && len(node.currentSuccessors) > 1 {
+        node.currentSuccessors.PopFirst()
+        node.successor = &node.currentSuccessors[0]
+    }
+}
 
 // # ------------------------ print info ----------------------- #
 
@@ -339,9 +367,17 @@ func (node *Node) CurrentFingerTableInfo() {
     fmt.Println("---------------------------------------------------------")
 }
 
+func (node *Node) CurrentSuccessorsInfo() {
+    fmt.Printf("-----------------Successors Table Info[%s]--------------------\n",node.Node_id.String())
+    for i := 0; i < len(node.currentSuccessors); i++ {
+        entry := node.currentSuccessors[i] 
+        fmt.Printf(" [%d]. Node ID : %s  Address : %s \n", i, entry.Node_id.String(), entry.Node_address)
+    }
+    fmt.Println("-------------------------------------------------------------")
+}
 
 func (node *Node) CurrentSuccessorTableInfo() {
-    fmt.Printf("-----------------Successor Table Info[%s]-----------------\n",node.Node_id.String())
+    fmt.Printf("-----------------[Successor|Predecessor] Table Info[%s]-----------------\n",node.Node_id.String())
     
     if succ := checkNode( node.successor);  succ != nil {
         fmt.Printf(" [SUCC] | Node ID : %s  Address : %s \n", succ.Node_id.String(), succ.Node_address)
@@ -355,7 +391,7 @@ func (node *Node) CurrentSuccessorTableInfo() {
         fmt.Printf(" [PRED] | NOT AVAILABLE \n")
     }
 
-    fmt.Println("-----------------------------------------------------------")
+    fmt.Println("---------------------------------------------------------------------")
 }
 
 

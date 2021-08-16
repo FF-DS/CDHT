@@ -7,9 +7,7 @@ import (
 	"time"
 )
 
-type Args struct {
-	DefaultParams string
-}
+// # -------------------- NodeRPC -------------------- # //
 
 type NodeRPC struct {
 	handle *rpc.Client
@@ -103,18 +101,18 @@ func (node *NodeRPC) GetPredecessor() (error, *NodeRPC) {
 }
 
 
-func (node *NodeRPC) Notify(predecessor *NodeRPC) (error, *NodeRPC) {
+func (node *NodeRPC) Notify(predecessor *NodeRPC) (error, *Successors) {
 	node.resetConnTimeOut();
 	
-	var successor NodeRPC
+	successors := Successors{}
 
-	err := node.handle.Call("Node.Notify", predecessor, &successor)
+	err := node.handle.Call("Node.Notify", predecessor, &successors)
     if err != nil {
         log.Println("Node.Notify:", err)
 		return err, nil
     }
 
-	return nil,  &successor
+	return nil,  &successors
 }
 
 
@@ -140,3 +138,25 @@ func (node *NodeRPC) resetConnTimeOut(){
 	node.ticker.Stop()
 	node.ticker = time.NewTicker(time.Second * 10)
 }
+
+
+// # -------------------- Successors -------------------- # //
+
+type Successors []NodeRPC
+
+func (successors *Successors) UpdateSuccessors(newSuccessors Successors) {
+	*successors = newSuccessors
+}
+
+func (successors *Successors) PopFirst() {
+	*successors = (*successors)[1:]
+}
+
+// # -------------------- Args -------------------- # //
+
+type Args struct {
+	DefaultParams string
+}
+
+
+
