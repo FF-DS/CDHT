@@ -314,12 +314,11 @@ func (node *Node) Notify(pred *NodeRPC, currSuccessors *Successors) error {
         if node.predecessor != nil {
             node.predecessor.Close()
         }
-
-        if checkNode(pred) != nil &&  checkNode(node.predecessor) != nil {
-            copyNodeData(pred, node.predecessor)
-        }else{
-            node.predecessor = checkNode(node.predecessor)
+        
+        if node.predecessor == nil {
+            node.predecessor = &NodeRPC{} 
         }
+        copyNodeData(pred, node.predecessor)
     }
 
     currSuccessors.UpdateSuccessors( node.currentSuccessors)
