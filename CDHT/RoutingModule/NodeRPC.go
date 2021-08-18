@@ -1,10 +1,11 @@
-package Util
+package RoutingModule
 
 import (
     "net/rpc"
     "log"
 	"math/big"
 	"time"
+	"cdht/Util"
 )
 
 // # -------------------- NodeRPC -------------------- # //
@@ -56,6 +57,26 @@ func (node *NodeRPC) GetNodeInfo() (error, *NodeRPC) {
     }
 	return nil, node
 }
+
+
+func (node *NodeRPC) ResolvePacket(reqObj Util.RequestObject) (error, Util.ResponseObject) {
+	node.resetConnTimeOut();
+
+	var responseObject Util.ResponseObject
+
+	err := node.handle.Call("Node.ResolvePacket", &reqObj, &responseObject)
+    if err != nil {
+        log.Println("Node.ResolvePacket:", err)
+
+		resp := reqObj.GetResponseObject()
+    	resp.ResponseStatus = Util.PACKET_STATUS_FAILED
+		return err, resp
+    }
+	return nil, responseObject
+}
+
+
+
 
 
 func (node *NodeRPC) FindSuccessor(nodeId *big.Int) (error, *NodeRPC) {
@@ -116,6 +137,7 @@ func (node *NodeRPC) Notify(predecessor *NodeRPC) (error, *Successors) {
 }
 
 
+
 func (node *NodeRPC) Close() {
 	if node == nil || node.handle == nil {
 		return 
@@ -126,18 +148,27 @@ func (node *NodeRPC) Close() {
 }
 
 func (node *NodeRPC) autoClose(){
+	if node == nil || node.ticker == nil || node.handle == nil {
+		return 
+	}
+
 	defer node.ticker.Stop()
 
 	<-node.ticker.C
 	node.handle.Close()
 	node.DefaultArgs = nil
-	// log.Println("connection closed...", node.Node_address)
 }
 
-func (node *NodeRPC) resetConnTimeOut(){
+func (node *NodeRPC) resetConnTimeOut() bool {
+	if node == nil || node.ticker == nil || node.handle == nil {
+		return false
+	}
+
 	node.ticker.Stop()
 	node.ticker = time.NewTicker(time.Second * 10)
+	return true
 }
+
 
 
 // # -------------------- Successors -------------------- # //

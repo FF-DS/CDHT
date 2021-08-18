@@ -3,8 +3,6 @@ package NetworkModule
 import (
 	"net"
 	"fmt"
-    "encoding/gob"
-    "cdht/Util"
 )
 
 // Network class
@@ -107,42 +105,6 @@ func (network *NetworkManager) CloseConn() bool {
 
 
 
-// ---------- methods only for tcp connection object ------------------ //
-
-func (network *NetworkManager) CreateTCPConnection() bool{
-	socketConnection, err := net.Dial("tcp4", fmt.Sprintf("%s:%s", network.ipAddr, network.port) ) 
-	if err != nil {
-		return false;
-	}
-	network.socketConnection = socketConnection
-	return true;
-}
-
-
-func (network *NetworkManager) SendPacket(packet Util.FingerTablePacket) bool {
-	enc := gob.NewEncoder(network.socketConnection) 
-
-	if err := enc.Encode(&packet); err != nil {
-		return false;
-	}
-	return true
-}
-
-
-func (network *NetworkManager) RecievePacket() Util.FingerTablePacket {
-	dec := gob.NewDecoder(network.socketConnection)
-	packet := &Util.FingerTablePacket{}
-
-	if err := dec.Decode(packet); err != nil {
-		return *packet
-	}
-	return *packet
-}
-
-// ---------- [end] methods only for tcp connection object ------------------ //
-
-
-
 
 // ## -------------------------- internal functions ---------------------------- ##
 
@@ -193,7 +155,6 @@ func (network *NetworkManager) startUdpServer(close_server chan bool, handle_req
 // *** 
 func (network *NetworkManager) startTcpServer(close_server chan bool, handle_request func(interface{}) )  bool {
 	connListner, err := net.Listen("tcp4", fmt.Sprintf("%s:%s", network.ipAddr, network.port) )
-	// connListner, err := net.Listen("tcp", ":"+strconv.Itoa(network.port) )
 	network.status = "LISTENING"
 
 	if err != nil {		
@@ -225,6 +186,7 @@ func (network *NetworkManager) startTcpServer(close_server chan bool, handle_req
 func (network *NetworkManager) tcpConnection(handle_request func(interface{}))  bool {
 	socketConnection, err := net.Dial("tcp4", fmt.Sprintf("%s:%s", network.ipAddr, network.port) ) 
 	if err != nil {
+		fmt.Println("[Net-Mngr]: ", err)
 		return false;
 	}
 	network.status = "CONNECTED"

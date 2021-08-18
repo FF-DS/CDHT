@@ -1,137 +1,175 @@
 package main
 
 import (
-    "fmt"
-    "math/big"
+    "cdht/RoutingModule"
+    "cdht/API"
+    "cdht/NetworkModule"
     "cdht/Util"
     "time"
-    "strconv"
+    "fmt"
+    "math/big"
+    "net"
 )
 
 
 func main() {
-    go runFirstNode();
+
+    // go runFirstNode();
 
     // go runSecondNode();
 
-    time.Sleep(time.Minute * 35)
+    go runTestApp()
+
+    time.Sleep(time.Minute * 350)
 }
 
 
 func runFirstNode() {
-    node := Util.Node{
-        Port : "9898",
-        JumpSpacing : 2,
-        FingerTableLength : 4,
+    apiComm := API.ApiCommunication{
+        ChannelSize: 100000,
+        PORT : "6789",
     }
-    testChangeNodeInfo(&node)
-    node.CurrentNodeInfo()
+    apiComm.Init()
 
-    node.CreateRing()
-    
-    
-    go func() {
-        for {
-            time.Sleep(time.Second)
-            node.CheckPredecessor()
-            node.CheckSeccessors()
+    firstNode := RoutingModule.RoutingTable{ 
+        RingPort: "9898",
+        JumpSpacing: 2,
+        FingerTableLength: 4,
+        Applications: apiComm.Application,
+    }
 
-            node.Stablize()
-            node.CurrentSuccessorTableInfo()
+    // TEST
+    currentAppServerPort(&apiComm)
+    // END TEST
 
-            node.FixFinger()
-            node.CurrentFingerTableInfo()
+    firstNode.CreateRing()
+    apiComm.NodeRoutingTable = &firstNode
 
-            node.CurrentSuccessorsInfo()
-        }
-    }()
-
+    apiComm.StartAppServer()
 }
 
 
 func runSecondNode() {
-    var port string
-    fmt.Print("Enter Node Port: ")
-    fmt.Scanln(&port)
-
-
-    remoteNode := Util.NodeRPC{ Node_address : "127.0.0.1:" + port }
-    remoteNode.Connect()
-    printRemoteNodeInfo(&remoteNode)
-
-
-    fmt.Print("Enter Your Port: ")
-    fmt.Scanln(&port)
-
-    node := Util.Node{
-        Port : port,
-        JumpSpacing : 2,
-        FingerTableLength : 4,
+    apiComm := API.ApiCommunication{
+        ChannelSize: 100000,
+        PORT : "3456",
     }
-    testChangeNodeInfo(&node)
-    node.CurrentNodeInfo()
-    
-    node.Join( &remoteNode)
-    
-    go func() {
-        for {
-            time.Sleep(time.Second)
+    apiComm.Init()
 
-            node.CheckPredecessor()
-            node.CheckSeccessors()
+    secondNode := RoutingModule.RoutingTable{ 
+        RemoteNodeAddr: "127.0.0.1:9898",
+        NodePort: "3456",
+        JumpSpacing: 2,
+        FingerTableLength: 4,
+        Applications: apiComm.Application,
+    }
 
-            node.Stablize()
-            node.CurrentSuccessorTableInfo()
+    // TEST
+    currentAppServerPort(&apiComm)
+    // END TEST
 
-            node.FixFinger()
-            node.CurrentFingerTableInfo()
+    secondNode.RunNode()
+    apiComm.NodeRoutingTable = &secondNode
 
-            node.CurrentSuccessorsInfo()
-        }
-    }()
+    apiComm.StartAppServer()
 }
 
 
-func check(){
-    remoteNode := Util.NodeRPC{ Node_address : "127.0.0.1:9898" }
-    err, remote := remoteNode.Connect()
-    for {
-        err, remote = remoteNode.GetNodeInfo()
-        
-        if err != nil {
-            fmt.Println("error")
+
+
+
+//  # ----------------------- TEST ----------------------- # //
+
+func currentAppServerPort(apiComm *API.ApiCommunication){
+	var port string
+	fmt.Print("Enter App Server Port: ")
+    fmt.Scanln(&port)
+	apiComm.PORT = port
+}
+
+
+
+
+//  # ----------------------- TEST  APPLICATION ----------------------- # //
+
+func runTestApp(){
+    reqObj1 := Util.RequestObject{ Type: "TEST_TYPE_1", RequestID: "REQ_1", AppName: "TEST_APP", AppID: 1}
+    appPort1 := testAppAddress("Test App 1", &reqObj1)
+
+
+    reqObj2 := Util.RequestObject{ Type: "TEST_TYPE_2", RequestID: "REQ_2", AppName: "TEST_APP", AppID: 1}
+    appPort2 := testAppAddress("Test App 2", &reqObj2)
+
+
+    go testApp(reqObj1, appPort1, "Test App 1")
+    go testApp(reqObj2, appPort2, "Test App 2")
+}
+
+
+func testApp(reqObj Util.RequestObject, port string, appName string) {
+    appConn := NetworkModule.NewNetworkManager("127.0.0.1", port)
+
+    res := appConn.Connect("TCP", func(connection interface{}){
+        if connection, ok := connection.(net.Conn); ok { 
+            netChannel := NetworkModule.NetworkChannel{ Connection: connection, ChannelSize: 100000 }
+            netChannel.Init()
+    
+            // register app name
+            netChannel.SendToSocket(Util.RequestObject{
+                AppName: "TEST_APP",
+            })        
+
+
+            fmt.Println("["+appName+"]:+ Connected.")
+
+            for {
+                select {
+                    case netReqObj := <- netChannel.ReqChannel:
+				    	fmt.Printf("[PACKET-RECEIVED][%s][Node-ID][%s]: Packet: %s \n", appName, reqObj.SenderNodeId.String(), netReqObj)
+				    default:
+                        time.Sleep(time.Millisecond*500)
+					    status := netChannel.SendToSocket(reqObj)
+
+                        if !status {
+                            fmt.Println("[API] Unable to send")
+                        }
+			    }
+		    }
+        }else {
+            fmt.Println("["+appName+"]:+ Unable to Connect.")
         }
-        printRemoteNodeInfo(remote)
+    })
+
+    if !res {
+        fmt.Println("["+appName+"]:+ Unable to Create Soc.")
     }
 }
 
 
-func printRemoteNodeInfo(remoteNode *Util.NodeRPC) {
-    fmt.Println("-----------------Remote node Info------------------------------")
-    fmt.Printf("Node ID : %s \n", remoteNode.Node_id.String())
-    fmt.Printf("M       : %s \n", remoteNode.M.String())
-    fmt.Printf("Address : %s \n", remoteNode.Node_address)
-    fmt.Println("---------------------------------------------------------------")
-}
 
-func testChangeNodeInfo(node *Util.Node) {
-    var nodeId, m string
-    fmt.Print("Enter Node Id: ")
-    fmt.Scanln(&nodeId)
 
-    fmt.Print("Enter M: ")
-    fmt.Scanln(&m)
+func testAppAddress(appName string, reqObject *Util.RequestObject) string {
+    var senderNodeId, recvNodeId, appServerPort string
+    var ok bool
+    
+    fmt.Println("       ",appName)
+    fmt.Print("Enter Sender(Connecting) Application Server Port: ")
+    fmt.Scanln(&appServerPort)
 
-    NodeId, ok := new(big.Int).SetString(nodeId, 10)
+    fmt.Print("Enter Sender(Connecting) Node Id: ")
+    fmt.Scanln(&senderNodeId)
+
+    fmt.Print("Enter Reciever Node Id: ")
+    fmt.Scanln(&recvNodeId)
+
+
+    reqObject.SenderNodeId, ok = new(big.Int).SetString(senderNodeId, 10)
     if !ok { fmt.Println("SetString: error node id") }
 
-    M, ok := new(big.Int).SetString(m, 10)
+    reqObject.ReceiverNodeId, ok = new(big.Int).SetString(recvNodeId, 10)
     if !ok { fmt.Println("SetString: error m") }
 
-    node.Node_id = NodeId
-    node.M = M
+    reqObject.RequestBody = "THIS IS REQ BODY FROM NODE: " + senderNodeId + " TO NODE " + recvNodeId
 
-    i, _ := strconv.Atoi(m)
-    node.FingerTableLength = i
+    return appServerPort
 }
-
