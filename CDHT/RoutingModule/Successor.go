@@ -1,200 +1,127 @@
 package RoutingModule
 
 import (
-	"math/big"
-	"cdht/Util"
-	"cdht/NetworkModule"
-	"fmt"
-	"net"
-    "encoding/gob"
-	"time"
+    "fmt"
 )
 
-type SuccessorTableRoute struct {
-	predeccessor TableEntry
-	fingerTable *FingerTableRoute
-	currentNodeInfo Util.NodeInfo
-	closeRequestServer (chan bool) 
+
+// # --------------------- successor  ----------------------------- # 
+
+// [ROUTING-MODULE]
+func (node *Node) stablize() {
+    succ := checkNode(node.successor)
+
+    if succ == nil {
+        return 
+    }
+
+
+    err, pred := succ.GetPredecessor()
+    
+
+    if err != nil {
+        fmt.Println("[STABLIZE][Error]:", err)
+        return 
+    }
+
+
+    pred = checkNode( pred )
+    
+    
+    if pred != nil && between(node.Node_id, pred.Node_id, succ.Node_id) {
+        node.successor.Close()
+        node.successor = pred
+    }
+
+    var curr NodeRPC
+    node.GetNodeInfo(node.defaultArgs, &curr)
+    _, nextSuccessors := node.successor.Notify(&curr)
+
+    if nextSuccessors != nil {
+        node.updateSuccessors( *nextSuccessors )
+    }
 }
 
 
-// #---------------------------- INIT ----------------------------- #
-
-func NewSuccessorTable( currNodeInfo Util.NodeInfo, fingerTable *FingerTableRoute) SuccessorTableRoute{
-	succTable := SuccessorTableRoute{
-		predeccessor : TableEntry{ EmptyEntry:true },
-		fingerTable : fingerTable,
-		currentNodeInfo : currNodeInfo,
-		closeRequestServer : make(chan bool),
-	}
-
-	return succTable
+// [INTERNAL]
+func (node *Node) updateSuccessors(nextSuccessors Successors){
+    node.currentSuccessors = Successors{}
+    succ := NodeRPC{}
+    copyNodeData(node.successor, &succ)
+    node.currentSuccessors = append(node.currentSuccessors, succ)
+    for i, succ := range nextSuccessors {
+        if i == 4 { break }
+        node.currentSuccessors = append(node.currentSuccessors, succ)
+    }
 }
 
 
-func (succTable *SuccessorTableRoute) InitSuccessorService(){
-	go succTable.predecessorNotificationListner()
-	go succTable.successorReqListner()
+// [RPC]
+func (node *Node) Notify(pred *NodeRPC, currSuccessors *Successors) error {
+    if checkNode( node.predecessor ) == nil || between( node.predecessor.Node_id, pred.Node_id, node.Node_id) {
+        if node.predecessor != nil {
+            node.predecessor.Close()
+        }
+        
+        if node.predecessor == nil {
+            node.predecessor = &NodeRPC{} 
+        }
+        copyNodeData(pred, node.predecessor)
+    }
+
+    currSuccessors.UpdateSuccessors( node.currentSuccessors)
+    return nil
+}   
+
+
+// [ROUTING-MODULE]
+func (node *Node) checkPredecessor() {
+    node.predecessor = checkNode(node.predecessor)
 }
 
 
-func (succTable *SuccessorTableRoute) RunStablize(loop bool){
-	for {
-		time.Sleep(time.Second * 10)
-		succTable.stablize()
+// [ROUTING-MODULE]
+func (node *Node) checkSeccessors() {
+    if checkNode(node.successor) != nil {
+        return
+    }
 
-		if !loop {
-			return
-		}
-	}
-}
-
-// #---------------------------- STABLIZE SERVICES ----------------------------- #
-
-// [SERVICE]
-func (succTable *SuccessorTableRoute) stablize(){
-	succID := succTable.calculateSuccId().String()
-	succ, ok := succTable.fingerTable.GetFingerTableState()[ succID ]
-
-	if !ok { return }
-
-	succReqPackt := Util.FingerTablePacket { Type : "SUCC_JOIN",  SenderNodeId :  succTable.currentNodeInfo.Node_id, ConnNode : succTable.currentNodeInfo  }
-	succNodeInfo, ok := succTable.stablizeHelper( succ.CurrNodeInfo,  succReqPackt)
-
-	if ok {
-		entry, ok := succTable.createTableEntry( succNodeInfo )
-		if ok {
-			succTable.fingerTable.GetFingerTableState()[ succID ] = entry
-		}
-	}
-	fmt.Printf("-----------------------------NODE [%s]---------------------------\n", succTable.currentNodeInfo.Node_id)
-	fmt.Println("[stablizeHelper]: ROUTING table")
-	fmt.Printf("		SUCC Entry : Node Id : %s  IP_ADD : %s  REQ_PORT : %s\n", succTable.fingerTable.GetFingerTableState()[ succID ].CurrNodeInfo.Node_id, succTable.fingerTable.GetFingerTableState()[ succID ].CurrNodeInfo.IP_address, succTable.fingerTable.GetFingerTableState()[ succID ].CurrNodeInfo.Ports["SUCC_REQ"])
-	fmt.Printf("		PRED Entry : Node Id : %s  IP_ADD : %s  REQ_PORT : %s\n", succTable.predeccessor.CurrNodeInfo.Node_id, succTable.predeccessor.CurrNodeInfo.IP_address, succTable.predeccessor.CurrNodeInfo.Ports["SUCC_REQ"])
-
-	fmt.Println("------------------------------------------------------------------")
-
-}
-
-// [HELPER]
-func (succTable *SuccessorTableRoute) stablizeHelper(contactNode Util.NodeInfo, succPackt Util.FingerTablePacket)  (Util.NodeInfo, bool) {
-	networkMnger := NetworkModule.NewNetworkManager( contactNode.IP_address, contactNode.Ports["SUCC_REQ"] )
-
-	if status := networkMnger.CreateTCPConnection(); !status {
-		fmt.Println("[stablizeHelper][Error]: Unable to send join request packet.")
-		return Util.NodeInfo{}, false
-	}
-
-	networkMnger.SendPacket(succPackt)
-	recvPkt := networkMnger.RecievePacket()
-	
-	if recvPkt.Type == "SUCC_FWD" {
-		// fmt.Printf("[stablizeHelper]: Successor Join request for [%s] forwarded to Node_ID: %s | IP_ADD: %s | PORT: %s\n", succPackt.SenderNodeId, recvPkt.ConnNode.Node_id, recvPkt.ConnNode.IP_address, recvPkt.ConnNode.Ports["SUCC_REQ"] )
-		return succTable.stablizeHelper( recvPkt.ConnNode, succPackt)
-	}
-	
-	return recvPkt.ConnNode, true
-}
-
-
-
-
-// #---------------------------- PREDECESSOR SERVICES ----------------------------- #
-
-func (succTable *SuccessorTableRoute) predecessorNotificationListner(){
-	var networkMnger NetworkModule.NetworkManager
-
-	networkMnger.SetIPAddress( succTable.currentNodeInfo.IP_address, succTable.currentNodeInfo.Ports["PRED_RSP"])
-	networkMnger.StartServer( "TCP",  succTable.closeRequestServer, predecessorNotificationHandler)
-}
-
-
-func predecessorNotificationHandler(connection interface{}){
-	if connection, ok := connection.(net.Conn); ok { 
-		// for {
-			dec := gob.NewDecoder(connection)
-			packet := &Util.FingerTablePacket{}
-	
-			if err:= dec.Decode(packet); err != nil {
-				fmt.Println("[predecessorNotification][Error]: Unable to decode packet.")
-				return
-			}
-			// else{
-				// fmt.Println("[predecessorNotification][PING]: ping received from")
-			// }
-		// }	 
-		
-	}else{
-		fmt.Println("[predecessorNotification][Error]: Can't decode the connection socket...")
-	}
-} 
-
-
-
-
-
-// #---------------------------- SUCCESSOR SERVICES ----------------------------- #
-// [SERVICE]
-func (succTable *SuccessorTableRoute) successorReqListner(){
-	var joinReqServer NetworkModule.NetworkManager
-	joinReqServer.SetIPAddress( succTable.currentNodeInfo.IP_address, succTable.currentNodeInfo.Ports["SUCC_REQ"] )
-
-	joinReqServer.StartServer("TCP", succTable.closeRequestServer, succTable.successorReqHandler)
+    for  checkNode(node.successor) == nil && len(node.currentSuccessors) > 1 {
+        node.currentSuccessors.PopFirst()
+        node.successor = &node.currentSuccessors[0]
+    }
 }
 
 
 
-func (succTable *SuccessorTableRoute) successorReqHandler(connection interface{}){
-	if connection, ok := connection.(net.Conn); ok { 
-		dec := gob.NewDecoder(connection)
-		packet := &Util.FingerTablePacket{}
+// # ------------------------ print info ----------------------- #
 
-		if err:= dec.Decode(packet); err != nil {
-			fmt.Println("[successorReqHandler][Error]: Unable to decode packet.")
-//  || !succTable.predeccessor.Ping()
-		}else if succTable.predeccessor.EmptyEntry || packet.SenderNodeId.Cmp( succTable.predeccessor.CurrNodeInfo.Node_id ) >= 0 {
-			// update predecessor table
-			networkMnger := NetworkModule.NewNetworkManager( packet.ConnNode.IP_address, packet.ConnNode.Ports["PRED_RSP"] )
-			if status := networkMnger.CreateTCPConnection(); !status {
-				fmt.Println("[successorReqHandler][Error]: Unable to receive join response packet.")
-				return
-			}
-			succTable.predeccessor = TableEntry{ CurrNodeInfo: packet.ConnNode,  ConnManager: networkMnger}
-
-			sendPacketToSocket( connection, Util.FingerTablePacket{ Type : "SUCC_ACC", ConnNode: succTable.currentNodeInfo })
-		}else{
-			sendPacketToSocket( connection, Util.FingerTablePacket{ Type : "SUCC_FWD", ConnNode: succTable.predeccessor.CurrNodeInfo })
-		}
-	}else{
-		fmt.Println("[successorReqHandler][Error]: Can't decode the connection socket...")
-	}
+// [ROUTING-MODULE]
+func (node *Node) currentSuccessorsInfo() {
+    fmt.Printf("-----------------Successors Table Info[%s]--------------------\n",node.Node_id.String())
+    for i := 0; i < len(node.currentSuccessors); i++ {
+        entry := node.currentSuccessors[i] 
+        fmt.Printf(" [%d]. Node ID : %s  Address : %s \n", i, entry.Node_id.String(), entry.Node_address)
+    }
+    fmt.Println("-------------------------------------------------------------")
 }
 
 
+// [ROUTING-MODULE]
+func (node *Node) currentSuccessorTableInfo() {
+    fmt.Printf("-----------------[Successor|Predecessor] Table Info[%s]-----------------\n",node.Node_id.String())
+    
+    if succ := checkNode( node.successor);  succ != nil {
+        fmt.Printf(" [SUCC] | Node ID : %s  Address : %s \n", succ.Node_id.String(), succ.Node_address)
+    }else{
+        fmt.Printf(" [SUCC] | NOT AVAILABLE \n")
+    }
 
+    if pred := checkNode( node.predecessor); pred != nil {
+        fmt.Printf(" [PRED] | Node ID : %s  Address : %s \n", pred.Node_id.String(), pred.Node_address)
+    }else{
+        fmt.Printf(" [PRED] | NOT AVAILABLE \n")
+    }
 
-
-// #---------------------------- HELPER FUNCTIONS ----------------------------- #
-
-func (succTable *SuccessorTableRoute) calculateSuccId()  *big.Int {
-	offset := new(big.Int).Exp(  big.NewInt( int64(succTable.fingerTable.GetJumpSpacing()) ), big.NewInt(int64(0)), nil)
-
-	sum := new(big.Int).Add( succTable.currentNodeInfo.Node_id, offset)
-	ceil :=  new(big.Int).Exp( big.NewInt( int64(succTable.fingerTable.GetJumpSpacing()) ), succTable.currentNodeInfo.M, nil)
-
-	return new(big.Int).Mod(sum, ceil)
-}
-
-func (succTable *SuccessorTableRoute) createTableEntry(nodeInfo Util.NodeInfo) (TableEntry, bool) {
-	// fmt.Println("[Successor]: createTableEntry.")
-
-	networkMnger := NetworkModule.NewNetworkManager(nodeInfo.IP_address, nodeInfo.Ports["JOIN_RSP"])
-
-	if status := networkMnger.CreateTCPConnection(); !status {
-		fmt.Println("[Successor][Error]: Unable to receive join response packet.")
-		return TableEntry{ EmptyEntry:true }, false
-	}	
-		
-	// fmt.Printf("[Successor]: successor is updated with node id %s \n", nodeInfo.Node_id.String() )
-	return TableEntry{ CurrNodeInfo:nodeInfo,  ConnManager: networkMnger }, true
+    fmt.Println("---------------------------------------------------------------------")
 }
