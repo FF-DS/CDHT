@@ -3,8 +3,9 @@ package RoutingModule
 import (
     "fmt"
 	"time"
-    "math/big"
 	"strconv"
+    "math/big"
+	"cdht/Util"
 )
 
 
@@ -17,6 +18,7 @@ type RoutingTable struct {
 	JumpSpacing int
 	FingerTableLength int
 
+    Applications map[string](chan Util.RequestObject)
 	node *Node
 }
 
@@ -29,6 +31,7 @@ func (routingTable *RoutingTable) CreateRing() {
         Port : routingTable.RingPort,
         JumpSpacing : routingTable.JumpSpacing,
         FingerTableLength : routingTable.FingerTableLength,
+        Applications : routingTable.Applications,
     }
 
 	// TESTING WILL BE REMOVED //
@@ -58,6 +61,7 @@ func (routingTable *RoutingTable) RunNode() {
         Port : routingTable.NodePort,
         JumpSpacing : routingTable.JumpSpacing,
         FingerTableLength : routingTable.FingerTableLength,
+        Applications : routingTable.Applications,
     }
 
 	// TESTING WILL BE REMOVED //
@@ -95,6 +99,26 @@ func (routingTable *RoutingTable) runStablization() {
 
 
 
+// # --------------------------- Routing Functionalities -------------------------- #
+
+// [CORE-MODULE]
+func (routingTable *RoutingTable) ForwardPacket(req Util.RequestObject) Util.ResponseObject {
+    var successor NodeRPC
+    err := routingTable.node.FindSuccessor( req.ReceiverNodeId, &successor)
+
+    if err == nil && checkNode(&successor) != nil{
+        _, resp := successor.ResolvePacket( req )
+        return resp
+    }
+
+    resp := req.GetResponseObject()
+    resp.ResponseStatus = Util.PACKET_STATUS_FAILED
+    return resp
+}
+
+
+
+// # ------------------------ [END] Routing Functionalities ----------------------- #
 
 
 

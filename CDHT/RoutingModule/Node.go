@@ -2,6 +2,7 @@ package RoutingModule
 
 import (
     "crypto/sha1"
+    "cdht/Util"
     "net"  
     "math/big"
     "net/rpc"
@@ -9,14 +10,14 @@ import (
 )
 
 
-// # --------------------------- NODE INFO --------------------------- # //
-
 type Node struct {
 	Node_id *big.Int 
 	M *big.Int 
 
     Port string 
     IP_address string 
+
+    Applications  map[string](chan Util.RequestObject)
 
     predecessor *NodeRPC
     successor *NodeRPC
@@ -84,6 +85,8 @@ func (node *Node) join(available *NodeRPC) {
     node.predecessor = &curr
 }
 
+// # --------------------------- [END] Init  --------------------------- # //
+
 
 
 
@@ -134,9 +137,6 @@ func (node *Node) getOutboundIP() {
     node.IP_address = localAddr.IP.String()
 }
 
-// # ---------------------  NODE  ----------------------------- # 
-
-
 // [RPC]
 func (node *Node) GetNodeInfo(args *Args, nodeRPC *NodeRPC) error {
     nodeRPC.M = node.M
@@ -146,24 +146,33 @@ func (node *Node) GetNodeInfo(args *Args, nodeRPC *NodeRPC) error {
     return nil
 }
 
+// # ----------------------- [END] node level info ----------------------------- # 
+
+
+
+
+
+// # ----------------------  NODE FUNCTIONALITIES  ----------------------------- # 
 
 // [RPC]
-func (node *Node) GetSuccessor(args *Args, nodeRPC *NodeRPC) error {
-    if checkNode(node.successor) != nil {
-        copyNodeData(node.successor, nodeRPC)
+func (node *Node) ResolvePacket(requestObject *Util.RequestObject, responseObject *Util.ResponseObject) error {
+    if appChannel, exists := node.Applications[ requestObject.AppName ]; exists {
+
+        appChannel <- *requestObject
+        response := requestObject.GetResponseObject()
+        copyResponseObject( &response, responseObject)
+        return nil
     }
 
+    resp := requestObject.GetResponseObject()
+    resp.ResponseStatus = Util.PACKET_STATUS_NO_APP
+    copyResponseObject( &resp, responseObject)
     return nil
 }
 
-// [RPC]
-func (node *Node) GetPredecessor(args *Args, nodeRPC *NodeRPC) error {
-    if checkNode(node.predecessor) != nil {
-        copyNodeData(node.predecessor, nodeRPC)
-    }
 
-    return nil
-}
+// # ------------------ [END] NODE FUNCTIONALITIES ----------------------------- # 
+
 
 
 

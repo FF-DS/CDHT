@@ -7,6 +7,27 @@ import (
 
 // # --------------------- successor  ----------------------------- # 
 
+
+// [RPC]
+func (node *Node) GetSuccessor(args *Args, nodeRPC *NodeRPC) error {
+    if checkNode(node.successor) != nil {
+        copyNodeData(node.successor, nodeRPC)
+    }
+
+    return nil
+}
+
+
+// [RPC]
+func (node *Node) GetPredecessor(args *Args, nodeRPC *NodeRPC) error {
+    if checkNode(node.predecessor) != nil {
+        copyNodeData(node.predecessor, nodeRPC)
+    }
+
+    return nil
+}
+
+
 // [ROUTING-MODULE]
 func (node *Node) stablize() {
     succ := checkNode(node.successor)

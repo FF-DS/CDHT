@@ -4,6 +4,7 @@ import  (
     "math/big"
     "os"
     "fmt"
+	"cdht/Util"
 )
 
 
@@ -38,6 +39,16 @@ func copyNodeData(old *NodeRPC, new *NodeRPC) {
     new.Node_address = old.Node_address
     new.Node_id = old.Node_id
     new.DefaultArgs = nil
+}
+
+func copyResponseObject(curr *Util.ResponseObject, resp *Util.ResponseObject){
+    resp.Type = curr.Type
+	resp.ResponseID = curr.ResponseID
+	resp.AppName = curr.AppName
+	resp.AppID = curr.AppID
+	resp.ResponseStatus = curr.ResponseStatus
+	resp.SenderNodeId = curr.SenderNodeId
+	resp.ReceiverNodeId = curr.ReceiverNodeId
 }
 
 
