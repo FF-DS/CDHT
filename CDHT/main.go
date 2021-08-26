@@ -18,8 +18,7 @@ func main() {
 
     // go runSecondNode();
 
-    go testApp1();
-    go testApp2();
+    go runTestApp()
 
     time.Sleep(time.Minute * 350)
 }
@@ -89,9 +88,26 @@ func currentAppServerPort(apiComm *API.ApiCommunication){
 }
 
 
-func testApp1() {
-    appConn := NetworkModule.NewNetworkManager("127.0.0.1", "7777")
-    fmt.Println("[APP-1]:+.")
+
+
+//  # ----------------------- TEST  APPLICATION ----------------------- # //
+
+func runTestApp(){
+    reqObj1 := Util.RequestObject{ Type: "TEST_TYPE_1", RequestID: "REQ_1", AppName: "TEST_APP", AppID: 1}
+    appPort1 := testAppAddress("Test App 1", &reqObj1)
+
+
+    reqObj2 := Util.RequestObject{ Type: "TEST_TYPE_2", RequestID: "REQ_2", AppName: "TEST_APP", AppID: 1}
+    appPort2 := testAppAddress("Test App 2", &reqObj2)
+
+
+    go testApp(reqObj1, appPort1, "Test App 1")
+    go testApp(reqObj2, appPort2, "Test App 2")
+}
+
+
+func testApp(reqObj Util.RequestObject, port string, appName string) {
+    appConn := NetworkModule.NewNetworkManager("127.0.0.1", port)
 
     res := appConn.Connect("TCP", func(connection interface{}){
         if connection, ok := connection.(net.Conn); ok { 
@@ -104,25 +120,15 @@ func testApp1() {
             })        
 
 
-            fmt.Println("[APP-1]:+ Connected.")
+            fmt.Println("["+appName+"]:+ Connected.")
 
             for {
                 select {
                     case netReqObj := <- netChannel.ReqChannel:
-				    	fmt.Println("[PACKET-RECEIVED]: ", 4)
-                        fmt.Println(netReqObj)
-                        
+				    	fmt.Printf("[PACKET-RECEIVED][%s][Node-ID][%s]: Packet: %s \n", appName, reqObj.SenderNodeId.String(), netReqObj)
 				    default:
                         time.Sleep(time.Millisecond*500)
-					    status := netChannel.SendToSocket(Util.RequestObject{
-                            Type: "TEST_TYPE_1",
-                            RequestID: "REQ_1",
-                            AppName: "TEST_APP",
-                            AppID: 1,
-                            SenderNodeId: big.NewInt(4),
-                            ReceiverNodeId: big.NewInt(9),
-                            RequestBody: "THIS IS REQ BODY FROM NODE 4",
-                        })
+					    status := netChannel.SendToSocket(reqObj)
 
                         if !status {
                             fmt.Println("[API] Unable to send")
@@ -130,64 +136,40 @@ func testApp1() {
 			    }
 		    }
         }else {
-            fmt.Println("[APP-1]:+ Unable to Connect.")
+            fmt.Println("["+appName+"]:+ Unable to Connect.")
         }
     })
 
     if !res {
-        fmt.Println("[APP-1]:+ Unable to Create Soc.")
+        fmt.Println("["+appName+"]:+ Unable to Create Soc.")
     }
 }
 
 
 
-func testApp2() {
-    appConn := NetworkModule.NewNetworkManager("127.0.0.1", "9999")
-    fmt.Println("[APP-2]:+.")
 
-    res := appConn.Connect("TCP", func(connection interface{}){
-        if connection, ok := connection.(net.Conn); ok { 
-            netChannel := NetworkModule.NetworkChannel{ Connection: connection, ChannelSize: 100000 }
-            netChannel.Init()
-
-            
-            // register app name
-            netChannel.SendToSocket(Util.RequestObject{
-                AppName: "TEST_APP",
-            })
-
-
-            fmt.Println("[APP-2]:+ Connected.")
+func testAppAddress(appName string, reqObject *Util.RequestObject) string {
+    var senderNodeId, recvNodeId, appServerPort string
+    var ok bool
     
-            for {
-                select {
-                    case netReqObj := <- netChannel.ReqChannel:
-				    	fmt.Println("[PACKET-RECEIVED]", 9)
-                        fmt.Println(netReqObj)
-                        
-				    default:
-                        time.Sleep(time.Millisecond*500)
-					    status := netChannel.SendToSocket(Util.RequestObject{
-                            Type: "TEST_TYPE_2",
-                            RequestID: "REQ_2",
-                            AppName: "TEST_APP",
-                            AppID: 1,
-                            SenderNodeId: big.NewInt(9),
-                            ReceiverNodeId: big.NewInt(4),
-                            RequestBody: "THIS IS REQ BODY FROM NODE 9",
-                        })
+    fmt.Println("       ",appName)
+    fmt.Print("Enter Sender(Connecting) Application Server Port: ")
+    fmt.Scanln(&appServerPort)
 
-                        if !status {
-                            fmt.Println("[API] Unable to send")
-                        }
-			    }
-		    }
-        }else {
-            fmt.Println("[APP-2]:+ Unable to Connect.")
-        }
-    })
+    fmt.Print("Enter Sender(Connecting) Node Id: ")
+    fmt.Scanln(&senderNodeId)
 
-    if !res {
-        fmt.Println("[APP-1]:+ Unable to Create Soc.")
-    }
+    fmt.Print("Enter Reciever Node Id: ")
+    fmt.Scanln(&recvNodeId)
+
+
+    reqObject.SenderNodeId, ok = new(big.Int).SetString(senderNodeId, 10)
+    if !ok { fmt.Println("SetString: error node id") }
+
+    reqObject.ReceiverNodeId, ok = new(big.Int).SetString(recvNodeId, 10)
+    if !ok { fmt.Println("SetString: error m") }
+
+    reqObject.RequestBody = "THIS IS REQ BODY FROM NODE: " + senderNodeId + " TO NODE " + recvNodeId
+
+    return appServerPort
 }
