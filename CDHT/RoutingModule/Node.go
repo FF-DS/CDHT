@@ -3,6 +3,7 @@ package RoutingModule
 import (
     "crypto/sha1"
     "cdht/Util"
+    "cdht/ReportModule"
     "net"  
     "math/big"
     "net/rpc"
@@ -28,6 +29,8 @@ type Node struct {
 
     JumpSpacing int
     defaultArgs *Args
+    Logger *ReportModule.Logger
+
 }
 
 
@@ -70,6 +73,7 @@ func (node *Node) join(available *NodeRPC) {
     
     err, succ := available.FindSuccessor(node.Node_id)
     
+    succ.NodeTraversalLogs =  []NodeRPC{}
     if err == nil && checkNode(succ) != nil {
         node.successor = succ 
         fmt.Println("[JOIN]: Joined with ", succ.Node_id)
@@ -95,9 +99,12 @@ func (node *Node) join(available *NodeRPC) {
 // [INTERNAL]
 func (node *Node) generateNodeInfo() Node {
     node.initializeNode()
-	// node.getOutboundIP();
-    node.IP_address = "127.0.0.1"
-	// node.generateNodeId();
+    if node.IP_address == "" {
+        node.getOutboundIP();
+    }
+    if node.Node_id == nil {
+	    node.generateNodeId();
+    }
 	return *node
 }
 
@@ -124,6 +131,7 @@ func (node *Node) generateNodeId() {
 
     node.Node_id = hashedID.Mod(hashedID, modulo)
     node.M = m
+    node.FingerTableLength = 160
 }
 
 
@@ -146,6 +154,13 @@ func (node *Node) GetNodeInfo(args *Args, nodeRPC *NodeRPC) error {
     return nil
 }
 
+func (node *Node) getLocalNodeInfo() NodeRPC {
+    return NodeRPC{
+        M : node.M,
+        Node_address : node.IP_address + ":" + node.Port,
+        Node_id : node.Node_id,
+    }
+}
 // # ----------------------- [END] node level info ----------------------------- # 
 
 
@@ -161,12 +176,28 @@ func (node *Node) ResolvePacket(requestObject *Util.RequestObject, responseObjec
         appChannel <- *requestObject
         response := requestObject.GetResponseObject()
         copyResponseObject( &response, responseObject)
+
+        // ---- logging ----- //
+        node.LOGNodeReport( 
+            ReportModule.LOG_TYPE_NODE_INFORMATION,
+            ReportModule.LOG_LOCATION_TYPE_INCOMMING,
+            ReportModule.LOG_OPERATION_STATUS_SUCCESS,
+            map[string]string{
+                "rtt" : "Not Available",
+                "srt" : "Not Available",
+                "latency" : "Not Available",
+                "app_name" : requestObject.AppName,
+            },
+        )
+        // ---- logging ----- //
+
         return nil
     }
 
     resp := requestObject.GetResponseObject()
     resp.ResponseStatus = Util.PACKET_STATUS_NO_APP
     copyResponseObject( &resp, responseObject)
+
     return nil
 }
 

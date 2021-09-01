@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"time"
 	"cdht/Util"
+	"fmt"
 )
 
 // # -------------------- NodeRPC -------------------- # //
@@ -19,6 +20,8 @@ type NodeRPC struct {
 
 	DefaultArgs *Args
 	ticker *time.Ticker
+
+	NodeTraversalLogs []NodeRPC
 }
 
 
@@ -82,7 +85,7 @@ func (node *NodeRPC) ResolvePacket(reqObj Util.RequestObject) (error, Util.Respo
 func (node *NodeRPC) FindSuccessor(nodeId *big.Int) (error, *NodeRPC) {
 	node.resetConnTimeOut();
 
-	var successor NodeRPC
+	successor := NodeRPC{ NodeTraversalLogs: []NodeRPC{} }
 
 	err := node.handle.Call("Node.FindSuccessor", nodeId, &successor)
     if err != nil {
@@ -137,13 +140,24 @@ func (node *NodeRPC) Notify(predecessor *NodeRPC) (error, *Successors) {
 }
 
 
+// # ---------------  print statemets -------------------------- # //
+func (node *NodeRPC) PrintNodeInfo() {
+    fmt.Println("-----------------Remote Node Info------------------------------")
+    fmt.Printf("Node ID : %s \n", node.Node_id.String())
+    fmt.Printf("M       : %s \n", node.M.String())
+    fmt.Printf("Address : %s \n", node.Node_address)
+    fmt.Println("---------------------------------------------------------------")
+}
 
+
+// # ---------------  resource optimization -------------------------- # //
 func (node *NodeRPC) Close() {
 	if node == nil || node.handle == nil {
 		return 
 	}
 
 	node.DefaultArgs = nil
+	node.ticker.Stop()
 	node.handle.Close()
 }
 

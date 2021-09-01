@@ -1,24 +1,25 @@
 package RoutingModule
 
 import (
-    "fmt"
 	"time"
-	"strconv"
     "math/big"
 	"cdht/Util"
+	"cdht/ReportModule"
 )
 
 
 type RoutingTable struct {
-	RingPort string
-	
 	RemoteNodeAddr string
 	NodePort string
+	IP_address string
 
 	JumpSpacing int
 	FingerTableLength int
+    Node_id *big.Int
+    M *big.Int
 
     Applications map[string](chan Util.RequestObject)
+    Logger *ReportModule.Logger
 	node *Node
 }
 
@@ -28,18 +29,19 @@ type RoutingTable struct {
 
 func (routingTable *RoutingTable) CreateRing() {
     routingTable.node = &Node{
-        Port : routingTable.RingPort,
+        Port : routingTable.NodePort,
         JumpSpacing : routingTable.JumpSpacing,
         FingerTableLength : routingTable.FingerTableLength,
         Applications : routingTable.Applications,
+        Logger: routingTable.Logger,
+        Node_id : routingTable.Node_id,
+        IP_address : routingTable.IP_address,
+        M : routingTable.M,
     }
 
-	// TESTING WILL BE REMOVED //
-    testChangeNodeInfo(routingTable.node)
-	// END OF TESTING //
-
-    routingTable.node.currentNodeInfo()
     routingTable.node.createRing()
+    // [PRINT]:WILL BE REMOVED
+    routingTable.node.currentNodeInfo()
     
     go routingTable.runStablization()
 }
@@ -49,32 +51,28 @@ func (routingTable *RoutingTable) CreateRing() {
 func (routingTable *RoutingTable) RunNode() {
 
     remoteNode := NodeRPC{ Node_address : routingTable.RemoteNodeAddr }
-    // TESTING WILL BE REMOVED //
-	remoteNodeAddr(&remoteNode)
-	// END OF TESTING //
 	remoteNode.Connect()
 
-    printRemoteNodeInfo(&remoteNode)
-
+    // [PRINT]:WILL BE REMOVED
+    remoteNode.PrintNodeInfo()
 
     routingTable.node = &Node{
         Port : routingTable.NodePort,
         JumpSpacing : routingTable.JumpSpacing,
         FingerTableLength : routingTable.FingerTableLength,
         Applications : routingTable.Applications,
+        Logger: routingTable.Logger,
+        Node_id : routingTable.Node_id,
+        IP_address : routingTable.IP_address,
+        M : routingTable.M,
     }
 
-	// TESTING WILL BE REMOVED //
-	currentNodePort(routingTable.node)
-    testChangeNodeInfo(routingTable.node)
-	// END OF TESTING //
-
-    routingTable.node.currentNodeInfo()
     routingTable.node.join( &remoteNode)
+    // [PRINT]:WILL BE REMOVED
+    routingTable.node.currentNodeInfo()
     
     go routingTable.runStablization()
 }
-
 
 
 func (routingTable *RoutingTable) runStablization() {
@@ -82,18 +80,15 @@ func (routingTable *RoutingTable) runStablization() {
 		time.Sleep(time.Second)
 		routingTable.node.checkPredecessor()
 		routingTable.node.checkSeccessors()
-
 		routingTable.node.stablize()
-		routingTable.node.currentSuccessorTableInfo()
-
 		routingTable.node.fixFinger()
-		routingTable.node.currentFingerTableInfo()
-
-		routingTable.node.currentSuccessorsInfo()
+        // logging
+        routingTable.node.LOGRoutingTableReport()
 	}
 }
-
 // # ------------------------ [END] Main Node INIT ----------------------- #
+
+
 
 
 
@@ -103,13 +98,43 @@ func (routingTable *RoutingTable) runStablization() {
 
 // [CORE-MODULE]
 func (routingTable *RoutingTable) ForwardPacket(req Util.RequestObject) Util.ResponseObject {
-    var successor NodeRPC
+    successor := NodeRPC{ NodeTraversalLogs: []NodeRPC{} }
+    start := time.Now()
     err := routingTable.node.FindSuccessor( req.ReceiverNodeId, &successor)
 
     if err == nil && checkNode(&successor) != nil{
+        rtt := time.Since(start)
         _, resp := successor.ResolvePacket( req )
+        latency := time.Since(start)
+        // ---- logging ----- //
+        routingTable.node.LOGNodeReport( 
+            ReportModule.LOG_TYPE_NODE_INFORMATION,
+            ReportModule.LOG_LOCATION_TYPE_LEAVING,
+            ReportModule.LOG_OPERATION_STATUS_SUCCESS,
+            map[string]string{
+                "rtt" : rtt.String(),
+                "srt" : (rtt/2).String(),
+                "latency" : latency.String(),
+                "app_name" : req.AppName,
+            },
+        )
+        // ---- logging ----- //
         return resp
     }
+
+    // ---- logging ----- //
+    routingTable.node.LOGNodeReport( 
+        ReportModule.LOG_TYPE_NODE_INFORMATION,
+        ReportModule.LOG_LOCATION_TYPE_LEAVING,
+        ReportModule.LOG_OPERATION_STATUS_FAILED,
+        map[string]string{
+            "rtt" : time.Since(start).String(),
+            "srt" : (time.Since(start)/2).String(),
+            "latency" : time.Since(start).String(),
+            "app_name" : req.AppName,
+        },
+    )
+    // ---- logging ----- //
 
     resp := req.GetResponseObject()
     resp.ResponseStatus = Util.PACKET_STATUS_FAILED
@@ -118,58 +143,20 @@ func (routingTable *RoutingTable) ForwardPacket(req Util.RequestObject) Util.Res
 
 
 
+// [CORE-MODULE]
+func (routingTable *RoutingTable) LookUp(nodeId *big.Int) NodeRPC {
+    successor := NodeRPC{ NodeTraversalLogs: []NodeRPC{} }
+    routingTable.node.FindSuccessor( nodeId, &successor)
+    return successor
+}
+
+
+// [CORE-MODULE]
+func (routingTable *RoutingTable) PrintRoutingInfo(){
+    routingTable.node.currentSuccessorTableInfo()
+	routingTable.node.currentFingerTableInfo()
+    routingTable.node.currentSuccessorsInfo()
+}
 // # ------------------------ [END] Routing Functionalities ----------------------- #
 
-
-
-
-
-// # ------------------------ print info ----------------------- #
-
-func printRemoteNodeInfo(remoteNode *NodeRPC) {
-    fmt.Println("-----------------Remote node Info------------------------------")
-    fmt.Printf("Node ID : %s \n", remoteNode.Node_id.String())
-    fmt.Printf("M       : %s \n", remoteNode.M.String())
-    fmt.Printf("Address : %s \n", remoteNode.Node_address)
-    fmt.Println("---------------------------------------------------------------")
-}
-
-
-// --------------- TEST ----------------------- //
-func testChangeNodeInfo(node *Node) {
-    var nodeId, m string
-    fmt.Print("Enter Node Id: ")
-    fmt.Scanln(&nodeId)
-
-    fmt.Print("Enter M: ")
-    fmt.Scanln(&m)
-
-    NodeId, ok := new(big.Int).SetString(nodeId, 10)
-    if !ok { fmt.Println("SetString: error node id") }
-
-    M, ok := new(big.Int).SetString(m, 10)
-    if !ok { fmt.Println("SetString: error m") }
-
-    node.Node_id = NodeId
-    node.M = M
-
-    i, _ := strconv.Atoi(m)
-    node.FingerTableLength = i
-}
-
-
-func remoteNodeAddr(node *NodeRPC) {
-	var port string
-    fmt.Print("Enter Remote Node Port: ")
-    fmt.Scanln(&port)
-	node.Node_address = "127.0.0.1:" + port
-}
-
-
-func currentNodePort(node *Node){
-	var port string
-	fmt.Print("Enter Your Port: ")
-    fmt.Scanln(&port)
-	node.Port = port
-}
 
