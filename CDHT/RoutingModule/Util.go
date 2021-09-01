@@ -5,6 +5,7 @@ import  (
     "os"
     "fmt"
 	"cdht/Util"
+	"cdht/ReportModule"
 )
 
 
@@ -28,7 +29,7 @@ func betweenClosest(start, middle, end *big.Int) bool {
 
 func checkError(err error) {
     if err != nil {
-        fmt.Println("Fatal error ", err.Error())
+        fmt.Println("[Fatal Error]: + ", err.Error())
         os.Exit(1)
     }
 }
@@ -40,6 +41,7 @@ func copyNodeData(old *NodeRPC, new *NodeRPC) {
     new.Node_id = old.Node_id
     new.DefaultArgs = nil
 }
+
 
 func copyResponseObject(curr *Util.ResponseObject, resp *Util.ResponseObject){
     resp.Type = curr.Type
@@ -66,4 +68,39 @@ func checkNode(node *NodeRPC) *NodeRPC {
     }
     
     return nodeRPC
+}
+
+
+
+
+// # -------------------- report logging -------------------- # 
+func (node *Node) logRoutingTableReport() {
+    routeReport := ReportModule.Log {
+        Type: ReportModule.LOG_TYPE_ROUTING_TABLE,
+        OperationStatus: ReportModule.LOG_OPERATION_STATUS_SUCCESS,
+        LogLocation: ReportModule.LOG_LOCATION_TYPE_SELF,
+        NodeId: node.Node_id,
+        NodeAddress: node.IP_address + ":" + node.Port,
+        LogBody: map[string]([][]string){
+            "FingerTable" : node.getFingerTableRouteEnty() ,
+            "SuccessorsTable": node.getSuccessorsRouteEnty() ,
+            "SuccPredTable": node.getSuccPredRouteEnty() ,
+        },
+    }
+
+    node.Logger.RouteTableLog(routeReport)
+}
+
+
+func (node *Node) logNodeReport(logType string, location string, status string, logData map[string]string ) {
+    fwdReport := ReportModule.Log {
+        Type: logType,
+        OperationStatus: status,
+        LogLocation: location,
+        NodeId: node.Node_id,
+        NodeAddress: node.IP_address + ":" + node.Port,
+        LogBody: logData,
+    }
+
+    node.Logger.NodeLog(fwdReport)
 }
