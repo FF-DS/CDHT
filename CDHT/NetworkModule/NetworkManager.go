@@ -36,14 +36,6 @@ type UDPPacketData struct {
 
 
 
-
-// ## ---- preparing envt ----- //
-
-func init() {
-	fmt.Println("[TEST]: Network Manager")
-}
-
-
 // ## ------------------------------- init ----------------------------- ##
 
 func NewNetworkManager(ipAddr string, port string) NetworkManager {

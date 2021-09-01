@@ -9,6 +9,11 @@ import (
 
 // [RPC]
 func (node *Node) FindSuccessor(nodeId *big.Int, remoteNode *NodeRPC) error {
+    if remoteNode.NodeTraversalLogs == nil {
+        remoteNode.NodeTraversalLogs = []NodeRPC{}
+    }
+    remoteNode.NodeTraversalLogs = append(remoteNode.NodeTraversalLogs, node.getLocalNodeInfo())
+
     succ := checkNode( node.successor )
     if succ == nil {
         node.GetNodeInfo(node.defaultArgs, remoteNode)
@@ -16,6 +21,7 @@ func (node *Node) FindSuccessor(nodeId *big.Int, remoteNode *NodeRPC) error {
     }
 
     if between(node.Node_id, nodeId, succ.Node_id) || nodeId.Cmp(succ.Node_id) == 0 {
+        remoteNode.NodeTraversalLogs = append(remoteNode.NodeTraversalLogs, *succ)
         copyNodeData(succ, remoteNode)
         return nil
     }else {
@@ -39,6 +45,10 @@ func (node *Node) FindSuccessor(nodeId *big.Int, remoteNode *NodeRPC) error {
             return nil
         }
 
+
+        if  pred.NodeTraversalLogs != nil{
+            remoteNode.NodeTraversalLogs = append(remoteNode.NodeTraversalLogs, pred2.NodeTraversalLogs...)
+        }
         copyNodeData(pred2, remoteNode)
     }
     return nil
@@ -47,14 +57,13 @@ func (node *Node) FindSuccessor(nodeId *big.Int, remoteNode *NodeRPC) error {
 
 // [INTERNAL]
 func  (node *Node)  closestPrecedingNode(nodeId *big.Int) *NodeRPC {
-    var curr NodeRPC
+    curr := NodeRPC{ NodeTraversalLogs: []NodeRPC{} }
     node.GetNodeInfo(node.defaultArgs, &curr)
 
     for i := len(node.fingerTableEntry) - 1; i >= 0; i-- {
         entry := node.fingerTableEntry[i];
 
         if entry == nil {
-            fmt.Println("empty entry ----------------", i)
             continue
         }
         
@@ -75,11 +84,12 @@ func  (node *Node)  closestPrecedingNode(nodeId *big.Int) *NodeRPC {
 // [ROUTING-MODULE]
 func (node *Node) fixFinger(){
     for i := 0; i < node.FingerTableLength; i++ { 
-        var entry NodeRPC
+        entry := NodeRPC{ NodeTraversalLogs: []NodeRPC{} }
         node.FindSuccessor( node.calculateFingerId(i), &entry)
 
         if checkNode(&entry) != nil {
             node.fingerTableEntry[i].Close()
+            entry.NodeTraversalLogs =  []NodeRPC{}
             node.fingerTableEntry[i] = &entry
         } 
     }
@@ -96,6 +106,21 @@ func (node *Node) calculateFingerId(i int)  *big.Int {
 	return new(big.Int).Mod(sum, ceil)
 }
 
+
+// # ------------------------ str info ----------------------- #
+func (node *Node) getFingerTableRouteEnty()  []([]string)  {
+    routes := []( []string ){}
+
+    for i := 0; i < len(node.fingerTableEntry); i++ { 
+        entry := checkNode( node.fingerTableEntry[i] )
+        status := "Alive"
+        if entry == nil {
+            status = "Down"
+        }
+        routes = append( routes,  []string{ node.calculateFingerId(i).String(),  entry.Node_id.String(), entry.Node_address, status} )
+    }
+    return routes
+}
 
 
 

@@ -34,7 +34,6 @@ func (Api *ApiCommunication) StartAppServer() {
 
 
 func (Api *ApiCommunication) appRequestHandler(connection interface{}) {
-	fmt.Println("[APP-SERVICE]:+ connection created")
 	if connection, ok := connection.(net.Conn); ok { 
 
 		netChannel := NetworkModule.NetworkChannel{ Connection: connection, ChannelSize: Api.ChannelSize }

@@ -2,6 +2,7 @@ package RoutingModule
 
 import (
     "fmt"
+    "strconv"
 )
 
 
@@ -112,6 +113,38 @@ func (node *Node) checkSeccessors() {
         node.successor = &node.currentSuccessors[0]
     }
 }
+
+
+
+// # ------------------------ str info ----------------------- #
+func (node *Node) getSuccessorsRouteEnty() []([]string) {
+    routes := []( []string ){}
+
+    for i := 0; i < len(node.currentSuccessors); i++ {
+        entry := node.currentSuccessors[i] 
+        routes = append( routes,  []string{ strconv.Itoa(i), entry.Node_id.String(), entry.Node_address  } )
+    }
+    return routes
+}
+
+
+func (node *Node) getSuccPredRouteEnty() []([]string)  {
+    routes := []( []string ){ }
+
+    if succ := checkNode( node.successor); succ != nil {
+        routes = append( routes,   []string{ "Successor",  succ.Node_id.String(), succ.Node_address  } )
+    }else{
+        routes = append( routes,   []string{ "Successor",  "NOT AVAILABLE", "NOT AVAILABLE" } )
+    }
+
+    if pred := checkNode( node.predecessor); pred != nil {
+        routes = append( routes,   []string{ "Predecessor", pred.Node_id.String(), pred.Node_address } )
+    }else{
+        routes = append( routes,   []string{ "Predecessor",  "NOT AVAILABLE", "NOT AVAILABLE" } )
+    }
+    return routes
+}
+
 
 
 
