@@ -83,7 +83,7 @@ func (routingTable *RoutingTable) runStablization() {
 		routingTable.node.stablize()
 		routingTable.node.fixFinger()
         // logging
-        routingTable.node.LOGRoutingTableReport()
+        routingTable.node.logRoutingTableReport()
 	}
 }
 // # ------------------------ [END] Main Node INIT ----------------------- #
@@ -107,7 +107,7 @@ func (routingTable *RoutingTable) ForwardPacket(req Util.RequestObject) Util.Res
         _, resp := successor.ResolvePacket( req )
         latency := time.Since(start)
         // ---- logging ----- //
-        routingTable.node.LOGNodeReport( 
+        routingTable.node.logNodeReport( 
             ReportModule.LOG_TYPE_NODE_INFORMATION,
             ReportModule.LOG_LOCATION_TYPE_LEAVING,
             ReportModule.LOG_OPERATION_STATUS_SUCCESS,
@@ -123,7 +123,7 @@ func (routingTable *RoutingTable) ForwardPacket(req Util.RequestObject) Util.Res
     }
 
     // ---- logging ----- //
-    routingTable.node.LOGNodeReport( 
+    routingTable.node.logNodeReport( 
         ReportModule.LOG_TYPE_NODE_INFORMATION,
         ReportModule.LOG_LOCATION_TYPE_LEAVING,
         ReportModule.LOG_OPERATION_STATUS_FAILED,

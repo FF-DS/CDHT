@@ -74,7 +74,7 @@ func checkNode(node *NodeRPC) *NodeRPC {
 
 
 // # -------------------- report logging -------------------- # 
-func (node *Node) LOGRoutingTableReport() {
+func (node *Node) logRoutingTableReport() {
     routeReport := ReportModule.Log {
         Type: ReportModule.LOG_TYPE_ROUTING_TABLE,
         OperationStatus: ReportModule.LOG_OPERATION_STATUS_SUCCESS,
@@ -92,7 +92,7 @@ func (node *Node) LOGRoutingTableReport() {
 }
 
 
-func (node *Node) LOGNodeReport(logType string, location string, status string, logData map[string]string ) {
+func (node *Node) logNodeReport(logType string, location string, status string, logData map[string]string ) {
     fwdReport := ReportModule.Log {
         Type: logType,
         OperationStatus: status,

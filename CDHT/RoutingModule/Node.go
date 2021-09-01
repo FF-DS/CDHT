@@ -178,7 +178,7 @@ func (node *Node) ResolvePacket(requestObject *Util.RequestObject, responseObjec
         copyResponseObject( &response, responseObject)
 
         // ---- logging ----- //
-        node.LOGNodeReport( 
+        node.logNodeReport( 
             ReportModule.LOG_TYPE_NODE_INFORMATION,
             ReportModule.LOG_LOCATION_TYPE_INCOMMING,
             ReportModule.LOG_OPERATION_STATUS_SUCCESS,

@@ -54,6 +54,7 @@ func  (log *Log) GetLogName() string {
 func  (log *Log) ToString() string {
 	str := "---------------- Log Data ----------------\n"  
 	str += fmt.Sprintf(" [+] Operation Type : %s\n", log.Type )
+	str += fmt.Sprintf(" [+] Log Location : %s\n", log.LogLocation )
 	str += fmt.Sprintf(" [+] Operation Status : %s\n", log.OperationStatus )
 	str += fmt.Sprintf(" [+] Node Id : %s\n", log.NodeId.String() )
 	str += fmt.Sprintf(" [+] Node Address : %s\n", log.NodeAddress ) 

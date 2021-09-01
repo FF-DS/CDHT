@@ -11,9 +11,9 @@ import (
 
 type Logger struct {
 	routingTable Log
-	nodeLogChannel chan Log
-	networkToolChannel chan Log
-	configurationToolChannel chan Log
+	nodeLogChannel []Log
+	networkToolChannel  []Log
+	configurationToolChannel []Log
 
 	config LogConfig
 }
@@ -25,9 +25,9 @@ func (logger *Logger) Configure(config LogConfig) {
 
 
 func (logger *Logger) Init() {
-	logger.nodeLogChannel =  make(chan Log, logger.config.NodeChanSize())
-	logger.networkToolChannel =  make(chan Log, logger.config.NetChanSize())
-	logger.configurationToolChannel =  make(chan Log, logger.config.ConfigChanSize())
+	logger.nodeLogChannel = []Log{}
+	logger.networkToolChannel =  []Log{}
+	logger.configurationToolChannel = []Log{}
 
 	go logger.reportRouteTableInfo()
 	go logger.reportNodeLogChannel()
@@ -42,30 +42,48 @@ func  (logger *Logger) RouteTableLog(logData Log) {
 	logger.routingTable = logData
 }
 
+func (logger *Logger) RouteLogs() []Log {
+	return []Log{ logger.routingTable }
+}
+
+
 
 func  (logger *Logger) NodeLog(logData Log) {
 	if( len(logger.nodeLogChannel) >= logger.config.NodeChanSize() -2 ){
-		<-logger.nodeLogChannel
+		logger.nodeLogChannel = logger.nodeLogChannel[1:]
 	}
-	logger.nodeLogChannel <- logData
-} 
+	logger.nodeLogChannel = append(logger.nodeLogChannel, logData)
+}
+
+func (logger *Logger) NodeLogs() []Log {
+	return logger.nodeLogChannel
+}
+
 
 
 func  (logger *Logger) NetworkToolLog(logData Log) {
 	if( len(logger.networkToolChannel) >= logger.config.NetChanSize() -2 ){
-		<-logger.networkToolChannel
+		logger.networkToolChannel = logger.networkToolChannel[1:]
 	}
-	logger.networkToolChannel <- logData
+	logger.networkToolChannel = append(logger.networkToolChannel, logData)
 }
+
+func (logger *Logger) NetworkToolLogs() []Log {
+	return logger.networkToolChannel 
+}
+
 
 
 func  (logger *Logger) ConfigToolLog(logData Log) {
 	if( len(logger.configurationToolChannel) >= logger.config.ConfigChanSize() -2 ){
-		<-logger.configurationToolChannel
+		logger.configurationToolChannel = logger.configurationToolChannel[1:]
 	}
-	logger.configurationToolChannel <- logData
+	logger.configurationToolChannel = append(logger.configurationToolChannel, logData)
 }
 
+func (logger *Logger) ConfigToolLogs() []Log {
+	return logger.configurationToolChannel
+}
 
 
 
@@ -74,8 +92,8 @@ func (logger *Logger) reportRouteTableInfo() {
 	for {
 		time.Sleep(time.Second * logger.config.RouteTableDelay() )
 		
-		logs := []Log{ logger.routingTable }
-		sendLogToAPI( logs, URL_SEND_ROUTE_TABLE_LOG)
+		// logs := []Log{ logger.routingTable }
+		// sendLogToAPI( logs, URL_SEND_ROUTE_TABLE_LOG)
 	}
 }
 
@@ -84,8 +102,8 @@ func (logger *Logger) reportNodeLogChannel() {
 	for {
 		time.Sleep(time.Second * logger.config.NodeChanDelay() )
 		
-		logs := collectLog(logger.nodeLogChannel, logger.config.NodeChanSize() )
-		sendLogToAPI(logs, URL_SEND_NODE_INFO_LOG)
+		// logs := logger.nodeLogChannel[:logger.config.NodeChanSize()]
+		// sendLogToAPI(logs, URL_SEND_NODE_INFO_LOG)
 	}
 }
 
@@ -94,8 +112,8 @@ func (logger *Logger) reportNetToolInfo() {
 	for {
 		time.Sleep(time.Second * logger.config.NetChanDelay() )
 		
-		logs := collectLog(logger.networkToolChannel, logger.config.NetChanSize() )
-		sendLogToAPI(logs, URL_SEND_NETWOR_TOOL_LOG)
+		// logs := logger.networkToolChannel[:logger.config.NetChanSize()]
+		// sendLogToAPI(logs, URL_SEND_NETWOR_TOOL_LOG)
 	}
 }
 
@@ -104,8 +122,8 @@ func (logger *Logger) reportConfigInfo() {
 	for {
 		time.Sleep(time.Second * logger.config.ConfigChanDelay() )
 		
-		logs := collectLog(logger.configurationToolChannel, logger.config.ConfigChanSize() )
-		sendLogToAPI(logs, URL_SEND_CONFIG_TOOL_LOG)
+		// logs := logger.configurationToolChannel[:logger.config.ConfigChanSize()]
+		// sendLogToAPI(logs, URL_SEND_CONFIG_TOOL_LOG)
 	}
 }
 
@@ -114,17 +132,6 @@ func (logger *Logger) reportConfigInfo() {
 
 
 // --------------------------- helper method --------------------------- //
-
-// collect log
-func collectLog(logChannel chan Log, size int) []Log {
-	logs := []Log{}
-
-	for size > 0 && len(logChannel) > 0 {
-		logs = append(logs, <-logChannel )
-	}
-	return logs
-}
-
 
 // api caller 
 func sendLogToAPI(logger []Log, url_link string) bool {

@@ -21,8 +21,8 @@ import (
 
 func main() {
     var wg sync.WaitGroup
+    
     wg.Add(1)
-
     go runFirstNode(&wg);
     // go runSecondNode(&wg);
     // go runTestApp(&wg);
@@ -96,9 +96,10 @@ func runTestApp(wg *sync.WaitGroup){
     reqObj2 := Util.RequestObject{ Type: "TEST_TYPE_2", RequestID: "REQ_2", AppName: "TEST_APP", AppID: 1}
     appPort2 := testAppAddress("Test App 2", &reqObj2)
 
-
     go testApp(reqObj1, appPort1, "Test App 1")
     go testApp(reqObj2, appPort2, "Test App 2")
+
+    time.Sleep(time.Minute * 300)
     wg.Done()
 }
 
@@ -130,6 +131,8 @@ func userUI(api *API.ApiCommunication, route *RoutingModule.RoutingTable){
                 printRoutes(route, params)
             case "lookup" :
                 lookUpUI(route, params)
+            case "log" :
+                logDump(route.Logger, params)
         }
 
     }
@@ -178,8 +181,29 @@ func lookUpUI(routingM *RoutingModule.RoutingTable, params []string) {
 }
 
 
+func logDump(logger *ReportModule.Logger, params []string) {
+    if len(params) < 2 {
+        return 
+    }
 
+    switch params[1] {
+        case "route":
+            printLog( logger.RouteLogs() )
+        case "node":
+            printLog( logger.NodeLogs() )
+        case "network":
+            printLog( logger.NetworkToolLogs() )
+        case "config":
+            printLog( logger.ConfigToolLogs() )
+    }
 
+}
+
+func printLog(logs []ReportModule.Log){
+    for _, log := range logs {
+        fmt.Println(log.ToString())
+    }
+}
 
 //  # ----------------------- TEST  APPLICATION ----------------------- # //
 
