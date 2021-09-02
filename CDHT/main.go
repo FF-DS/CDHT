@@ -1,195 +1,175 @@
 package main
 
 import (
-    "net"
+    "cdht/RoutingModule"
+    "cdht/API"
+    "cdht/NetworkModule"
+    "cdht/Util"
+    "time"
     "fmt"
     "math/big"
-    "cdht/NetworkModule"
-    "cdht/RoutingModule"
-    "cdht/Util"
-    "bufio"
-    "strings"
-    "log"
-    "time"
-    "strconv"
+    "net"
 )
 
 
-
 func main() {
-    var currNodeInfo Util.NodeInfo
-    currNodeInfo.GetNodeInfo()
 
-    M_VAL := testChangeFingerTableID(&currNodeInfo)
+    // go runFirstNode();
 
-    fmt.Println("-----------------Current node Info--------------------")
-    fmt.Printf("Node ID    : %s \n", currNodeInfo.Node_id.String())
-    fmt.Printf("M          : %s \n", currNodeInfo.M.String())
-    fmt.Printf("IP Address : %s \n", currNodeInfo.IP_address)
-    fmt.Println("Ports      : ", currNodeInfo.Ports)
-    fmt.Println("------------------------------------------------------")
-    
-    fmt.Println("[TEST]: starting figer fix")
+    // go runSecondNode();
 
-    availableNodeInfo := Util.NodeInfo {
-        IP_address : currNodeInfo.IP_address,
-        // Ports : map[string]string{ "JOIN_RSP" : "8989", "JOIN_REQ" : "9898",},
-        Ports : map[string]string{ "JOIN_RSP" : "6010", "JOIN_REQ" : "2705",},
-    }
+    go runTestApp()
 
-
-    fingerTableRoute := RoutingModule.NewFingerTable( currNodeInfo, availableNodeInfo, 2, M_VAL);
-    fingerTableRoute.InitFingerService()
-
-    go fingerTableRoute.RunFixFingerAlg()
-    
-    
-    time.Sleep(time.Second * 10)
-
-
-    successorTablerRoute := RoutingModule.NewSuccessorTable( currNodeInfo, &fingerTableRoute)
-    successorTablerRoute.InitSuccessorService()
-
-    go successorTablerRoute.RunStablize()
-
-
-    time.Sleep(time.Minute * 35)
+    time.Sleep(time.Minute * 350)
 }
 
 
-func testChangeFingerTableID(nodeInfo *Util.NodeInfo) int{
-    var nodeId, m string
-    fmt.Print("Enter Node Id: ")
-    fmt.Scanln(&nodeId)
+func runFirstNode() {
+    apiComm := API.ApiCommunication{
+        ChannelSize: 100000,
+        PORT : "6789",
+    }
+    apiComm.Init()
 
-    fmt.Print("Enter M: ")
-    fmt.Scanln(&m)
+    firstNode := RoutingModule.RoutingTable{ 
+        RingPort: "9898",
+        JumpSpacing: 2,
+        FingerTableLength: 4,
+        Applications: apiComm.Application,
+    }
 
-    NodeId, ok := new(big.Int).SetString(nodeId, 10)
+    // TEST
+    currentAppServerPort(&apiComm)
+    // END TEST
+
+    firstNode.CreateRing()
+    apiComm.NodeRoutingTable = &firstNode
+
+    apiComm.StartAppServer()
+}
+
+
+func runSecondNode() {
+    apiComm := API.ApiCommunication{
+        ChannelSize: 100000,
+        PORT : "3456",
+    }
+    apiComm.Init()
+
+    secondNode := RoutingModule.RoutingTable{ 
+        RemoteNodeAddr: "127.0.0.1:9898",
+        NodePort: "3456",
+        JumpSpacing: 2,
+        FingerTableLength: 4,
+        Applications: apiComm.Application,
+    }
+
+    // TEST
+    currentAppServerPort(&apiComm)
+    // END TEST
+
+    secondNode.RunNode()
+    apiComm.NodeRoutingTable = &secondNode
+
+    apiComm.StartAppServer()
+}
+
+
+
+
+
+//  # ----------------------- TEST ----------------------- # //
+
+func currentAppServerPort(apiComm *API.ApiCommunication){
+	var port string
+	fmt.Print("Enter App Server Port: ")
+    fmt.Scanln(&port)
+	apiComm.PORT = port
+}
+
+
+
+
+//  # ----------------------- TEST  APPLICATION ----------------------- # //
+
+func runTestApp(){
+    reqObj1 := Util.RequestObject{ Type: "TEST_TYPE_1", RequestID: "REQ_1", AppName: "TEST_APP", AppID: 1}
+    appPort1 := testAppAddress("Test App 1", &reqObj1)
+
+
+    reqObj2 := Util.RequestObject{ Type: "TEST_TYPE_2", RequestID: "REQ_2", AppName: "TEST_APP", AppID: 1}
+    appPort2 := testAppAddress("Test App 2", &reqObj2)
+
+
+    go testApp(reqObj1, appPort1, "Test App 1")
+    go testApp(reqObj2, appPort2, "Test App 2")
+}
+
+
+func testApp(reqObj Util.RequestObject, port string, appName string) {
+    appConn := NetworkModule.NewNetworkManager("127.0.0.1", port)
+
+    res := appConn.Connect("TCP", func(connection interface{}){
+        if connection, ok := connection.(net.Conn); ok { 
+            netChannel := NetworkModule.NetworkChannel{ Connection: connection, ChannelSize: 100000 }
+            netChannel.Init()
+    
+            // register app name
+            netChannel.SendToSocket(Util.RequestObject{
+                AppName: "TEST_APP",
+            })        
+
+
+            fmt.Println("["+appName+"]:+ Connected.")
+
+            for {
+                select {
+                    case netReqObj := <- netChannel.ReqChannel:
+				    	fmt.Printf("[PACKET-RECEIVED][%s][Node-ID][%s]: Packet: %s \n", appName, reqObj.SenderNodeId.String(), netReqObj)
+				    default:
+                        time.Sleep(time.Millisecond*500)
+					    status := netChannel.SendToSocket(reqObj)
+
+                        if !status {
+                            fmt.Println("[API] Unable to send")
+                        }
+			    }
+		    }
+        }else {
+            fmt.Println("["+appName+"]:+ Unable to Connect.")
+        }
+    })
+
+    if !res {
+        fmt.Println("["+appName+"]:+ Unable to Create Soc.")
+    }
+}
+
+
+
+
+func testAppAddress(appName string, reqObject *Util.RequestObject) string {
+    var senderNodeId, recvNodeId, appServerPort string
+    var ok bool
+    
+    fmt.Println("       ",appName)
+    fmt.Print("Enter Sender(Connecting) Application Server Port: ")
+    fmt.Scanln(&appServerPort)
+
+    fmt.Print("Enter Sender(Connecting) Node Id: ")
+    fmt.Scanln(&senderNodeId)
+
+    fmt.Print("Enter Reciever Node Id: ")
+    fmt.Scanln(&recvNodeId)
+
+
+    reqObject.SenderNodeId, ok = new(big.Int).SetString(senderNodeId, 10)
     if !ok { fmt.Println("SetString: error node id") }
 
-    M, ok := new(big.Int).SetString(m, 10)
+    reqObject.ReceiverNodeId, ok = new(big.Int).SetString(recvNodeId, 10)
     if !ok { fmt.Println("SetString: error m") }
 
-    nodeInfo.Node_id = NodeId
-    nodeInfo.M = M
+    reqObject.RequestBody = "THIS IS REQ BODY FROM NODE: " + senderNodeId + " TO NODE " + recvNodeId
 
-    i, _ := strconv.Atoi(m)
-    return i
-}
-
-// ## ------------------ TESTS ----------------------- ## 
-
-func main_network_manager_test() {
-    fmt.Println("[Network Manager]: Testing")
-    
-    go udpServer()
-    go tcpServer()
-    time.Sleep(time.Second * 2)
-
-    go client()
-    time.Sleep(time.Minute * 5)
-}
-
-
-func udpServer(){
-    close_server := make(chan bool)
-
-    var UDPnetworkManager NetworkModule.NetworkManager
-    UDPnetworkManager.SetIPAddress("", "6000")
-    UDPnetworkManager.StartServer("UDP", close_server, TEST_udp_server)
-
-}
-
-func tcpServer(){
-    close_server := make(chan bool)
-
-    var TCPnetworkManager NetworkModule.NetworkManager
-    TCPnetworkManager.SetIPAddress("", "5400")
-    TCPnetworkManager.StartServer("TCP", close_server, TEST_tcp_server)
-
-}
-
-
-func client(){
-    fmt.Print("Enter The IP: ")
-    var ipAddrr string
-    fmt.Scanln(&ipAddrr)
-
-    var UDPnetworkManager NetworkModule.NetworkManager
-    UDPnetworkManager.SetIPAddress(ipAddrr, "6000")
-    UDPnetworkManager.Connect("UDP", TEST_udp_client)
-
-    var TCPnetworkManager NetworkModule.NetworkManager
-    TCPnetworkManager.SetIPAddress(ipAddrr, "5400")
-    TCPnetworkManager.Connect("TCP", TEST_tcp_client)
-}
-
-
-
-// ## ------------------ NETWORK MANAGER CONNECTION TESTS ----------------------- ## 
-func TEST_tcp_server(connection interface{}){
-
-    if connection, ok := connection.(net.Conn); ok {
-        fmt.Println("[SERVER][TCP]: Connected with client... ")
-
-        clientReader := bufio.NewReader(connection)
-        clientRequest, _ := clientReader.ReadString('\n')
-        fmt.Println("[SERVER][TCP]:",strings.TrimSpace(clientRequest))
-
-        if _, err := connection.Write([]byte("FROM SERVER.... recieved. \n")); err != nil {
-            log.Printf("failed to send the client request: %v\n", err)
-        }
-
-    }else{
-        fmt.Println("[SERVER][TCP][err]: can't decode")
-    }
-
-}
-
-
-func TEST_tcp_client(connection interface{}){
-
-    if connection, ok := connection.(net.Conn); ok {
-        fmt.Println("[CLIENT][TCP]: Connected with server... ")
-
-        if _, err := connection.Write([]byte("HELLO SERVER... \n")); err != nil {
-            log.Printf("failed to send the client request: %v\n", err)
-        }
-
-        clientReader := bufio.NewReader(connection)
-        clientRequest, _ := clientReader.ReadString('\n')
-
-        fmt.Println("[CLIENT][TCP]:",strings.TrimSpace(clientRequest))
-    }else{
-        fmt.Println("[CLIENT][TCP][err]: can't decode")
-    }
-
-}
-
-
-
-func TEST_udp_server(packetData interface{}){
-    fmt.Println("[SERVER][UDP]: Connected with client... ")
-
-    if packetData, ok := packetData.(NetworkModule.UDPPacketData); ok {
-        fmt.Println("[SERVER][UDP]: " + string(packetData.Data), packetData )
-    }else{
-        fmt.Println("[SERVER][UDP][err]: can't decode")
-    }
-
-}
-
-
-
-func TEST_udp_client(packetData interface{}){
-    fmt.Println("[CLIENT][UDP]: Connected with server... ")
-
-    if packetData, ok := packetData.(NetworkModule.UDPPacketData); ok {
-        fmt.Println("[CLIENT][UDP]: connection data")
-        fmt.Println("[CLIENT][UDP]:", packetData)
-        packetData.UDPsocketConnection.Write( []byte("hello"))
-    }else{
-        fmt.Println("[CLIENT][UDP][err]: can't decode")
-    }
+    return appServerPort
 }
