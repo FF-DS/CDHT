@@ -7,8 +7,8 @@ import(
 	"context"
     "log"
 	"go.mongodb.org/mongo-driver/bson"
-    "go.mongodb.org/mongo-driver/bson/primitive"
-    "time"
+    // "go.mongodb.org/mongo-driver/bson/primitive"
+    // "time"
 	"net/http"
 )
 
@@ -50,7 +50,7 @@ func (self LogController) GetLogs(c *gin.Context){
 func (self LogController) AddLog(c *gin.Context){
 	logCollection := ConnectDB("logs")
 
-	var logEntries []core.LogEntry
+	var logEntries []interface{}
 
 	if err := c.ShouldBindJSON(&logEntries) ; err == nil{
 	
