@@ -50,13 +50,11 @@ func (self LogController) GetLogs(c *gin.Context){
 func (self LogController) AddLog(c *gin.Context){
 	logCollection := ConnectDB("logs")
 
-	var logEntry core.LogEntry
+	var logEntries []core.LogEntry
 
-	if err := c.ShouldBindJSON(&logEntry) ; err == nil{
-		logEntry.ID = primitive.NewObjectID()
-        logEntry.CreatedDate = time.Now()
-
-        result, err := logCollection.InsertOne(context.TODO(), logEntry)
+	if err := c.ShouldBindJSON(&logEntries) ; err == nil{
+	
+        result, err := logCollection.InsertMany(context.TODO(), logEntries)
     
         if err != nil {
             GetError(err, c)
