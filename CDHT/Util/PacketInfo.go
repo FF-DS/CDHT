@@ -15,6 +15,7 @@ const (
 	PACKET_TYPE_APPLICATION string = "APPLICATION_PACKET"
 	PACKET_TYPE_NETWORK     string = "NETWORK_TOOL"
 	PACKET_TYPE_CLOSE       string = "TERMINATE_CONNECTION"
+	PACKET_TYPE_INIT_APP    string = "APP_REGISTER"
 )
 
 
@@ -40,14 +41,16 @@ type RequestObject struct {
 	AppID int
 	SenderNodeId *big.Int
 	ReceiverNodeId *big.Int
+	ResponseStatus string
+	UdpAddress string
 	RequestBody interface{}
 }
 
 
-func (reqObj *RequestObject) GetResponseObject() ResponseObject {
-	return ResponseObject{
+func (reqObj *RequestObject) GetResponseObject() RequestObject {
+	return RequestObject{
 		Type: reqObj.Type,
-		ResponseID: reqObj.RequestID,
+		RequestID: reqObj.RequestID,
 		AppName: reqObj.AppName,
 		AppID: reqObj.AppID,
 		ResponseStatus: PACKET_STATUS_SUCCESS,
@@ -56,32 +59,5 @@ func (reqObj *RequestObject) GetResponseObject() ResponseObject {
 	}
 }
 
-
-
-
-
-// #--------------------------------- Response Object ------------------------# //
-
-type ResponseObject struct {
-	Type string
-	ResponseID string
-	AppName string
-	AppID int
-	ResponseStatus string
-	SenderNodeId *big.Int
-	ReceiverNodeId *big.Int
-}
-
-
-func (respObj *ResponseObject) GetRequestObject() RequestObject {
-	return RequestObject{
-		Type: respObj.Type,
-		RequestID: respObj.ResponseID,
-		AppName: respObj.AppName,
-		AppID: respObj.AppID,
-		SenderNodeId: respObj.ReceiverNodeId,
-		ReceiverNodeId: respObj.SenderNodeId,
-	}
-}
 
 

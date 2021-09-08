@@ -62,10 +62,10 @@ func (node *NodeRPC) GetNodeInfo() (error, *NodeRPC) {
 }
 
 
-func (node *NodeRPC) ResolvePacket(reqObj Util.RequestObject) (error, Util.ResponseObject) {
+func (node *NodeRPC) ResolvePacket(reqObj Util.RequestObject) (error, Util.RequestObject) {
 	node.resetConnTimeOut();
 
-	var responseObject Util.ResponseObject
+	var responseObject Util.RequestObject
 
 	err := node.handle.Call("Node.ResolvePacket", &reqObj, &responseObject)
     if err != nil {
@@ -79,9 +79,6 @@ func (node *NodeRPC) ResolvePacket(reqObj Util.RequestObject) (error, Util.Respo
 }
 
 
-
-
-
 func (node *NodeRPC) FindSuccessor(nodeId *big.Int) (error, *NodeRPC) {
 	node.resetConnTimeOut();
 
@@ -90,6 +87,20 @@ func (node *NodeRPC) FindSuccessor(nodeId *big.Int) (error, *NodeRPC) {
 	err := node.handle.Call("Node.FindSuccessor", nodeId, &successor)
     if err != nil {
         log.Println("Node.FindSuccessor:", err)
+		return err, nil
+    }
+	return nil, &successor
+}
+
+
+func (node *NodeRPC) LookUP(nodeId *big.Int) (error, *NodeRPC) {
+	node.resetConnTimeOut();
+
+	successor := NodeRPC{ NodeTraversalLogs: []NodeRPC{} }
+
+	err := node.handle.Call("Node.LookUP", nodeId, &successor)
+    if err != nil {
+        log.Println("Node.LookUP:", err)
 		return err, nil
     }
 	return nil, &successor

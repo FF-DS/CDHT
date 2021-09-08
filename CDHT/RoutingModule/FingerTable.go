@@ -81,6 +81,84 @@ func  (node *Node)  closestPrecedingNode(nodeId *big.Int) *NodeRPC {
 }
 
 
+// [RPC]
+func (node *Node) LookUP(nodeId *big.Int, remoteNode *NodeRPC) error {
+    if remoteNode.NodeTraversalLogs == nil {
+        remoteNode.NodeTraversalLogs = []NodeRPC{}
+    }
+    remoteNode.NodeTraversalLogs = append(remoteNode.NodeTraversalLogs, node.getLocalNodeInfo())
+
+    succ := checkNode( node.successor )
+    if succ == nil ||  nodeId.Cmp(node.Node_id) == 0  {
+        node.GetNodeInfo(node.defaultArgs, remoteNode)
+        return nil
+    }
+
+    if between(node.Node_id, nodeId, succ.Node_id) || nodeId.Cmp(succ.Node_id) == 0 {
+        remoteNode.NodeTraversalLogs = append(remoteNode.NodeTraversalLogs, *succ)
+        copyNodeData(succ, remoteNode)
+        return nil
+    }else {
+        pred := node.closestPrecedingNodeLookUp(nodeId)
+
+        if pred.Node_id.Cmp(node.Node_id) == 0 {
+            if succ := checkNode(node.successor); succ != nil {
+                copyNodeData(succ, remoteNode)
+
+                return nil
+            }
+            node.GetNodeInfo(node.defaultArgs, remoteNode)
+            return nil
+        }
+
+        if  nodeId.Cmp(pred.Node_id) == 0  {
+            remoteNode.NodeTraversalLogs = append(remoteNode.NodeTraversalLogs, *pred)
+            copyNodeData(succ, remoteNode)
+            return nil
+        }
+        
+        err, pred2 := pred.LookUP(nodeId)
+
+        if err != nil || checkNode( pred2 ) == nil {
+            node.GetNodeInfo(node.defaultArgs, remoteNode)
+            return nil
+        }
+
+
+        if  pred.NodeTraversalLogs != nil{
+            remoteNode.NodeTraversalLogs = append(remoteNode.NodeTraversalLogs, pred2.NodeTraversalLogs...)
+        }
+        copyNodeData(pred2, remoteNode)
+    }
+    return nil
+}
+
+// [INTERNAL]
+func  (node *Node)  closestPrecedingNodeLookUp(nodeId *big.Int) *NodeRPC {
+    curr := NodeRPC{ NodeTraversalLogs: []NodeRPC{} }
+    node.GetNodeInfo(node.defaultArgs, &curr)
+
+    for i := len(node.fingerTableEntry) - 1; i >= 0; i-- {
+        entry := node.fingerTableEntry[i];
+
+        if entry == nil {
+            continue
+        }
+        
+        if betweenClosest(node.Node_id, entry.Node_id, nodeId) || nodeId.Cmp(entry.Node_id) == 0  {
+            if checkNode( entry ) == nil {
+                continue
+            }
+
+            return entry
+        }
+    }
+
+    checkNode( &curr)
+    return &curr
+}
+
+
 // [ROUTING-MODULE]
 func (node *Node) fixFinger(){
     for i := 0; i < node.FingerTableLength; i++ { 
@@ -113,11 +191,10 @@ func (node *Node) getFingerTableRouteEnty()  []([]string)  {
 
     for i := 0; i < len(node.fingerTableEntry); i++ { 
         entry := checkNode( node.fingerTableEntry[i] )
-        status := "Alive"
         if entry == nil {
-            status = "Down"
+            continue
         }
-        routes = append( routes,  []string{ node.calculateFingerId(i).String(),  entry.Node_id.String(), entry.Node_address, status} )
+        routes = append( routes,  []string{ node.calculateFingerId(i).String(),  entry.Node_id.String(), entry.Node_address, "Alive"} )
     }
     return routes
 }

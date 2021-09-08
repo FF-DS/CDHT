@@ -16,6 +16,11 @@ type NetworkChannel struct {
 }
 
 
+func init(){
+	gob.Register( map[string]string{} )
+	gob.Register( map[string]interface{}{} )
+}
+
 
 func (netChan *NetworkChannel) Init(){
 	netChan.ReqChannel = make(chan Util.RequestObject, netChan.ChannelSize)
@@ -47,4 +52,23 @@ func (netChan *NetworkChannel) SendToSocket(reqObj Util.RequestObject) bool {
 		return false
 	}
 	return true
+}
+
+
+
+func (netChan *NetworkChannel) SendToUDPSocket(address string, port string) {
+	var UDPnetworkManager NetworkManager
+    UDPnetworkManager.SetIPAddress( address, port)
+    UDPnetworkManager.Connect("UDP", func( udpConnection interface{}){
+		if soc, ok := udpConnection.(*net.UDPConn); ok { 
+			for {
+				packet := <- netChan.ReqChannel
+		
+				if packet.Type == Util.PACKET_TYPE_CLOSE {
+					return
+				}
+				SendUDPPacket(soc, &packet)
+			}
+		}
+	})
 }

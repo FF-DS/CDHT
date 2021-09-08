@@ -43,9 +43,9 @@ func copyNodeData(old *NodeRPC, new *NodeRPC) {
 }
 
 
-func copyResponseObject(curr *Util.ResponseObject, resp *Util.ResponseObject){
+func copyResponseObject(curr *Util.RequestObject, resp *Util.RequestObject){
     resp.Type = curr.Type
-	resp.ResponseID = curr.ResponseID
+	resp.RequestID = curr.RequestID
 	resp.AppName = curr.AppName
 	resp.AppID = curr.AppID
 	resp.ResponseStatus = curr.ResponseStatus
