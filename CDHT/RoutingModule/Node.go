@@ -19,6 +19,7 @@ type Node struct {
     IP_address string 
 
     Applications  map[string](chan Util.RequestObject)
+    NetworkTools chan Util.RequestObject
 
     predecessor *NodeRPC
     successor *NodeRPC
@@ -170,9 +171,12 @@ func (node *Node) getLocalNodeInfo() NodeRPC {
 // # ----------------------  NODE FUNCTIONALITIES  ----------------------------- # 
 
 // [RPC]
-func (node *Node) ResolvePacket(requestObject *Util.RequestObject, responseObject *Util.ResponseObject) error {
-    if appChannel, exists := node.Applications[ requestObject.AppName ]; exists {
+func (node *Node) ResolvePacket(requestObject *Util.RequestObject, responseObject *Util.RequestObject) error {
+    if requestObject.Type == Util.PACKET_TYPE_NETWORK {
+        node.NetworkTools <- *requestObject
 
+
+    } else if appChannel, exists := node.Applications[ requestObject.AppName ]; exists {
         appChannel <- *requestObject
         response := requestObject.GetResponseObject()
         copyResponseObject( &response, responseObject)

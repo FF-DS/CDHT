@@ -3,6 +3,9 @@ package NetworkModule
 import (
 	"net"
 	"fmt"
+	"cdht/Util"
+	"encoding/gob"
+	"bytes"
 )
 
 // Network class
@@ -22,18 +25,10 @@ type NetworkManager struct {
 }
 
 
-// UDP Packet Data class
-
-// *** UDPsocketConnection - this will be used to send data from the client place 
-// *** Address - to store ip address & port which will be used to identify who connected with the server
-// *** Data - since there is no delegated socket type(like for tcp) for UDP in golang we will be storing the sent packet data here. 
-
-type UDPPacketData struct {
-	UDPsocketConnection *net.UDPConn
-	Address *net.UDPAddr
-	Data []byte
+func init(){
+	gob.Register( map[string]string{} )
+	gob.Register( map[string]interface{}{} )
 }
-
 
 
 // ## ------------------------------- init ----------------------------- ##
@@ -129,13 +124,18 @@ func (network *NetworkManager) startUdpServer(close_server chan bool, handle_req
 				return true
 			default:
 				inputBytes := make([]byte, 4096)
-				length, add, err := connListner.ReadFromUDP(inputBytes)
+				length, udpAddress, err := connListner.ReadFromUDP(inputBytes)
 
 				if err != nil {
 					return false
 				}
 
-				go handle_request( UDPPacketData{ Data:inputBytes[:length],  Address: add } )
+				dec := gob.NewDecoder(bytes.NewReader(inputBytes[:length]))
+        		requestObject := Util.RequestObject{}
+        		dec.Decode(&requestObject)
+				requestObject.UdpAddress = udpAddress.String()
+
+				go handle_request( requestObject )
 		}
     }
 }
@@ -200,6 +200,33 @@ func (network *NetworkManager) udpConnection(handle_request func(interface{}) ) 
     if err != nil {
         return false
     }
-	go handle_request(  UDPPacketData{ UDPsocketConnection: socketConnection,  Address: connServerAddress }  )
+	go handle_request( socketConnection )
 	return true
+}
+
+
+
+// # -------------- [send  udp/tcp packet] Internal udp connection extension ------------- # //
+
+// [UDP|TCP SOCKET] helper function 
+// Since we will be using this method extensively it will make sense to include it 
+// ************
+
+// [REQUEST]: request packets
+func SendUDPPacket(socketConnection *net.UDPConn, requestObject *Util.RequestObject) {
+	var buf bytes.Buffer
+	encoder := gob.NewEncoder(&buf)
+	err := encoder.Encode(requestObject)
+	if err != nil{
+		fmt.Println("[Error][UDP ENCODER]:+ ", err)
+	}
+	socketConnection.Write(buf.Bytes())
+}
+
+func SendTCPPacket(socketConnection net.Conn, requestObject *Util.RequestObject) {
+	enc := gob.NewEncoder(socketConnection) 
+
+	if err := enc.Encode(&requestObject); err != nil {
+		fmt.Println("[Error][ResponseObject][TCP ENCODER]:+  ", err)
+	}
 }

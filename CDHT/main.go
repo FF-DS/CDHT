@@ -1,21 +1,24 @@
 package main
 
 import (
-    "cdht/RoutingModule"
-    "cdht/API"
-    "cdht/NetworkModule"
-    "cdht/Util"
-    "time"
-    "fmt"
-    "math/big"
-    "net"
-    "strconv"
-    "sync"
-    "cdht/ReportModule"
-    "os"
-    "bufio"
-    "strings"
 	"github.com/schollz/progressbar/v2"
+
+    "cdht/Applications/TestApplications"
+    "cdht/Applications/CDHTNetworkTools"
+    "cdht/RoutingModule"
+    "cdht/ReportModule"
+    "cdht/NetworkTools"
+    "cdht/API"
+
+    "strconv"
+    "strings"
+    "math/big"
+    "bufio"
+    "fmt"
+    
+    "time"
+    "sync"
+    "os"
 )
 
 
@@ -26,7 +29,8 @@ func main() {
     wg.Add(1)
     go runFirstNode(&wg);
     // go runSecondNode(&wg);
-    // go runTestApp(&wg);
+    // go runTestApps()
+
 
     wg.Wait()
 }
@@ -46,24 +50,43 @@ func runFirstNode(wg *sync.WaitGroup) {
     logMngr := ReportModule.Logger{}
     logMngr.Init()
 
-    // routing
-    firstNode := RoutingModule.RoutingTable{ Applications: apiComm.Application, Logger: &logMngr }
-    testChangeNodeInfo( &firstNode )
+    // Network Tool
+    netTools := NetworkTools.NetworkTool{ Logger: &logMngr}
+    netTools.Init(100000)
 
+    // routing
+    firstNode := RoutingModule.RoutingTable{ Applications: apiComm.Application, Logger: &logMngr, NetworkTools: netTools.NetworkToolPackets}
+    testChangeNodeInfo( &firstNode )
+    
+    // init node
+    firstNode.CreateRing()    
+    
+    // init api communication
+    apiComm.NodeRoutingTable = &firstNode
+    apiComm.StartAppServer()
+    
+    // init network tools
+    netTools.RoutingTable = &firstNode
+    netTools.RunTools()
+
+    // cdht network tools
+    cdhtTools := runCDHTNetworkTools(&firstNode, &apiComm)    
+    
     // logo
     fmt.Println(logo)
-
-    firstNode.CreateRing()
-    apiComm.NodeRoutingTable = &firstNode
     
-    apiComm.StartAppServer()
-    progressBar(5)
+    // just ps bars
+    progressBar(100)
 
     fmt.Println("[Init]: + Initalizing routing tables.... ")
-    progressBar(10)
+    progressBar(100)
+
+    fmt.Println("[Init]: + Initalizing network tools.... ")
+    progressBar(100)
 
 
-    userUI(&apiComm, &firstNode)
+    // user interface
+    userUI(&apiComm, &firstNode, &cdhtTools)
     wg.Done()
 }
 
@@ -82,42 +105,70 @@ func runSecondNode(wg *sync.WaitGroup) {
     logMngr.Init()
 
 
+    // Network Tool
+    netTools := NetworkTools.NetworkTool{ Logger: &logMngr}
+    netTools.Init(100000)
+
     // routing
-    secondNode := RoutingModule.RoutingTable{ Applications: apiComm.Application, Logger: &logMngr }
+    secondNode := RoutingModule.RoutingTable{ Applications: apiComm.Application, Logger: &logMngr,  NetworkTools: netTools.NetworkToolPackets }
     testChangeNodeInfo( &secondNode )
+
+    // init node
+    secondNode.RunNode()
+    
+    // init api communication
+    apiComm.NodeRoutingTable = &secondNode
+    apiComm.StartAppServer()
+    
+    // init network tools
+    netTools.RoutingTable = &secondNode
+    netTools.RunTools()
+    
+
+    // cdht network tools
+    var cdhtTools CDHTNetworkTools.CDHTNetworkTool
+    cdhtTools = runCDHTNetworkTools(&secondNode, &apiComm)    
 
     // logo
     fmt.Println(logo)
 
-    secondNode.RunNode()
-    apiComm.NodeRoutingTable = &secondNode
-    
-    apiComm.StartAppServer()
-    progressBar(5)
+    // just ps bars
+    progressBar(100)
 
     fmt.Println("[Init]: + Initalizing routing tables.... ")
-    progressBar(10)
+    progressBar(100)
 
-    userUI(&apiComm, &secondNode)
+    fmt.Println("[Init]: + Initalizing network tools.... ")
+    progressBar(100)
+
+
+    // user interface
+    userUI(&apiComm, &secondNode, &cdhtTools)
     wg.Done()
 }
 
 
-func runTestApp(wg *sync.WaitGroup){
-    reqObj1 := Util.RequestObject{ Type: "TEST_TYPE_1", RequestID: "REQ_1", AppName: "TEST_APP", AppID: 1}
-    appPort1 := testAppAddress("Test App 1", &reqObj1)
-
-
-    reqObj2 := Util.RequestObject{ Type: "TEST_TYPE_2", RequestID: "REQ_2", AppName: "TEST_APP", AppID: 1}
-    appPort2 := testAppAddress("Test App 2", &reqObj2)
-
-    go testApp(reqObj1, appPort1, "Test App 1")
-    go testApp(reqObj2, appPort2, "Test App 2")
-
-    time.Sleep(time.Minute * 300)
-    wg.Done()
+func runTestApps(){
+    go TestApplications.RunTestTCPApp();
+    go TestApplications.RunTestUDPApp();
 }
 
+
+func runCDHTNetworkTools(routingTable *RoutingModule.RoutingTable, api *API.ApiCommunication) CDHTNetworkTools.CDHTNetworkTool {
+    pingPort := getInput("Enter Ping tool port: ")
+    cdhtTools := CDHTNetworkTools.CDHTNetworkTool{
+        AppServerIP: routingTable.NodeInfo().IP_address,
+        AppServerPort: api.PORT,
+        PingToolListeningPort: pingPort[0],
+        ReadCommandDelay: 10000,
+        ChannelSize: 10000,
+        NodeId: routingTable.NodeInfo().Node_id,
+        NodeAddress: routingTable.NodeInfo().IP_address + ":" + routingTable.NodeInfo().Port,
+    }
+    cdhtTools.Init()
+
+    return cdhtTools
+}
 
 
 
@@ -134,8 +185,7 @@ func getInput(inputStr string) []string {
     return strings.Split(strInput, " ")
 }
 
-
-func userUI(api *API.ApiCommunication, route *RoutingModule.RoutingTable){
+func userUI(api *API.ApiCommunication, route *RoutingModule.RoutingTable, cdhtTools *CDHTNetworkTools.CDHTNetworkTool){
     for {
         params := getInput("> ")
 
@@ -148,12 +198,16 @@ func userUI(api *API.ApiCommunication, route *RoutingModule.RoutingTable){
                 lookUpUI(route, params)
             case "log" :
                 logDump(route.Logger, params)
+            case "tool":
+                testCDHTtool(cdhtTools, params[1])
         }
 
     }
 }
 
 
+
+// # ------------------- Route Tool -------------------  # //
 func printRoutes(route *RoutingModule.RoutingTable, params []string) {
     if len(params) == 1 {
         route.PrintRoutingInfo()
@@ -170,8 +224,10 @@ func printRoutes(route *RoutingModule.RoutingTable, params []string) {
         }
     }
 }
+// # ------------------- [END] Route Tool -------------------  # //
 
 
+// # ------------------- LookUp Tool -------------------  # //
 func lookUpUI(routingM *RoutingModule.RoutingTable, params []string) {
     var nodeId string
     fmt.Print("Enter Node Id: ")
@@ -182,7 +238,7 @@ func lookUpUI(routingM *RoutingModule.RoutingTable, params []string) {
 
     succ := routingM.LookUp(NodeId)
     succ.PrintNodeInfo()
-    fmt.Println("----------- [Trace] ------------")
+    fmt.Println("============ [Trace] ============")
 
     logged := make(map[string]string)
     for _, node := range succ.NodeTraversalLogs {
@@ -194,8 +250,10 @@ func lookUpUI(routingM *RoutingModule.RoutingTable, params []string) {
         logged[node.Node_id.String()] = node.Node_id.String()
     }
 }
+// # ------------------- [END] LookUp Tool -------------------  # //
 
 
+// # ------------------- Log Tool -------------------  # //
 func logDump(logger *ReportModule.Logger, params []string) {
     if len(params) < 2 {
         return 
@@ -220,85 +278,93 @@ func printLog(logs []ReportModule.Log){
     }
 }
 
-func progressBar(secs time.Duration){
-    diff := secs/10
+func progressBar(amount time.Duration){
     bar := progressbar.New(10)
     for i := 0; i < 10; i++ {
         bar.Add(1)
-        time.Sleep(diff * time.Second)
+        time.Sleep(amount * time.Millisecond)
     }
     fmt.Print("\n")
 }
-//  # ----------------------- TEST  APPLICATION ----------------------- # //
-
-func testApp(reqObj Util.RequestObject, port string, appName string) {
-    appConn := NetworkModule.NewNetworkManager("127.0.0.1", port)
-
-    res := appConn.Connect("TCP", func(connection interface{}){
-        if connection, ok := connection.(net.Conn); ok { 
-            netChannel := NetworkModule.NetworkChannel{ Connection: connection, ChannelSize: 100000 }
-            netChannel.Init()
-    
-            // register app name
-            netChannel.SendToSocket(Util.RequestObject{
-                AppName: "TEST_APP",
-            })        
+// # ------------------- [END] Log Tool -------------------  # //
 
 
-            fmt.Println("["+appName+"]:+ Connected.")
+// # ------------------- CDHT Network Tool -------------------  # //
+func testCDHTtool(cdhtTools *CDHTNetworkTools.CDHTNetworkTool, command string) {
+    if cdhtTools ==  nil {
+        return
+    }
+    switch command {
+        case "hop":
+            hopCountTool(cdhtTools)
+        case "lookup":
+            lookUpTool(cdhtTools)
+        case "ping":
+            pingTool(cdhtTools)
+        case "log":
+            pintCDHTlog(cdhtTools)
+    }
+} 
 
-            for {
-                select {
-                    case netReqObj := <- netChannel.ReqChannel:
-				    	fmt.Printf("[PACKET-RECEIVED][%s][Node-ID][%s]: Packet: %s \n", appName, reqObj.SenderNodeId.String(), netReqObj)
-				    default:
-                        time.Sleep(time.Millisecond*500)
-					    status := netChannel.SendToSocket(reqObj)
+func hopCountTool(cdhtTools *CDHTNetworkTools.CDHTNetworkTool){
+    var startNodeId, endNodeId string
+    fmt.Print("Start Node Port: ")
+    fmt.Scanln(&startNodeId)
+    fmt.Print("End Node Port: ")
+    fmt.Scanln(&endNodeId)
 
-                        if !status {
-                            fmt.Println("[API] Unable to send")
-                        }
-			    }
-		    }
-        }else {
-            fmt.Println("["+appName+"]:+ Unable to Connect.")
-        }
-    })
+    command := CDHTNetworkTools.ToolCommand{
+        Type: CDHTNetworkTools.COMMAND_TYPE_HOP_COUNT,
+	    OperationID: "1232",
+	    Body: map[string]string{
+            "START_NODE_ID" : startNodeId,
+            "END_NODE_ID" : endNodeId,
+        },
+    }
+    cdhtTools.DispatchCommands(command)
+}
 
-    if !res {
-        fmt.Println("["+appName+"]:+ Unable to Create Soc.")
+
+func lookUpTool(cdhtTools *CDHTNetworkTools.CDHTNetworkTool){
+    var NodeId string
+    fmt.Print("Node Port: ")
+    fmt.Scanln(&NodeId)
+
+    command := CDHTNetworkTools.ToolCommand{
+        Type: CDHTNetworkTools.COMMAND_TYPE_LOOK_UP,
+	    OperationID: "1232",
+	    Body: map[string]string{
+            "NODE_ID" : NodeId,
+        },
+    }
+    cdhtTools.DispatchCommands(command)
+}
+
+
+func pingTool(cdhtTools *CDHTNetworkTools.CDHTNetworkTool){
+    var NodeId string
+    fmt.Print("Node Port: ")
+    fmt.Scanln(&NodeId)
+
+    command := CDHTNetworkTools.ToolCommand{
+        Type: CDHTNetworkTools.COMMAND_TYPE_PING,
+	    OperationID: "1232",
+	    Body: map[string]string{
+            "NODE_ID" : NodeId,
+        },
+    }
+    cdhtTools.DispatchCommands(command)
+}
+
+func pintCDHTlog(cdhtTools *CDHTNetworkTools.CDHTNetworkTool){
+    for len(cdhtTools.ResultChannel) > 0 {
+        command := <- cdhtTools.ResultChannel
+        fmt.Println( command.ToString() )
     }
 }
+// # ------------------- [END] CDHT Network Tool -------------------  # //
 
-
-func testAppAddress(appName string, reqObject *Util.RequestObject) string {
-    var senderNodeId, recvNodeId, appServerPort string
-    var ok bool
-    
-    fmt.Println(" ------------------- ["+appName+"] ------------------- ")
-    
-    fmt.Print("      [+]: Enter Sender(Connecting) Application Server Port: ")
-    fmt.Scanln(&appServerPort)
-    
-    fmt.Print("      [+]: Enter Sender(Connecting) Node Id: ")
-    fmt.Scanln(&senderNodeId)
-    
-    fmt.Print("      [+]: Enter Reciever Node Id: ")
-    fmt.Scanln(&recvNodeId)
-    
-    fmt.Println(" ------------------------------------------------------ ")
-
-    reqObject.SenderNodeId, ok = new(big.Int).SetString(senderNodeId, 10)
-    if !ok { fmt.Println("SetString: error node id") }
-
-    reqObject.ReceiverNodeId, ok = new(big.Int).SetString(recvNodeId, 10)
-    if !ok { fmt.Println("SetString: error m") }
-
-    reqObject.RequestBody = "THIS IS REQ BODY FROM NODE: " + senderNodeId + " TO NODE " + recvNodeId
-
-    return appServerPort
-}
-// ------------------------ end [test  app] -------------------- //
+// # ------------------- [END] UI TOOOLS -------------------  # //
 
 
 
@@ -343,6 +409,7 @@ func testChangeNodeInfo(routingM *RoutingModule.RoutingTable) {
     routingM.M = M
     routingM.IP_address = "127.0.0.1"
 }
+
 
 
 

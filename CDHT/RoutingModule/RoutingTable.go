@@ -19,6 +19,8 @@ type RoutingTable struct {
     M *big.Int
 
     Applications map[string](chan Util.RequestObject)
+    NetworkTools chan Util.RequestObject
+
     Logger *ReportModule.Logger
 	node *Node
 }
@@ -37,6 +39,7 @@ func (routingTable *RoutingTable) CreateRing() {
         Node_id : routingTable.Node_id,
         IP_address : routingTable.IP_address,
         M : routingTable.M,
+        NetworkTools : routingTable.NetworkTools,
     }
 
     routingTable.node.createRing()
@@ -54,7 +57,7 @@ func (routingTable *RoutingTable) RunNode() {
 	remoteNode.Connect()
 
     // [PRINT]:WILL BE REMOVED
-    remoteNode.PrintNodeInfo()
+    // remoteNode.PrintNodeInfo()
 
     routingTable.node = &Node{
         Port : routingTable.NodePort,
@@ -65,6 +68,7 @@ func (routingTable *RoutingTable) RunNode() {
         Node_id : routingTable.Node_id,
         IP_address : routingTable.IP_address,
         M : routingTable.M,
+        NetworkTools : routingTable.NetworkTools,
     }
 
     routingTable.node.join( &remoteNode)
@@ -97,7 +101,7 @@ func (routingTable *RoutingTable) runStablization() {
 // # --------------------------- Routing Functionalities -------------------------- #
 
 // [CORE-MODULE]
-func (routingTable *RoutingTable) ForwardPacket(req Util.RequestObject) Util.ResponseObject {
+func (routingTable *RoutingTable) ForwardPacket(req Util.RequestObject) Util.RequestObject {
     successor := NodeRPC{ NodeTraversalLogs: []NodeRPC{} }
     start := time.Now()
     err := routingTable.node.FindSuccessor( req.ReceiverNodeId, &successor)
@@ -146,7 +150,7 @@ func (routingTable *RoutingTable) ForwardPacket(req Util.RequestObject) Util.Res
 // [CORE-MODULE]
 func (routingTable *RoutingTable) LookUp(nodeId *big.Int) NodeRPC {
     successor := NodeRPC{ NodeTraversalLogs: []NodeRPC{} }
-    routingTable.node.FindSuccessor( nodeId, &successor)
+    routingTable.node.LookUP( nodeId, &successor)
     return successor
 }
 
@@ -160,3 +164,7 @@ func (routingTable *RoutingTable) PrintRoutingInfo(){
 // # ------------------------ [END] Routing Functionalities ----------------------- #
 
 
+// # ------------------------ Routing Info ----------------------- #
+func (routingTable *RoutingTable) NodeInfo() *Node{
+   return routingTable.node
+}
