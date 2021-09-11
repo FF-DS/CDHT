@@ -93,7 +93,7 @@ func (logger *Logger) reportRouteTableInfo() {
 		
 		logs := []Log{ logger.routingTable }
 		if len(logs) > 0 {
-			sendLogToAPI( logs, URL_SEND_ROUTE_TABLE_LOG)
+			sendLogToAPI( logs, logger.config.URLSendRouteTableLog() )
 		}
 	}
 }
@@ -108,7 +108,7 @@ func (logger *Logger) reportNodeLogChannel() {
 			logs = logs[:logger.config.NodeChanSize()]
 		}
 		if len(logs) > 0 {
-			if sent:= sendLogToAPI(logs, URL_SEND_NODE_INFO_LOG); sent {
+			if sent:= sendLogToAPI(logs, logger.config.URLSendNodeInfoLog() ); sent {
 				logger.nodeLogChannel = logger.nodeLogChannel[ len(logs) - 1: ]
 			}
 		}
@@ -125,7 +125,7 @@ func (logger *Logger) reportNetToolInfo() {
 			logs = logs[:logger.config.NetChanSize()]
 		}
 		if len(logs) > 0 {
-			if sent:= sendLogToAPI(logs, URL_SEND_NETWOR_TOOL_LOG); sent {
+			if sent:= sendLogToAPI(logs, logger.config.URLSendNetworkToolLog() ); sent {
 				logger.networkToolChannel = logger.networkToolChannel[ len(logs) - 1: ]
 			}
 		}
@@ -142,7 +142,7 @@ func (logger *Logger) reportConfigInfo() {
 			logs = logs[:logger.config.ConfigChanSize()]
 		}
 		if len(logs) > 0 {
-			if sent:= sendLogToAPI(logs, URL_SEND_CONFIG_TOOL_LOG); sent {
+			if sent:= sendLogToAPI(logs, logger.config.URLSendConfigToolLog() ); sent {
 				logger.configurationToolChannel = logger.configurationToolChannel[ len(logs) - 1: ]
 			}
 		}

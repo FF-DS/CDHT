@@ -15,6 +15,12 @@ type LogConfig struct {
 	
 	ConfigChanSizeValue int
 	ConfigChanDelayValue time.Duration
+
+	URLSendRouteTableLogValue string
+	URLSendNodeInfoLogValue string
+	URLSendNetworkToolLogValue string
+	URLSendConfigToolLogValue string
+
 }
 
 func (conf *LogConfig) RouteTableDelay() time.Duration {
@@ -65,4 +71,35 @@ func (conf *LogConfig) ConfigChanDelay() time.Duration {
 		return 15
 	}
 	return conf.ConfigChanDelayValue
+}
+
+
+
+// url links
+func (conf *LogConfig) URLSendRouteTableLog() string {
+	if conf.URLSendRouteTableLogValue == "" {
+		return URL_SEND_ROUTE_TABLE_LOG
+	}
+	return conf.URLSendRouteTableLogValue
+}
+
+func (conf *LogConfig) URLSendNodeInfoLog() string {
+	if conf.URLSendNodeInfoLogValue == "" {
+		return URL_SEND_NODE_INFO_LOG
+	}
+	return conf.URLSendNodeInfoLogValue
+}
+
+func (conf *LogConfig) URLSendNetworkToolLog() string {
+	if conf.URLSendNetworkToolLogValue == "" {
+		return URL_SEND_NETWORK_TOOL_LOG
+	}
+	return conf.URLSendNetworkToolLogValue
+}
+
+func (conf *LogConfig) URLSendConfigToolLog() string {
+	if conf.URLSendConfigToolLogValue == "" {
+		return URL_SEND_CONFIG_TOOL_LOG
+	}
+	return conf.URLSendConfigToolLogValue
 }

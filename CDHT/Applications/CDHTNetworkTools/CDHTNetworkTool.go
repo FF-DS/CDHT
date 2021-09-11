@@ -20,6 +20,9 @@ type CDHTNetworkTool struct {
 	NodeId *big.Int
 	NodeAddress string
 
+	URLGetCommandFromServer string
+	URLSendCommandResult string
+
 	ResultChannel chan ToolCommand
 	hopCountTool *HopCountTool
 	lookUpTool *LookUpTool
@@ -60,14 +63,14 @@ func (netTool *CDHTNetworkTool) Init() {
 func (netTool *CDHTNetworkTool) runApiCommunicationTools(){
 	go func(){
 		for {
-			time.Sleep(time.Millisecond * netTool.ReadCommandDelay )
+			time.Sleep(time.Second * netTool.ReadCommandDelay )
 			netTool.fetchCommands()
 		}
 	}()
 
 	go func(){
 		for {
-			time.Sleep(time.Millisecond * netTool.ReadCommandDelay )
+			time.Sleep(time.Second * netTool.ReadCommandDelay )
 			netTool.sendReportToServer()
 		}
 	}()
@@ -88,10 +91,27 @@ func (netTool *CDHTNetworkTool) DispatchCommands(command ToolCommand){
 
 
 // -------------- [API]: Communicate with the server -------------- //
+func (netTool *CDHTNetworkTool) getCommandFetchingURL() string {
+	if netTool.URLGetCommandFromServer == "" {
+		return URL_GET_COMMAND_FROM_SERVER
+	}
+
+	return netTool.URLGetCommandFromServer
+}
+
+func (netTool *CDHTNetworkTool) getCommandResultPostingURL() string {
+	if netTool.URLSendCommandResult == "" {
+		return URL_SEND_COMMAND_RESULT
+	}
+
+	return netTool.URLSendCommandResult
+}
+
+
 
 // fetch command from CDHT Monitoring Server
 func (netTool *CDHTNetworkTool)  fetchCommands(){
-	resp, err := http.Get(URL_GET_COMMAND_FROM_SERVER)
+	resp, err := http.Get( netTool.getCommandFetchingURL() )
 
     if err != nil {
 		return 
@@ -126,7 +146,7 @@ func (netTool *CDHTNetworkTool)  sendReportToServer(){
     }
 	
     responseBody := bytes.NewBuffer(postBody)
-    resp, err := http.Post(URL_SEND_COMMAND_RESULT, "application/json", responseBody)
+    resp, err := http.Post( netTool.getCommandResultPostingURL() , "application/json", responseBody)
     
     if err != nil {
 		netTool.ResultChannel <- command

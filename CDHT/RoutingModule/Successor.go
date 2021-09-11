@@ -72,7 +72,7 @@ func (node *Node) updateSuccessors(nextSuccessors Successors){
     copyNodeData(node.successor, &succ)
     node.currentSuccessors = append(node.currentSuccessors, succ)
     for i, succ := range nextSuccessors {
-        if i == 4 { break }
+        if i == node.SuccessorsTableLength - 1 { break }
         node.currentSuccessors = append(node.currentSuccessors, succ)
     }
 }
@@ -155,7 +155,7 @@ func (node *Node) currentSuccessorsInfo() {
     fmt.Printf("-----------------Successors Table Info[%s]--------------------\n",node.Node_id.String())
     for i := 0; i < len(node.currentSuccessors); i++ {
         entry := node.currentSuccessors[i] 
-        fmt.Printf(" [%d]. Node ID : %s  Address : %s \n", i, entry.Node_id.String(), entry.Node_address)
+        fmt.Printf(" [%d]. Node ID : %s  Address : %s \n", i + 1, entry.Node_id.String(), entry.Node_address)
     }
     fmt.Println("-------------------------------------------------------------")
 }

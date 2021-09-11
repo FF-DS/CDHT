@@ -9,9 +9,8 @@ import (
 )
 
 
-func (testApp  *TestApplication) TestAppTCP(reqObj Util.RequestObject) {
+func (testApp  *TestApplication) TestAppTCP() {
     appConn := NetworkModule.NewNetworkManager( testApp.IPAddress, testApp.Port)
-	testApp.requestObject = reqObj
 	appConn.Connect("TCP", testApp.handleTCPConnection)
 }
 
@@ -36,10 +35,12 @@ func (testApp  *TestApplication) handlePacketTransaction(netChannel NetworkModul
 	for {
 		select {
 			case netReqObj := <- netChannel.ReqChannel:
-				fmt.Printf("[PACKET-RECEIVED][%s][Node-ID][%s]: Packet: %s \n", testApp.AppName, testApp.requestObject.SenderNodeId.String(), netReqObj)
+				fmt.Printf("[PACKET-RECEIVED][%s][NODE-ID][%s]: Packet: %s \n", testApp.AppName, netReqObj.ReceiverNodeId.String(), netReqObj)
 			default:
 				time.Sleep(time.Millisecond*testApp.PacketDelay)
-				if status := netChannel.SendToSocket( testApp.requestObject ); !status {
+
+				requestObject := testApp.getPacket()
+				if status := netChannel.SendToSocket( requestObject ); !status {
 					fmt.Println("[API] Unable to send")
 				}
 		}

@@ -9,7 +9,7 @@ require (
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/rogpeppe/go-internal v1.8.0 // indirect
 	github.com/schollz/peerdiscovery v1.6.6 // indirect
-	github.com/schollz/progressbar/v2 v2.15.0 // indirect
+	github.com/schollz/progressbar/v2 v2.15.0
 	github.com/sethvargo/go-envconfig v0.3.5
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
