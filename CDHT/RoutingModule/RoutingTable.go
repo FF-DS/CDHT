@@ -17,6 +17,8 @@ type RoutingTable struct {
 	FingerTableLength int
     Node_id *big.Int
     M *big.Int
+    RoutingUpdateDelay time.Duration
+    SuccessorsTableLength int
 
     Applications map[string](chan Util.RequestObject)
     NetworkTools chan Util.RequestObject
@@ -40,6 +42,7 @@ func (routingTable *RoutingTable) CreateRing() {
         IP_address : routingTable.IP_address,
         M : routingTable.M,
         NetworkTools : routingTable.NetworkTools,
+        SuccessorsTableLength : routingTable.SuccessorsTableLength,
     }
 
     routingTable.node.createRing()
@@ -69,6 +72,7 @@ func (routingTable *RoutingTable) RunNode() {
         IP_address : routingTable.IP_address,
         M : routingTable.M,
         NetworkTools : routingTable.NetworkTools,
+        SuccessorsTableLength : routingTable.SuccessorsTableLength,
     }
 
     routingTable.node.join( &remoteNode)
@@ -81,7 +85,7 @@ func (routingTable *RoutingTable) RunNode() {
 
 func (routingTable *RoutingTable) runStablization() {
 	for {
-		time.Sleep(time.Second)
+		time.Sleep(time.Second * routingTable.RoutingUpdateDelay)
 		routingTable.node.checkPredecessor()
 		routingTable.node.checkSeccessors()
 		routingTable.node.stablize()

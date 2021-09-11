@@ -55,7 +55,7 @@ func runFirstNode(wg *sync.WaitGroup) {
     netTools.Init(100000)
 
     // routing
-    firstNode := RoutingModule.RoutingTable{ Applications: apiComm.Application, Logger: &logMngr, NetworkTools: netTools.NetworkToolPackets}
+    firstNode := RoutingModule.RoutingTable{ Applications: apiComm.Application, Logger: &logMngr, NetworkTools: netTools.NetworkToolPackets, RoutingUpdateDelay: 1,  SuccessorsTableLength: 5 }
     testChangeNodeInfo( &firstNode )
     
     // init node
@@ -76,9 +76,10 @@ func runFirstNode(wg *sync.WaitGroup) {
     fmt.Println(logo)
     
     // just ps bars
+    fmt.Println("[Init]: + Initalizing routing tables.... ")
     progressBar(100)
 
-    fmt.Println("[Init]: + Initalizing routing tables.... ")
+    fmt.Println("[Init]: + Initalizing application manager.... ")
     progressBar(100)
 
     fmt.Println("[Init]: + Initalizing network tools.... ")
@@ -110,7 +111,7 @@ func runSecondNode(wg *sync.WaitGroup) {
     netTools.Init(100000)
 
     // routing
-    secondNode := RoutingModule.RoutingTable{ Applications: apiComm.Application, Logger: &logMngr,  NetworkTools: netTools.NetworkToolPackets }
+    secondNode := RoutingModule.RoutingTable{ Applications: apiComm.Application, Logger: &logMngr,  NetworkTools: netTools.NetworkToolPackets, RoutingUpdateDelay: 1, SuccessorsTableLength: 5 }
     testChangeNodeInfo( &secondNode )
 
     // init node
@@ -133,9 +134,10 @@ func runSecondNode(wg *sync.WaitGroup) {
     fmt.Println(logo)
 
     // just ps bars
+    fmt.Println("[Init]: + Initalizing routing tables.... ")
     progressBar(100)
 
-    fmt.Println("[Init]: + Initalizing routing tables.... ")
+    fmt.Println("[Init]: + Initalizing application manager.... ")
     progressBar(100)
 
     fmt.Println("[Init]: + Initalizing network tools.... ")
@@ -160,7 +162,7 @@ func runCDHTNetworkTools(routingTable *RoutingModule.RoutingTable, api *API.ApiC
         AppServerIP: routingTable.NodeInfo().IP_address,
         AppServerPort: api.PORT,
         PingToolListeningPort: pingPort[0],
-        ReadCommandDelay: 10000,
+        ReadCommandDelay: 5,
         ChannelSize: 10000,
         NodeId: routingTable.NodeInfo().Node_id,
         NodeAddress: routingTable.NodeInfo().IP_address + ":" + routingTable.NodeInfo().Port,
@@ -238,7 +240,7 @@ func lookUpUI(routingM *RoutingModule.RoutingTable, params []string) {
 
     succ := routingM.LookUp(NodeId)
     succ.PrintNodeInfo()
-    fmt.Println("============ [Trace] ============")
+    fmt.Println("===================== [Trace] ======================")
 
     logged := make(map[string]string)
     for _, node := range succ.NodeTraversalLogs {
@@ -357,9 +359,15 @@ func pingTool(cdhtTools *CDHTNetworkTools.CDHTNetworkTool){
 }
 
 func pintCDHTlog(cdhtTools *CDHTNetworkTools.CDHTNetworkTool){
+    commands := []CDHTNetworkTools.ToolCommand {}
     for len(cdhtTools.ResultChannel) > 0 {
         command := <- cdhtTools.ResultChannel
         fmt.Println( command.ToString() )
+        commands = append(commands, command)
+    }
+
+    for _, command := range commands {
+        cdhtTools.ResultChannel <- command
     }
 }
 // # ------------------- [END] CDHT Network Tool -------------------  # //

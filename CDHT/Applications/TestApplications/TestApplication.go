@@ -46,8 +46,8 @@ func (testApp  *TestApplication) Init() TestApplication {
 
 // # --------------------- TEST Packet Craft -------------------- # //
 
-func TestPacket() (Util.RequestObject, string, string) {
-    var senderNodeId, recvNodeId, appServerPort, UDPListenerPort string
+func TestPacket() (Util.RequestObject, string, string, string) {
+    var senderNodeId, recvNodeId, appServerIP, appServerPort, UDPListenerPort string
     var ok bool
     reqObject := Util.RequestObject{}
     
@@ -55,7 +55,10 @@ func TestPacket() (Util.RequestObject, string, string) {
 	fmt.Print("      [+]: Enter App Name: ")
     fmt.Scanln(&reqObject.AppName)
 
-    fmt.Print("      [+]: Enter Sender(Connecting) Application Server Port: ")
+    fmt.Print("      [+]: Enter Sender(Connecting) Application Server IP: ")
+    fmt.Scanln(&appServerIP)
+
+	fmt.Print("      [+]: Enter Sender(Connecting) Application Server Port: ")
     fmt.Scanln(&appServerPort)
 
 	fmt.Print("      [+]: Enter Current (UDP) Server Port: ")
@@ -76,7 +79,7 @@ func TestPacket() (Util.RequestObject, string, string) {
 
     reqObject.RequestBody = "THIS IS REQ BODY FROM NODE: " + senderNodeId + " TO NODE " + recvNodeId
 
-	return reqObject, appServerPort, UDPListenerPort
+	return reqObject, appServerPort, UDPListenerPort, appServerIP
 }
 
 
@@ -85,30 +88,20 @@ func TestPacket() (Util.RequestObject, string, string) {
 // # --------------- TEST APP RUNNER ---------------------------- #
 
 func RunTestTCPApp(){
-    reqObj1, appPort1, _ := TestPacket()
-    reqObj2, appPort2, _ := TestPacket()
+    reqObj1, appPort1, _, localIP1 := TestPacket()
 
-
-	app1 := TestApplication{ Port: appPort1, AppName: reqObj1.AppName }
+	app1 := TestApplication{ Port: appPort1, AppName: reqObj1.AppName, IPAddress: localIP1 }
 	app1.Init()
-	app2 := TestApplication{ Port: appPort2, AppName: reqObj2.AppName }
-	app2.Init()
 
     go app1.TestAppTCP(reqObj1)
-    go app2.TestAppTCP(reqObj2)
 }
 
 
 func RunTestUDPApp(){
-	reqObj1, appPort1, localPort1 := TestPacket()
-    reqObj2, appPort2, localPort2 := TestPacket()
+	reqObj1, appPort1, localPort1, localIP1 := TestPacket()
 
-
-	app1 := &TestApplication{ Port: appPort1, UDPListenerPort: localPort1, AppName: reqObj1.AppName }
+	app1 := &TestApplication{ Port: appPort1, UDPListenerPort: localPort1, IPAddress: localIP1, AppName: reqObj1.AppName }
 	app1.Init()
-	app2 := &TestApplication{ Port: appPort2, UDPListenerPort: localPort2, AppName: reqObj2.AppName }
-	app2.Init()
 
     go app1.TestAppUDP(reqObj1)
-    go app2.TestAppUDP(reqObj2)
 }

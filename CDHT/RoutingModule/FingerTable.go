@@ -209,9 +209,9 @@ func (node *Node) currentFingerTableInfo() {
     for i := 0; i < len(node.fingerTableEntry); i++ {
         entry := checkNode( node.fingerTableEntry[i] )
         if entry != nil {
-            fmt.Printf(" [%d]. Entry ID: |%s| Node ID : %s  Address : %s \n", i, node.calculateFingerId(i).String(), entry.Node_id.String(), entry.Node_address)
+            fmt.Printf(" [%d]. Entry ID: |%s| Node ID : %s  Address : %s \n", i + 1, node.calculateFingerId(i).String(), entry.Node_id.String(), entry.Node_address)
         }else{
-            fmt.Printf(" [%d]. Entry ID: |%s| NOT AVAILABLE \n", i, node.calculateFingerId(i).String())
+            fmt.Printf(" [%d]. Entry ID: |%s| NOT AVAILABLE \n", i + 1, node.calculateFingerId(i).String())
         }
     }
     fmt.Println("---------------------------------------------------------")

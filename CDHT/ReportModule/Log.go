@@ -24,7 +24,7 @@ const (
 
 	URL_SEND_ROUTE_TABLE_LOG         string = "https://cdht-monitoring-api.herokuapp.com/logs"
 	URL_SEND_NODE_INFO_LOG           string = "https://cdht-monitoring-api.herokuapp.com/logs"
-	URL_SEND_NETWOR_TOOL_LOG         string = "https://cdht-monitoring-api.herokuapp.com/logs"
+	URL_SEND_NETWORK_TOOL_LOG         string = "https://cdht-monitoring-api.herokuapp.com/logs"
 	URL_SEND_CONFIG_TOOL_LOG         string = "https://cdht-monitoring-api.herokuapp.com/logs"
 )
 
