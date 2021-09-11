@@ -7,6 +7,7 @@ import (
     "net"  
     "math/big"
     "net/rpc"
+    "strconv"
     "fmt"
 )
 
@@ -27,6 +28,7 @@ type Node struct {
 
     fingerTableEntry map[int]*NodeRPC
     FingerTableLength int
+    SuccessorsTableLength int
 
     JumpSpacing int
     defaultArgs *Args
@@ -126,13 +128,15 @@ func (node *Node) generateNodeId() {
     hashFunction.Write([]byte(nodeIdentification))
     sha := hashFunction.Sum(nil)
 
-    two, m, hashedID := big.NewInt(2), big.NewInt(160),  (&big.Int{}).SetBytes(sha)
+    base, m, hashedID := big.NewInt( int64(node.JumpSpacing) ), node.M,  (&big.Int{}).SetBytes(sha)
 
-    modulo := two.Exp( two, m, nil)
+    modulo := base.Exp( base, m, nil)
 
     node.Node_id = hashedID.Mod(hashedID, modulo)
     node.M = m
-    node.FingerTableLength = 160
+
+    fingerTableLen, _ := strconv.Atoi(m.String())
+    node.FingerTableLength = fingerTableLen
 }
 
 

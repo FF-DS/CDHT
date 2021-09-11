@@ -17,6 +17,8 @@ type RoutingTable struct {
 	FingerTableLength int
     Node_id *big.Int
     M *big.Int
+    RoutingUpdateDelay time.Duration
+    SuccessorsTableLength int
 
     Applications map[string](chan Util.RequestObject)
     NetworkTools chan Util.RequestObject
@@ -40,25 +42,20 @@ func (routingTable *RoutingTable) CreateRing() {
         IP_address : routingTable.IP_address,
         M : routingTable.M,
         NetworkTools : routingTable.NetworkTools,
+        SuccessorsTableLength : routingTable.SuccessorsTableLength,
     }
 
     routingTable.node.createRing()
+    
     // [PRINT]:WILL BE REMOVED
-    routingTable.node.currentNodeInfo()
+    // routingTable.node.currentNodeInfo()
     
     go routingTable.runStablization()
 }
 
 
 
-func (routingTable *RoutingTable) RunNode() {
-
-    remoteNode := NodeRPC{ Node_address : routingTable.RemoteNodeAddr }
-	remoteNode.Connect()
-
-    // [PRINT]:WILL BE REMOVED
-    // remoteNode.PrintNodeInfo()
-
+func (routingTable *RoutingTable) RunNode(remoteNode *NodeRPC) {
     routingTable.node = &Node{
         Port : routingTable.NodePort,
         JumpSpacing : routingTable.JumpSpacing,
@@ -69,11 +66,13 @@ func (routingTable *RoutingTable) RunNode() {
         IP_address : routingTable.IP_address,
         M : routingTable.M,
         NetworkTools : routingTable.NetworkTools,
+        SuccessorsTableLength : routingTable.SuccessorsTableLength,
     }
 
-    routingTable.node.join( &remoteNode)
+    routingTable.node.join( remoteNode )
+
     // [PRINT]:WILL BE REMOVED
-    routingTable.node.currentNodeInfo()
+    // routingTable.node.currentNodeInfo()
     
     go routingTable.runStablization()
 }
@@ -81,7 +80,7 @@ func (routingTable *RoutingTable) RunNode() {
 
 func (routingTable *RoutingTable) runStablization() {
 	for {
-		time.Sleep(time.Second)
+		time.Sleep(time.Second * routingTable.RoutingUpdateDelay)
 		routingTable.node.checkPredecessor()
 		routingTable.node.checkSeccessors()
 		routingTable.node.stablize()
@@ -167,4 +166,8 @@ func (routingTable *RoutingTable) PrintRoutingInfo(){
 // # ------------------------ Routing Info ----------------------- #
 func (routingTable *RoutingTable) NodeInfo() *Node{
    return routingTable.node
+}
+
+func (routingTable *RoutingTable) PrintCurrentNodeInfo() {
+    routingTable.node.currentNodeInfo()
 }

@@ -31,7 +31,7 @@ func (Api *ApiCommunication) StartAppServer() {
 	go netManagerTCP.StartServer("TCP", Api.CloseAppServer, Api.appRequestHandlerTCP)
 	netManagerUDP := NetworkModule.NewNetworkManager("", Api.PORT)
 	go netManagerUDP.StartServer("UDP", Api.CloseAppServer, Api.appRequestHandlerUDP)
-	fmt.Println("[APP-SERVICE]:+ Starting Application server at port: ", Api.PORT)
+	// fmt.Println("[APP-SERVICE]:+ Starting Application server at port: ", Api.PORT)
 }
 
 
@@ -53,6 +53,7 @@ func (Api *ApiCommunication) appRequestHandlerTCP(connection interface{}) {
 						delete(Api.Application, netReqObj.AppName);
 						return 
 					}else {
+						netReqObj.SenderNodeId = Api.NodeRoutingTable.NodeInfo().Node_id
 						Api.NodeRoutingTable.ForwardPacket( netReqObj )
 					}
 					
