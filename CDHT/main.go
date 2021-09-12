@@ -27,10 +27,7 @@ func testNode(wg *sync.WaitGroup) {
     config := configMngr.LoadConfig()
     core := CoreModule.Core{ Config: &config }
 
-    core.Start()
-
-    // ui := CoreModule.TerminalUI{ CoreLink : &core }
-    // ui.UserUI()
+    core.START()
 
     time.Sleep(time.Second * 30000)
     wg.Done()

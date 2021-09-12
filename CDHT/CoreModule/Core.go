@@ -180,15 +180,6 @@ func (core *Core) RunApplications() {
 }
 
 
-func (core *Core) Start() {
-	if !core.Config.RUN_TCP_TEST_APPLICATION && !core.Config.RUN_UDP_TEST_APPLICATION {
-		core.RunNode()
-	}
-	core.RunApplications()
-}
-
-
-
 // # ------------------  [Helper]  ------------------ #
 
 func progressBar(amount time.Duration){
@@ -199,3 +190,19 @@ func progressBar(amount time.Duration){
     }
     fmt.Print("\n")
 }
+
+
+
+
+
+// # -------------------  [START]  ------------------ #
+// #==================================================#
+func (core *Core) START() {
+	if !core.Config.RUN_TCP_TEST_APPLICATION && !core.Config.RUN_UDP_TEST_APPLICATION {
+		core.RunNode()
+		ui := TerminalUI{ CoreLink : core }
+    	ui.UserUI()
+	}
+	core.RunApplications()
+}
+
