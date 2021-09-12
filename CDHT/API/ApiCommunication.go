@@ -53,6 +53,7 @@ func (Api *ApiCommunication) appRequestHandlerTCP(connection interface{}) {
 						delete(Api.Application, netReqObj.AppName);
 						return 
 					}else {
+						netReqObj.SenderNodeId = Api.NodeRoutingTable.NodeInfo().Node_id
 						Api.NodeRoutingTable.ForwardPacket( netReqObj )
 					}
 					

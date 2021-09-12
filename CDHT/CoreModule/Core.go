@@ -2,81 +2,200 @@ package CoreModule
 
 
 import (
+	"github.com/schollz/progressbar/v2"
     "cdht/Applications/TestApplications"
     "cdht/Applications/CDHTNetworkTools"
     "cdht/RoutingModule"
     "cdht/ReportModule"
     "cdht/NetworkTools"
+    "cdht/Config"
     "cdht/API"
+	"time"
+	"fmt"
 )
 
 
 type Core struct {
-	config   		        *Configuration
+	Config   		        *Config.Configuration
 	
-	apiCommunication   	    *API.ApiCommunication
-	logManager  		    *ReportModule.Logge
-	internalNetworkTools    *NetworkTools.NetworkTool
-	routingTableInfo   	    *RoutingModule.RoutingTable
-	cdhtNetworkTools   	    *CDHTNetworkTools.CDHTNetworkTool
+	ApiCommunication   	    *API.ApiCommunication
+	LogManager  		    *ReportModule.Logger
+	InternalNetworkTools    *NetworkTools.NetworkTool
+	RoutingTableInfo   	    *RoutingModule.RoutingTable
+	CdhtNetworkTools   	    *CDHTNetworkTools.CDHTNetworkTool
+	CdhtTestApplication     *TestApplications.TestApplication
+	RemoteNode              *RoutingModule.NodeRPC
 }
 
 
 
+
+// # --------------- [INITALIZATION!!] --------------- #
+
 func (core *Core) InitalizeApiCommunication(){
 	apiComm := API.ApiCommunication{
-        ChannelSize:  core.config.Application_Channel_Size,
-        PORT:  core.config.Application_Connecting_Port,
+        ChannelSize:  core.Config.Application_Channel_Size,
+        PORT:  core.Config.Application_Connecting_Port,
     }
     apiComm.Init()
 	
-	core.apiCommunication = &apiComm
+	core.ApiCommunication = &apiComm
 }
 
 
 func (core *Core) InitalizeLogManager(){
 	logMngr := ReportModule.Logger{}
-	logMngr.Configure( core.config.GetLogConfiguration() )
+	logMngr.Configure( core.Config.GetLogConfiguration() )
     logMngr.Init()
 	
-	core.logManager = &logMngr
+	core.LogManager = &logMngr
 }
 
 
 func (core *Core) InitalizeNetworkTools(){
-	netTools := NetworkTools.NetworkTool{ Logger: core.logManager }
-    netTools.Init( core.config.Network_Tool_Channel_Size )
+	netTools := NetworkTools.NetworkTool{ Logger: core.LogManager }
+    netTools.Init( core.Config.Network_Tool_Channel_Size )
 
-	core.internalNetworkTools = &netTools
+	core.InternalNetworkTools = &netTools
 }
+
+
+func (core *Core) ConnectWithNode(){
+	remoteNode := RoutingModule.NodeRPC{ Node_address : core.Config.Remote_Node_Address }
+	remoteNode.Connect()
+	core.RemoteNode = &remoteNode
+}
+
 
 
 func (core *Core) InitalizeRoutingTable(){
 	routingTableInfo := RoutingModule.RoutingTable{ 
-		Applications: core.apiCommunication.Application, 
-		Logger: core.logManager, 
-		NetworkTools: core.internalNetworkTools.NetworkToolPackets, 
-		RoutingUpdateDelay: 1, 
-		SuccessorsTableLength: 5, 
-		RemoteNodeAddr: core.config.Remote_Node_Address,
+		Applications: core.ApiCommunication.Application, 
+		Logger: core.LogManager, 
+		NetworkTools: core.InternalNetworkTools.NetworkToolPackets, 
+		RoutingUpdateDelay: core.Config.Routing_Update_Delay, 
+		SuccessorsTableLength: core.Config.Successors_Table_Length, 
+		NodePort: core.Config.Node_Port,
+		IP_address: core.Config.Node_IP,
+		M: core.Config.GetNodeM(),
+		Node_id: core.Config.GetNodeID(),
+		FingerTableLength: core.Config.Finger_Table_Length,
+		JumpSpacing: core.Config.Jump_Spacing,
 	}
 	
-	core.routingTableInfo = &routingTableInfo
+	core.RoutingTableInfo = &routingTableInfo
 
 	// [CREATE RING] or [JOIN RING]
-	if core.config.Application_Mode == MODE_CREATE_RING {
-		core.routingTableInfo.CreateRing()    
-	}else if core.config.Application_Mode == MODE_JOIN_RING {
-		core.routingTableInfo.RunNode()    
+	if core.Config.Application_Mode == Config.MODE_CREATE_RING {
+		core.RoutingTableInfo.CreateRing()    
+	}else if core.Config.Application_Mode == Config.MODE_JOIN_RING {
+		core.ConnectWithNode()
+		core.RoutingTableInfo.RunNode( core.RemoteNode )    
 	}
 }
 
 
 func (core *Core) InitalizeCDHTNetworkTools(){
-	
+	cdhtTools := CDHTNetworkTools.CDHTNetworkTool{
+        AppServerIP: core.RoutingTableInfo.NodeInfo().IP_address,
+        AppServerPort: core.Config.Application_Connecting_Port,
+        PingToolListeningPort: core.Config.CDHT_Ping_Tool_Listening_Port,
+        ReadCommandDelay: core.Config.CDHT_API_Communication_Delay,
+        ChannelSize: core.Config.CDHT_Command_Channel_Size,
+        NodeId: core.RoutingTableInfo.NodeInfo().Node_id,
+        NodeAddress: core.RoutingTableInfo.NodeInfo().IP_address + ":" + core.Config.Node_Port,
+        URLGetCommandFromServer: core.Config.CDHT_URL_Get_Command_From_Server,
+        URLSendCommandResult: core.Config.CDHT_URL_Send_Command_Result,
+    }
+    cdhtTools.Init()
+	core.CdhtNetworkTools = &cdhtTools
 }
 
 
+
 func (core *Core) InitalizeTestApplicationTool(){
-	
+	testApp := TestApplications.TestApplication{
+		IPAddress: core.Config.TEST_APP_IPAddress,
+		Port: core.Config.TEST_APP_Port,
+		UDPListenerPort: core.Config.TEST_APP_UDP_Listener_Port,
+		NetChannelSize: core.Config.TEST_APP_Net_Channel_Size,
+		AppName: core.Config.TEST_APP_AppName,
+		PacketDelay: core.Config.TEST_APP_Packet_Delay,
+	}
+
+	testApp.Init()
+	core.CdhtTestApplication = &testApp
+}
+
+
+
+
+// # --------------- [RUNNING!!] --------------- #
+
+func (core *Core) RunNode() {
+	// Initalizing apps
+	core.InitalizeApiCommunication()
+	core.InitalizeLogManager()
+	core.InitalizeNetworkTools()
+
+
+	// init routing table
+	core.InitalizeRoutingTable()
+	fmt.Println("[Init]: + Initalizing routing tables.... ")
+    progressBar(100)
+
+
+	// init api communication
+	core.ApiCommunication.NodeRoutingTable = core.RoutingTableInfo
+	core.ApiCommunication.StartAppServer()
+	fmt.Println("[Init]: + Initalizing application manager.... ")
+    progressBar(100)
+
+
+	// init [internal network tool]
+	core.InternalNetworkTools.RoutingTable = core.RoutingTableInfo
+	core.InternalNetworkTools.RunTools()
+
+	core.RunApplications()
+	fmt.Println("[Init]: + Initalizing network tools.... ")
+    progressBar(100)
+}
+
+
+
+func (core *Core) RunApplications() {
+	if (core.Config.RUN_TCP_TEST_APPLICATION){
+		core.InitalizeTestApplicationTool()
+		core.CdhtTestApplication.TestAppTCP()
+	}
+
+	if (core.Config.RUN_UDP_TEST_APPLICATION){
+		core.InitalizeTestApplicationTool()
+		core.CdhtTestApplication.TestAppUDP()
+	}
+
+	if (core.Config.RUN_NETWORK_TEST_APPLICATION){
+		core.InitalizeCDHTNetworkTools()
+	}
+}
+
+
+func (core *Core) Start() {
+	if !core.Config.RUN_TCP_TEST_APPLICATION && !core.Config.RUN_UDP_TEST_APPLICATION {
+		core.RunNode()
+	}
+	core.RunApplications()
+}
+
+
+
+// # ------------------  [Helper]  ------------------ #
+
+func progressBar(amount time.Duration){
+    bar := progressbar.New(10)
+    for i := 0; i < 10; i++ {
+        bar.Add(1)
+        time.Sleep(amount * time.Millisecond)
+    }
+    fmt.Print("\n")
 }

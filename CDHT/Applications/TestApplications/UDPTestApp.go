@@ -8,8 +8,7 @@ import (
     "net"
 )
 
-func (testApp  *TestApplication) TestAppUDP(reqObj Util.RequestObject) {
-	testApp.requestObject = reqObj
+func (testApp  *TestApplication) TestAppUDP() {
 
     appConn := NetworkModule.NewNetworkManager( testApp.IPAddress, testApp.Port)
     go appConn.Connect("UDP", testApp.sendUDPPacket)
@@ -28,7 +27,8 @@ func (testApp  *TestApplication) sendUDPPacket(udpConnection interface{}){
 
 		for {
 			time.Sleep(time.Millisecond*testApp.PacketDelay)
-			NetworkModule.SendUDPPacket(soc, &testApp.requestObject)
+			requestObject := testApp.getPacket()
+			NetworkModule.SendUDPPacket(soc, &requestObject)
 		}
 	}
 }
@@ -36,6 +36,6 @@ func (testApp  *TestApplication) sendUDPPacket(udpConnection interface{}){
 
 func (testApp  *TestApplication) receiveUDPPacket(requestObject interface{}){
 	if requestObject, ok := requestObject.(Util.RequestObject); ok { 
-		fmt.Printf("[PACKET-RECEIVED][%s][Node-ID][%s]: Packet: %s \n", testApp.AppName, requestObject.ReceiverNodeId.String(), requestObject)
+		fmt.Printf("[PACKET-RECEIVED][%s][NODE-ID][%s]: Packet: %s \n", testApp.AppName, requestObject.ReceiverNodeId.String(), requestObject)
 	}
 }

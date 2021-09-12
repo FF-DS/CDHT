@@ -20,7 +20,7 @@ type TestApplication struct {
 	PacketDelay time.Duration
 	close_server chan bool
 
-    requestObject Util.RequestObject
+    requestObject *Util.RequestObject
 }
 
 
@@ -46,62 +46,49 @@ func (testApp  *TestApplication) Init() TestApplication {
 
 // # --------------------- TEST Packet Craft -------------------- # //
 
-func TestPacket() (Util.RequestObject, string, string, string) {
-    var senderNodeId, recvNodeId, appServerIP, appServerPort, UDPListenerPort string
-    var ok bool
-    reqObject := Util.RequestObject{}
+func (testApp  *TestApplication) TestPacket() (Util.RequestObject, bool) {
+    var recvNodeId, repeat, payload string
+	var ok = false
+
+    reqObject := Util.RequestObject{ Type: Util.PACKET_TYPE_APPLICATION, RequestID: "12221", AppName: testApp.AppName , AppID: 1221}
     
 	fmt.Println(" ------------------- [TEST-PACKET] ------------------- ")
-	fmt.Print("      [+]: Enter App Name: ")
-    fmt.Scanln(&reqObject.AppName)
-
-    fmt.Print("      [+]: Enter Sender(Connecting) Application Server IP: ")
-    fmt.Scanln(&appServerIP)
-
-	fmt.Print("      [+]: Enter Sender(Connecting) Application Server Port: ")
-    fmt.Scanln(&appServerPort)
-
-	fmt.Print("      [+]: Enter Current (UDP) Server Port: ")
-    fmt.Scanln(&UDPListenerPort)
-    
-    fmt.Print("      [+]: Enter Sender(Connecting) Node Id: ")
-    fmt.Scanln(&senderNodeId)
-    
     fmt.Print("      [+]: Enter Reciever Node Id: ")
     fmt.Scanln(&recvNodeId)
+	fmt.Print("      [+]: Enter Packet PAYLOAD : ")
+    fmt.Scanln(&payload)
+	fmt.Print("      [+]: Use this packet repeatedly (y/N) : ")
+    fmt.Scanln(&repeat)
     fmt.Println(" ------------------------------------------------------ ")
 
-    reqObject.SenderNodeId, ok = new(big.Int).SetString(senderNodeId, 10)
-    if !ok { fmt.Println("SetString: error node id") }
-
     reqObject.ReceiverNodeId, ok = new(big.Int).SetString(recvNodeId, 10)
-    if !ok { fmt.Println("SetString: error m") }
+    for !ok { 
+		fmt.Print("      [+]: Enter (Valid) Reciever Node Id: ")
+		fmt.Scanln(&recvNodeId)
+		reqObject.ReceiverNodeId, ok = new(big.Int).SetString(recvNodeId, 10)
 
-    reqObject.RequestBody = "THIS IS REQ BODY FROM NODE: " + senderNodeId + " TO NODE " + recvNodeId
+	}
 
-	return reqObject, appServerPort, UDPListenerPort, appServerIP
+	reqObject.RequestBody = payload
+	if reqObject.RequestBody == "" {
+		reqObject.RequestBody = "THIS IS REQ BODY IS FOR NODE " + recvNodeId
+	}else
+	
+	if repeat == "y" || repeat == "yes" {
+		return reqObject, true
+	}
+	return reqObject, false
 }
 
 
+func (testApp  *TestApplication) getPacket() Util.RequestObject {
+	if testApp.requestObject == nil {
+		requestObject, repeat := testApp.TestPacket()
+		if repeat {
+			testApp.requestObject = &requestObject 
+		}
 
-
-// # --------------- TEST APP RUNNER ---------------------------- #
-
-func RunTestTCPApp(){
-    reqObj1, appPort1, _, localIP1 := TestPacket()
-
-	app1 := TestApplication{ Port: appPort1, AppName: reqObj1.AppName, IPAddress: localIP1 }
-	app1.Init()
-
-    go app1.TestAppTCP(reqObj1)
-}
-
-
-func RunTestUDPApp(){
-	reqObj1, appPort1, localPort1, localIP1 := TestPacket()
-
-	app1 := &TestApplication{ Port: appPort1, UDPListenerPort: localPort1, IPAddress: localIP1, AppName: reqObj1.AppName }
-	app1.Init()
-
-    go app1.TestAppUDP(reqObj1)
+		return requestObject
+	}
+	return	*testApp.requestObject
 }

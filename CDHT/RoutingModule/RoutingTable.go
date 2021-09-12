@@ -46,6 +46,7 @@ func (routingTable *RoutingTable) CreateRing() {
     }
 
     routingTable.node.createRing()
+    
     // [PRINT]:WILL BE REMOVED
     routingTable.node.currentNodeInfo()
     
@@ -54,14 +55,7 @@ func (routingTable *RoutingTable) CreateRing() {
 
 
 
-func (routingTable *RoutingTable) RunNode() {
-
-    remoteNode := NodeRPC{ Node_address : routingTable.RemoteNodeAddr }
-	remoteNode.Connect()
-
-    // [PRINT]:WILL BE REMOVED
-    // remoteNode.PrintNodeInfo()
-
+func (routingTable *RoutingTable) RunNode(remoteNode *NodeRPC) {
     routingTable.node = &Node{
         Port : routingTable.NodePort,
         JumpSpacing : routingTable.JumpSpacing,
@@ -75,7 +69,8 @@ func (routingTable *RoutingTable) RunNode() {
         SuccessorsTableLength : routingTable.SuccessorsTableLength,
     }
 
-    routingTable.node.join( &remoteNode)
+    routingTable.node.join( remoteNode )
+
     // [PRINT]:WILL BE REMOVED
     routingTable.node.currentNodeInfo()
     
