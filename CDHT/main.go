@@ -29,7 +29,9 @@ func testNode(wg *sync.WaitGroup) {
 
     core.START()
 
-    time.Sleep(time.Second * 30000)
+    if core.Config.RUN_TCP_TEST_APPLICATION || core.Config.RUN_UDP_TEST_APPLICATION { 
+        time.Sleep(time.Minute * core.Config.TEST_APP_RUNNING_TIME)
+    }
     wg.Done()
 }
 
@@ -37,14 +39,14 @@ func testNode(wg *sync.WaitGroup) {
 
 
 var logo  string = `
-                                                ▄████▄  ▓█████▄  ██░ ██ ▄▄▄█████▓
-                                                ▒██▀ ▀█  ▒██▀ ██▌▓██░ ██▒▓  ██▒ ▓▒
-                                                ▒▓█    ▄ ░██   █▌▒██▀▀██░▒ ▓██░ ▒░
-                                                ▒▓▓▄ ▄██▒░▓█▄   ▌░▓█ ░██ ░ ▓██▓ ░ 
-                                                ▒ ▓███▀ ░░▒████▓ ░▓█▒░██▓  ▒██▒ ░ 
-                                                ░ ░▒ ▒  ░ ▒▒▓  ▒  ▒ ░░▒░▒  ▒ ░░   
-                                                  ░  ▒    ░ ▒  ▒  ▒ ░▒░ ░    ░    
-                                                ░         ░ ░  ░  ░  ░░ ░  ░      
-                                                ░ ░         ░     ░  ░  ░         
-                                                ░         ░
+                                            ▄████▄  ▓█████▄  ██░ ██ ▄▄▄█████▓
+                                            ▒██▀ ▀█  ▒██▀ ██▌▓██░ ██▒▓  ██▒ ▓▒
+                                            ▒▓█    ▄ ░██   █▌▒██▀▀██░▒ ▓██░ ▒░
+                                            ▒▓▓▄ ▄██▒░▓█▄   ▌░▓█ ░██ ░ ▓██▓ ░ 
+                                            ▒ ▓███▀ ░░▒████▓ ░▓█▒░██▓  ▒██▒ ░ 
+                                            ░ ░▒ ▒  ░ ▒▒▓  ▒  ▒ ░░▒░▒  ▒ ░░   
+                                              ░  ▒    ░ ▒  ▒  ▒ ░▒░ ░    ░    
+                                            ░         ░ ░  ░  ░  ░░ ░  ░      
+                                            ░ ░         ░     ░  ░  ░         
+                                            ░         ░
 `

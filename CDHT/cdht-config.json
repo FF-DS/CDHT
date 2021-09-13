@@ -1,15 +1,15 @@
 {
-  // "Application_Mode": "FIRST_NODE",
-  "Application_Mode": "SECOND_NODE",
+  "Application_Mode": "FIRST_NODE",
+  // "Application_Mode": "SECOND_NODE",
 
-  // "RUN_TCP_TEST_APPLICATION": false,
-  "RUN_TCP_TEST_APPLICATION": true,
+  "RUN_TCP_TEST_APPLICATION": false,
+  // "RUN_TCP_TEST_APPLICATION": true,
   "RUN_UDP_TEST_APPLICATION": false,
-  // "RUN_NETWORK_TEST_APPLICATION": true,
-  "RUN_NETWORK_TEST_APPLICATION": false,
+  "RUN_NETWORK_TEST_APPLICATION": true,
+  // "RUN_NETWORK_TEST_APPLICATION": false,
 
   // "Node_Port": "2323",
-  "Node_Port": "8886",
+  "Node_Port": "2323",
   "Node_IP": "127.0.0.1",
   // "Node_ID": "2",
   "Node_ID": "8",

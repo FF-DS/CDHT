@@ -14,6 +14,8 @@ const (
 
 
 type Configuration struct {
+	ConfigID int
+	
 	// mode of the application
 	Application_Mode string
 
@@ -76,6 +78,7 @@ type Configuration struct {
 	TEST_APP_Net_Channel_Size int
 	TEST_APP_AppName string
 	TEST_APP_Packet_Delay  time.Duration 
+	TEST_APP_RUNNING_TIME  time.Duration
 }
 
 
