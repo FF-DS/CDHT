@@ -28,9 +28,8 @@ func (core *Core) UpdateRoutingTableInfoConfig() {
 	}
 
 	core.RoutingTableInfo.RoutingUpdateDelay = core.Config.Routing_Update_Delay
-	core.RoutingTableInfo.SuccessorsTableLength = core.Config.Successors_Table_Length
-	core.RoutingTableInfo.FingerTableLength = core.Config.Finger_Table_Length
-	core.RoutingTableInfo.JumpSpacing = core.Config.Jump_Spacing
+	core.RoutingTableInfo.NodeInfo().SuccessorsTableLength = core.Config.Successors_Table_Length
+	core.RoutingTableInfo.NodeInfo().JumpSpacing = core.Config.Jump_Spacing
 }
 
 func (core *Core) UpdateCdhtNetworkToolsConfig() {

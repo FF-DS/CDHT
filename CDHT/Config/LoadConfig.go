@@ -15,7 +15,7 @@ type Config struct {
 
 
 // ## ---------- init --------------- ##
-func (config *Config) LoadConfig() Configuration {
+func (config *Config) LoadConfig() *Configuration {
 	configuration := Configuration{}
 
 	// load from file
@@ -29,7 +29,7 @@ func (config *Config) LoadConfig() Configuration {
 	}
 
 	config.configuration.ValidateConfig()
-	return configuration
+	return config.configuration
 }
 
 
@@ -45,10 +45,11 @@ func (config *Config) DownloadConfiguration() {
 }
 
 
-func (config *Config) UpdateFromFile() {
+func (config *Config) UpdateFromFile() *Configuration {
 	configuration := Configuration{}
 	gonfig.GetConf("./cdht-config.json", &configuration)
 	config.configuration.CopyConfiguration( &configuration )
+	return config.configuration
 }
 
 

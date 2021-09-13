@@ -134,7 +134,7 @@ func (core *Core) InitalizeConfiguration() {
     config := configMngr.LoadConfig()
 	
 	core.ConfigMngr = &configMngr
-	core.Config = &config
+	core.Config = config
 	
     go configMngr.DownloadConfiguration()
 	go core.UpdateApplicationConfiguration()
