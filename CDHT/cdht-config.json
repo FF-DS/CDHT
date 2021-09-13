@@ -1,28 +1,22 @@
 {
   "Application_Mode": "FIRST_NODE",
-  // "Application_Mode": "SECOND_NODE",
 
   "RUN_TCP_TEST_APPLICATION": false,
-  // "RUN_TCP_TEST_APPLICATION": true,
   "RUN_UDP_TEST_APPLICATION": false,
   "RUN_NETWORK_TEST_APPLICATION": true,
-  // "RUN_NETWORK_TEST_APPLICATION": false,
 
-  // "Node_Port": "2323",
   "Node_Port": "2323",
   "Node_IP": "127.0.0.1",
-  // "Node_ID": "2",
-  "Node_ID": "8",
+  "Node_ID": "2",
   "Node_M": "4",
   "Jump_Spacing": 2,
   "Routing_Update_Delay": 1,
   "Successors_Table_Length": 5,
 
-  "Remote_Node_Address": "127.0.0.1:2323",
+  "Remote_Node_Address": "",
 
   "Application_Channel_Size": 100000,
-  // "Application_Connecting_Port": "2222",
-  "Application_Connecting_Port": "8888",
+  "Application_Connecting_Port": "2222",
 
   "Log_Route_Table_Delay_Value": 0,
   "Log_Node_Channel_Size_Value": 0,
@@ -48,9 +42,8 @@
   "CDHT_URL_Send_Command_Result": "https://cdht-monitoring-api.herokuapp.com/network-tools",
 
   "TEST_APP_IPAddress": "127.0.0.1",
-  "TEST_APP_Port": "2222",
-  // "TEST_APP_Port": "9999",
-  "TEST_APP_UDP_Listener_Port": "5454",
+  "TEST_APP_Port": "",
+  "TEST_APP_UDP_Listener_Port": "",
   "TEST_APP_Net_Channel_Size": 100000,
   "TEST_APP_AppName": "TEST_APP",
   "TEST_APP_Packet_Delay": 500

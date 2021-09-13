@@ -2,8 +2,7 @@ package CoreModule
 
 
 import (
-	"github.com/schollz/progressbar/v2"
-    "cdht/Applications/TestApplications"
+	"cdht/Applications/TestApplications"
     "cdht/Applications/CDHTNetworkTools"
     "cdht/RoutingModule"
     "cdht/ReportModule"
@@ -16,6 +15,7 @@ import (
 
 
 type Core struct {
+	ConfigMngr				*Config.Config
 	Config   		        *Config.Configuration
 	
 	ApiCommunication   	    *API.ApiCommunication
@@ -129,6 +129,18 @@ func (core *Core) InitalizeTestApplicationTool(){
 
 
 
+func (core *Core) InitalizeConfiguration() {
+	configMngr := Config.Config{}
+    config := configMngr.LoadConfig()
+	
+	core.ConfigMngr = &configMngr
+	core.Config = &config
+	
+    go configMngr.DownloadConfiguration()
+	go core.UpdateApplicationConfiguration()
+}
+
+
 
 // # --------------- [RUNNING!!] --------------- #
 
@@ -148,8 +160,6 @@ func (core *Core) RunNode() {
 	// init api communication
 	core.ApiCommunication.NodeRoutingTable = core.RoutingTableInfo
 	core.ApiCommunication.StartAppServer()
-	fmt.Println("[Init]: + Initalizing application manager.... ")
-    progressBar(100)
 
 
 	// init [internal network tool]
@@ -157,8 +167,14 @@ func (core *Core) RunNode() {
 	core.InternalNetworkTools.RunTools()
 
 	core.RunApplications()
-	fmt.Println("[Init]: + Initalizing network tools.... ")
+	fmt.Println("[Init]: + Initalizing application manager....")
     progressBar(100)
+
+	// NODE INFO
+	fmt.Println("\n")
+	fmt.Println(logo)
+	core.RoutingTableInfo.PrintCurrentNodeInfo() 
+	fmt.Println("\n")
 }
 
 
@@ -180,17 +196,6 @@ func (core *Core) RunApplications() {
 }
 
 
-// # ------------------  [Helper]  ------------------ #
-
-func progressBar(amount time.Duration){
-    bar := progressbar.New(10)
-    for i := 0; i < 10; i++ {
-        bar.Add(1)
-        time.Sleep(amount * time.Millisecond)
-    }
-    fmt.Print("\n")
-}
-
 
 
 
@@ -198,11 +203,34 @@ func progressBar(amount time.Duration){
 // # -------------------  [START]  ------------------ #
 // #==================================================#
 func (core *Core) START() {
+	core.InitalizeConfiguration()
+	fmt.Println("[Init]: + Loading configuration.... ")
+	progressBar(200)
+	
 	if !core.Config.RUN_TCP_TEST_APPLICATION && !core.Config.RUN_UDP_TEST_APPLICATION {
 		core.RunNode()
 		ui := TerminalUI{ CoreLink : core }
     	ui.UserUI()
 	}
 	core.RunApplications()
+
+	if core.Config.RUN_TCP_TEST_APPLICATION || core.Config.RUN_UDP_TEST_APPLICATION { 
+        time.Sleep(time.Minute * core.Config.TEST_APP_RUNNING_TIME)
+    }
 }
 
+
+
+
+var logo  string = `
+                                               ▄████▄  ▓█████▄  ██░ ██ ▄▄▄█████▓
+                                               ▒██▀ ▀█  ▒██▀ ██▌▓██░ ██▒▓  ██▒ ▓▒
+                                               ▒▓█    ▄ ░██   █▌▒██▀▀██░▒ ▓██░ ▒░
+                                               ▒▓▓▄ ▄██▒░▓█▄   ▌░▓█ ░██ ░ ▓██▓ ░ 
+                                               ▒ ▓███▀ ░░▒████▓ ░▓█▒░██▓  ▒██▒ ░ 
+                                               ░ ░▒ ▒  ░ ▒▒▓  ▒  ▒ ░░▒░▒  ▒ ░░   
+                                                 ░  ▒    ░ ▒  ▒  ▒ ░▒░ ░    ░    
+                                               ░         ░ ░  ░  ░  ░░ ░  ░      
+                                               ░ ░         ░     ░  ░  ░         
+                                               ░         ░
+`

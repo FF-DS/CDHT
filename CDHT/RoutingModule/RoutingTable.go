@@ -48,7 +48,7 @@ func (routingTable *RoutingTable) CreateRing() {
     routingTable.node.createRing()
     
     // [PRINT]:WILL BE REMOVED
-    routingTable.node.currentNodeInfo()
+    // routingTable.node.currentNodeInfo()
     
     go routingTable.runStablization()
 }
@@ -72,7 +72,7 @@ func (routingTable *RoutingTable) RunNode(remoteNode *NodeRPC) {
     routingTable.node.join( remoteNode )
 
     // [PRINT]:WILL BE REMOVED
-    routingTable.node.currentNodeInfo()
+    // routingTable.node.currentNodeInfo()
     
     go routingTable.runStablization()
 }
@@ -166,4 +166,8 @@ func (routingTable *RoutingTable) PrintRoutingInfo(){
 // # ------------------------ Routing Info ----------------------- #
 func (routingTable *RoutingTable) NodeInfo() *Node{
    return routingTable.node
+}
+
+func (routingTable *RoutingTable) PrintCurrentNodeInfo() {
+    routingTable.node.currentNodeInfo()
 }

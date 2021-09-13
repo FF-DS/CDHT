@@ -79,8 +79,10 @@ type Configuration struct {
 	TEST_APP_AppName string
 	TEST_APP_Packet_Delay  time.Duration 
 	TEST_APP_RUNNING_TIME  time.Duration
-}
 
+	CONFIGURATION_DOWNLOAD_DELAY  time.Duration
+	CONFIGURATION_DOWNLOAD_URL string
+}
 
 
 func (config *Configuration) GetLogConfiguration() ReportModule.LogConfig {

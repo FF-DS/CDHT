@@ -32,7 +32,9 @@ func (ui *TerminalUI) UserUI(){
             case "log" :
                 ui.logDump(params)
             case "tool":
-                ui.testCDHTtool(params[1])
+                ui.testCDHTtool(params)
+            case "config":
+                ui.uiConfigManager(params)
         }
 
     }
@@ -56,9 +58,7 @@ func (ui *TerminalUI) printRoutes(params []string) {
 }
 
 func (ui *TerminalUI) lookUpUI( params []string) {
-    var nodeId string
-    fmt.Print("Enter Node Id: ")
-    fmt.Scanln(&nodeId)
+    _, nodeId := ui.getNodeId( "Enter Node ID: " )
 
     NodeId, ok := new(big.Int).SetString(nodeId, 10)
     if !ok { fmt.Println("SetString: error node id") }
@@ -97,11 +97,14 @@ func (ui *TerminalUI) logDump(params []string) {
 }
 
 
-func (ui *TerminalUI) testCDHTtool(command string) {
+func (ui *TerminalUI) testCDHTtool(commands []string) {
     if  ui.CoreLink.CdhtNetworkTools ==  nil {
         return
     }
-    switch command {
+    if len(commands) < 2 {
+        return
+    }
+    switch commands[1] {
         case "hop":
             ui.hopCountTool()
         case "lookup":
@@ -114,11 +117,8 @@ func (ui *TerminalUI) testCDHTtool(command string) {
 } 
 
 func (ui *TerminalUI) hopCountTool(){
-    var startNodeId, endNodeId string
-    fmt.Print("Start Node ID: ")
-    fmt.Scanln(&startNodeId)
-    fmt.Print("End Node ID: ")
-    fmt.Scanln(&endNodeId)
+    _, startNodeId := ui.getNodeId( "Start Node ID: " )
+    _, endNodeId := ui.getNodeId( "End Node ID: " )
 
     command := CDHTNetworkTools.ToolCommand{
         Type: CDHTNetworkTools.COMMAND_TYPE_HOP_COUNT,
@@ -133,9 +133,7 @@ func (ui *TerminalUI) hopCountTool(){
 
 
 func (ui *TerminalUI) lookUpTool(){
-    var NodeId string
-    fmt.Print("Node ID: ")
-    fmt.Scanln(&NodeId)
+    _, NodeId := ui.getNodeId( "Node ID: " )
 
     command := CDHTNetworkTools.ToolCommand{
         Type: CDHTNetworkTools.COMMAND_TYPE_LOOK_UP,
@@ -149,9 +147,7 @@ func (ui *TerminalUI) lookUpTool(){
 
 
 func (ui *TerminalUI) pingTool(){
-    var NodeId string
-    fmt.Print("Node ID: ")
-    fmt.Scanln(&NodeId)
+    _, NodeId := ui.getNodeId( "Node ID: " )
 
     command := CDHTNetworkTools.ToolCommand{
         Type: CDHTNetworkTools.COMMAND_TYPE_PING,
@@ -177,6 +173,35 @@ func (ui *TerminalUI) printCDHTlog(){
 }
 
 
+func (ui *TerminalUI) uiConfigManager(commands []string) {
+    if  ui.CoreLink.Config ==  nil {
+        return
+    }
+    
+    if len(commands) < 2 {
+        ui.printConfig()
+        return
+    }
+
+    switch commands[1] {
+        case "load":
+            ui.loadFromFile()
+        default:
+            ui.printConfig()
+    }
+} 
+
+func (ui *TerminalUI) printConfig(){
+    ui.CoreLink.Config.PrintConfiguration()
+}
+
+func (ui *TerminalUI) loadFromFile(){
+    ui.CoreLink.ConfigMngr.UpdateFromFile()
+}
+
+
+
+
 // # ------------------  [Helper]  ------------------ #
 
 func getInput(inputStr string) []string {
@@ -195,4 +220,23 @@ func printLog(logs []ReportModule.Log){
     for _, log := range logs {
         fmt.Println(log.ToString())
     }
+}
+
+
+func (ui *TerminalUI) getNodeId(message string) (*big.Int, string) {
+    var nodeID string;
+    fmt.Print(message)
+    fmt.Scanln(&nodeID)
+
+    NodeID, ok := new(big.Int).SetString(nodeID, 10)
+
+    // inRange := modulo := base.Exp( base, m, nil)
+
+    for !ok { 
+		fmt.Println("[ERROR]: Not a valid node id ")
+        fmt.Print(message)
+        fmt.Scanln(&nodeID)
+        NodeID, ok = new(big.Int).SetString(nodeID, 10)
+	}
+    return NodeID, nodeID
 }
