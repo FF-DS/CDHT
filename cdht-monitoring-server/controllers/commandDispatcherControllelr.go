@@ -25,7 +25,7 @@ func (self CommandDispatcherController) GetPendingCommands(c *gin.Context){
 
 	commandCollection := ConnectDB("commands")
 
-	cursor , err := commandCollection.Find(context.TODO() , bson.M{} , findOptions )
+	cursor , err := commandCollection.Find(context.TODO() , bson.M{} , findOptions)
 
 	if err != nil{
 		GetError(err , c)
