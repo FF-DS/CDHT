@@ -40,6 +40,8 @@ func copyNodeData(old *NodeRPC, new *NodeRPC) {
     new.Node_address = old.Node_address
     new.Node_id = old.Node_id
     new.DefaultArgs = nil
+    new.NodeState = old.NodeState
+
 }
 
 
@@ -70,6 +72,21 @@ func checkNode(node *NodeRPC) *NodeRPC {
     return nodeRPC
 }
 
+func CheckNode(node *NodeRPC) *NodeRPC {
+    if node == nil || node.Node_id == nil {
+        return nil
+    }
+
+    var nodeRPC *NodeRPC
+    if node.DefaultArgs == nil {
+        // fmt.Println("CHECK connection")
+        _, nodeRPC = node.Connect()
+    }else{
+        _, nodeRPC = node.GetNodeInfo()
+    }
+    
+    return nodeRPC
+}
 
 
 

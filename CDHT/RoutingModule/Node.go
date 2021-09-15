@@ -34,6 +34,11 @@ type Node struct {
     defaultArgs *Args
     Logger *ReportModule.Logger
 
+
+    // Replication
+    NodeState string
+    ReplicaInfos ReplicaInfo
+    MainReplicaNode *NodeRPC
 }
 
 
@@ -43,6 +48,28 @@ type Node struct {
 
 // [INTERNAL]
 func (node *Node) initNode() {
+    node.NodeState = NODE_STATE_ACTIVE
+
+    node.generateNodeInfo()
+
+    rpc.Register(node)
+
+    tcpAddr, err := net.ResolveTCPAddr("tcp", ":" + node.Port)
+    checkError(err)
+
+    listener, err := net.ListenTCP("tcp", tcpAddr)
+    checkError(err)
+
+    go rpc.Accept(listener)
+}
+
+
+func (node *Node) initReplica(){
+    node.NodeState = NODE_STATE_REPLICA
+
+    node.Node_id = node.MainReplicaNode.Node_id
+    node.M = node.MainReplicaNode.M
+
     node.generateNodeInfo()
 
     rpc.Register(node)
@@ -92,6 +119,25 @@ func (node *Node) join(available *NodeRPC) {
     node.predecessor = &curr
 }
 
+
+// [ROUTING-MODULE]
+func (node *Node) makeReplicaOf(mainNode *NodeRPC) {
+    node.MainReplicaNode = mainNode
+    node.initReplica()
+    
+    remoteRep := NodeRPC{}
+    node.GetNodeInfo(node.defaultArgs, &remoteRep)
+    err, replicaInfo := mainNode.AddReplica( &remoteRep )
+
+    if err == nil {
+        node.ReplicaInfos = replicaInfo
+
+        fmt.Println("[JOIN][Replica]: Joined as a replica of ", mainNode.Node_id)
+    }else{
+        fmt.Println("[JOIN][Replica][Error]:", err)
+    }
+}
+
 // # --------------------------- [END] Init  --------------------------- # //
 
 
@@ -105,11 +151,13 @@ func (node *Node) generateNodeInfo() Node {
     if node.IP_address == "" {
         node.getOutboundIP();
     }
-    if node.Node_id == nil {
+
+    if node.Node_id == nil && node.NodeState != NODE_STATE_REPLICA {
 	    node.generateNodeId();
     }
 	return *node
 }
+
 
 // [INTERNAL]
 func (node *Node) initializeNode() {
@@ -118,6 +166,8 @@ func (node *Node) initializeNode() {
     node.successor = &NodeRPC{}
     node.currentSuccessors = Successors{}
     node.fingerTableEntry = make(map[int]*NodeRPC)
+    node.ReplicaInfos = ReplicaInfo{ SuccessorsTable : Successors{}, FingerTable : map[int]NodeRPC{}, Successor : NodeRPC{}, 
+                            Predcessor : NodeRPC{},ReplicaAddress : []NodeRPC{}, }
 }
 
 // [INTERNAL]
@@ -155,6 +205,7 @@ func (node *Node) GetNodeInfo(args *Args, nodeRPC *NodeRPC) error {
     nodeRPC.M = node.M
     nodeRPC.Node_address = node.IP_address + ":" + node.Port
     nodeRPC.Node_id = node.Node_id
+    nodeRPC.NodeState = node.NodeState
 
     return nil
 }
@@ -221,7 +272,7 @@ func (node *Node) ResolvePacket(requestObject *Util.RequestObject, responseObjec
 // [ROUTING-MODULE]
 func (node *Node) currentNodeInfo() {
     fmt.Printf("                                ------------------Current node Info[%s]------------------\n",node.Node_id.String())
-    fmt.Printf("                                      [+]: Node ID : %s \n", node.Node_id.String())
+    fmt.Printf("                                      [+]: Node ID : %s [%s] \n", node.Node_id.String(), node.NodeState)
     fmt.Printf("                                      [+]: M       : %s \n", node.M.String())
     fmt.Printf("                                      [+]: Address : %s:%s \n", node.IP_address, node.Port)
     fmt.Printf("                                ---------------------------------------------------------\n")

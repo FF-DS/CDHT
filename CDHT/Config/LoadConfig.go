@@ -49,6 +49,7 @@ func (config *Config) UpdateFromFile() *Configuration {
 	configuration := Configuration{}
 	gonfig.GetConf("./cdht-config.json", &configuration)
 	config.configuration.CopyConfiguration( &configuration )
+	config.configuration.ValidateConfig()
 	return config.configuration
 }
 

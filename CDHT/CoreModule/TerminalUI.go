@@ -3,6 +3,7 @@ package CoreModule
 import (
     "cdht/Applications/CDHTNetworkTools"
     "cdht/ReportModule"
+    // "cdht/Config"
 
     "strconv"
     "strings"
@@ -35,6 +36,8 @@ func (ui *TerminalUI) UserUI(){
                 ui.testCDHTtool(params)
             case "config":
                 ui.uiConfigManager(params)
+            case "replica":
+                ui.printReplica(params)
         }
 
     }
@@ -200,6 +203,14 @@ func (ui *TerminalUI) loadFromFile(){
 }
 
 
+func (ui *TerminalUI) printReplica(params []string){
+    if len(params) == 2 && params[1] == "remote" { // && ui.CoreLink.Config.Application_Mode == Config.MODE_REPLICA_NODE
+        ui.CoreLink.RoutingTableInfo.PrintRemoteReplicaInfo()
+    }else {
+        ui.CoreLink.RoutingTableInfo.PrintCurrentReplicaInfo()
+    }
+
+}
 
 
 // # ------------------  [Helper]  ------------------ #

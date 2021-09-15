@@ -47,9 +47,6 @@ func (routingTable *RoutingTable) CreateRing() {
 
     routingTable.node.createRing()
     
-    // [PRINT]:WILL BE REMOVED
-    // routingTable.node.currentNodeInfo()
-    
     go routingTable.runStablization()
 }
 
@@ -70,13 +67,31 @@ func (routingTable *RoutingTable) RunNode(remoteNode *NodeRPC) {
     }
 
     routingTable.node.join( remoteNode )
-
-    // [PRINT]:WILL BE REMOVED
-    // routingTable.node.currentNodeInfo()
     
     go routingTable.runStablization()
 }
 
+
+func (routingTable *RoutingTable) InitReplicaRoutingTable(remoteNode *NodeRPC) {
+    routingTable.node = &Node{
+        Port : routingTable.NodePort,
+        Applications : routingTable.Applications,
+        Logger: routingTable.Logger,
+        IP_address : routingTable.IP_address,
+        NetworkTools : routingTable.NetworkTools,
+        SuccessorsTableLength : routingTable.SuccessorsTableLength,
+    }
+
+    routingTable.node.makeReplicaOf(remoteNode)
+
+    go routingTable.runReplicaUpdate()
+}
+
+// # ------------------------ [END] Main Node INIT ----------------------- #
+
+
+
+// # -------------------------------- INIT ------------------------------- #
 
 func (routingTable *RoutingTable) runStablization() {
 	for {
@@ -87,9 +102,19 @@ func (routingTable *RoutingTable) runStablization() {
 		routingTable.node.fixFinger()
         // logging
         routingTable.node.logRoutingTableReport()
+        // replica info
+        routingTable.node.currentNodeReplicaInfo()
 	}
 }
-// # ------------------------ [END] Main Node INIT ----------------------- #
+
+
+func (routingTable *RoutingTable) runReplicaUpdate() {
+	for {
+		time.Sleep(time.Second * routingTable.RoutingUpdateDelay)
+        routingTable.node.updateReplicaInfo()
+	}
+}
+// # ----------------------------- [END] INIT ---------------------------- #
 
 
 
@@ -163,11 +188,19 @@ func (routingTable *RoutingTable) PrintRoutingInfo(){
 // # ------------------------ [END] Routing Functionalities ----------------------- #
 
 
-// # ------------------------ Routing Info ----------------------- #
+// # ------------------------ Routing Info [Exported] ----------------------- #
 func (routingTable *RoutingTable) NodeInfo() *Node{
    return routingTable.node
 }
 
 func (routingTable *RoutingTable) PrintCurrentNodeInfo() {
     routingTable.node.currentNodeInfo()
+}
+
+func (routingTable *RoutingTable) PrintCurrentReplicaInfo() {
+    routingTable.node.currentReplicaInfo()
+}
+
+func (routingTable *RoutingTable) PrintRemoteReplicaInfo() {
+    routingTable.node.remoteReplicaInfo()
 }

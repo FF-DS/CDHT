@@ -89,9 +89,14 @@ func (core *Core) InitalizeRoutingTable(){
 	// [CREATE RING] or [JOIN RING]
 	if core.Config.Application_Mode == Config.MODE_CREATE_RING {
 		core.RoutingTableInfo.CreateRing()    
+
 	}else if core.Config.Application_Mode == Config.MODE_JOIN_RING {
 		core.ConnectWithNode()
 		core.RoutingTableInfo.RunNode( core.RemoteNode )    
+
+	}else if core.Config.Application_Mode == Config.MODE_REPLICA_NODE {
+		core.ConnectWithNode()
+		core.RoutingTableInfo.InitReplicaRoutingTable( core.RemoteNode )    
 	}
 }
 
