@@ -89,8 +89,8 @@ func (config ConfigurationController) SetCurrentConfigurationProfile(c *gin.Cont
 
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 
-	activeConfigId := c.Query("cuurent_active_config_id")
-	newConfigId := c.Query("new_active_config_id")
+	activeConfigId , _:= primitive.ObjectIDFromHex(c.Query("cuurent_active_config_id"))
+	newConfigId , _:= primitive.ObjectIDFromHex(c.Query("new_active_config_id"))
 
 	var activeConfigurationProfile core.ConfigurationProfile
 	var activeConfigurationProfileToSet core.ConfigurationProfile
