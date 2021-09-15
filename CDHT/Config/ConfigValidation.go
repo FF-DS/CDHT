@@ -15,6 +15,7 @@ func (config *Configuration) ValidateConfig(){
 	config.validateNodeId()
 	config.validateApplicationPort()
 	config.validateCDHTPort()
+	config.validateReplicaCount()
 }
 
 
@@ -22,15 +23,17 @@ func (config *Configuration) ValidateConfig(){
 
 
 func (config *Configuration) validateMode(){
-	if config.Application_Mode == "FIRST_NODE" ||  config.Application_Mode == "SECOND_NODE" {
+	if config.Application_Mode == "FIRST_NODE" ||  config.Application_Mode == "SECOND_NODE" || config.Application_Mode == "REPLICA_NODE"{
 		return 
 	}
-	inputVal :=  getInput("Enter  1 = FIRST_NODE / 2 = SECOND_NODE  Node Mode :")
+	inputVal :=  getInput("Enter  1 = FIRST_NODE / 2 = SECOND_NODE / 3 = REPLICA_NODE  Node Mode :")
 
 	if inputVal == "1" {
 		config.Application_Mode = "FIRST_NODE"
 	}else if inputVal == "2" {
 		config.Application_Mode = "SECOND_NODE"
+	}else if inputVal == "3" {
+		config.Application_Mode = "REPLICA_NODE"
 	}
 
 	config.validateMode()
@@ -55,8 +58,24 @@ func (config *Configuration) validateNodePort(){
 	config.validateNodePort()
 }	
 
+func (config *Configuration) validateReplicaCount(){
+	if (0 <= config.REPLICATION_COUNT  &&  config.REPLICATION_COUNT <= 10) {
+		return 
+	}
+	count :=  getInput("Enter Valid Replication Count :")
+	userInpt, err :=  strconv.Atoi( count )
+	if err == nil { 
+		config.REPLICATION_COUNT = userInpt
+	}
+
+	config.validateReplicaCount()
+}	
 
 func (config *Configuration) validateNodeM() {
+	if config.Application_Mode == "REPLICA_NODE" {
+		return
+	}
+
 	M, err :=  strconv.Atoi( config.Node_M )
 	if err == nil && (3 < M  &&  M <= 160) {
 		return
@@ -68,6 +87,10 @@ func (config *Configuration) validateNodeM() {
 
 
 func (config *Configuration) validateNodeId() {
+	if config.Application_Mode == "REPLICA_NODE" {
+		return
+	}
+
 	_, ok := new(big.Int).SetString(config.Node_ID, 10)
 	if config.Node_M == "160" || ok {
 		return

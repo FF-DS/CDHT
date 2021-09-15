@@ -38,6 +38,8 @@ func (logger *Logger) Init() {
 
 // --------------------------- Send to the api --------------------------- //
 func  (logger *Logger) RouteTableLog(logData Log) {
+	logData.CreatedDate = time.Now()
+	logData.NodeIdString = logData.NodeId.String()
 	logger.routingTable = logData
 }
 
@@ -48,6 +50,8 @@ func (logger *Logger) RouteLogs() []Log {
 
 
 func  (logger *Logger) NodeLog(logData Log) {
+	logData.CreatedDate = time.Now()
+	logData.NodeIdString = logData.NodeId.String()
 	if( len(logger.nodeLogChannel) >= logger.config.NodeChanSize() -2 ){
 		logger.nodeLogChannel = logger.nodeLogChannel[1:]
 	}
@@ -61,6 +65,8 @@ func (logger *Logger) NodeLogs() []Log {
 
 
 func  (logger *Logger) NetworkToolLog(logData Log) {
+	logData.CreatedDate = time.Now()
+	logData.NodeIdString = logData.NodeId.String()
 	if( len(logger.networkToolChannel) >= logger.config.NetChanSize() -2 ){
 		logger.networkToolChannel = logger.networkToolChannel[1:]
 	}
@@ -74,6 +80,8 @@ func (logger *Logger) NetworkToolLogs() []Log {
 
 
 func  (logger *Logger) ConfigToolLog(logData Log) {
+	logData.CreatedDate = time.Now()
+	logData.NodeIdString = logData.NodeId.String()
 	if( len(logger.configurationToolChannel) >= logger.config.ConfigChanSize() -2 ){
 		logger.configurationToolChannel = logger.configurationToolChannel[1:]
 	}

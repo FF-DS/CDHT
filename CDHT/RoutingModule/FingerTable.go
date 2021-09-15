@@ -16,6 +16,10 @@ func (node *Node) FindSuccessor(nodeId *big.Int, remoteNode *NodeRPC) error {
 
     succ := checkNode( node.successor )
     if succ == nil {
+        if node.NodeState == NODE_STATE_REPLICA {
+            copyNodeData(node.MainReplicaNode, remoteNode)
+            return nil
+        }
         node.GetNodeInfo(node.defaultArgs, remoteNode)
         return nil
     }
@@ -33,6 +37,10 @@ func (node *Node) FindSuccessor(nodeId *big.Int, remoteNode *NodeRPC) error {
 
                 return nil
             }
+            if node.NodeState == NODE_STATE_REPLICA {
+                copyNodeData(node.MainReplicaNode, remoteNode)
+                return nil
+            }
             node.GetNodeInfo(node.defaultArgs, remoteNode)
             return nil
         }
@@ -41,6 +49,10 @@ func (node *Node) FindSuccessor(nodeId *big.Int, remoteNode *NodeRPC) error {
         err, pred2 := pred.FindSuccessor(nodeId)
 
         if err != nil || checkNode( pred2 ) == nil {
+            if node.NodeState == NODE_STATE_REPLICA {
+                copyNodeData(node.MainReplicaNode, remoteNode)
+                return nil
+            }
             node.GetNodeInfo(node.defaultArgs, remoteNode)
             return nil
         }
@@ -58,7 +70,11 @@ func (node *Node) FindSuccessor(nodeId *big.Int, remoteNode *NodeRPC) error {
 // [INTERNAL]
 func  (node *Node)  closestPrecedingNode(nodeId *big.Int) *NodeRPC {
     curr := NodeRPC{ NodeTraversalLogs: []NodeRPC{} }
-    node.GetNodeInfo(node.defaultArgs, &curr)
+    if node.NodeState == NODE_STATE_REPLICA {
+        copyNodeData(node.MainReplicaNode,  &curr)
+    }else{
+        node.GetNodeInfo(node.defaultArgs, &curr)
+    }
 
     for i := len(node.fingerTableEntry) - 1; i >= 0; i-- {
         entry := node.fingerTableEntry[i];
@@ -90,6 +106,10 @@ func (node *Node) LookUP(nodeId *big.Int, remoteNode *NodeRPC) error {
 
     succ := checkNode( node.successor )
     if succ == nil ||  nodeId.Cmp(node.Node_id) == 0  {
+        if node.NodeState == NODE_STATE_REPLICA {
+            copyNodeData(node.MainReplicaNode, remoteNode)
+            return nil
+        }
         node.GetNodeInfo(node.defaultArgs, remoteNode)
         return nil
     }
@@ -107,6 +127,10 @@ func (node *Node) LookUP(nodeId *big.Int, remoteNode *NodeRPC) error {
 
                 return nil
             }
+            if node.NodeState == NODE_STATE_REPLICA {
+                copyNodeData(node.MainReplicaNode, remoteNode)
+                return nil
+            }
             node.GetNodeInfo(node.defaultArgs, remoteNode)
             return nil
         }
@@ -120,12 +144,16 @@ func (node *Node) LookUP(nodeId *big.Int, remoteNode *NodeRPC) error {
         err, pred2 := pred.LookUP(nodeId)
 
         if err != nil || checkNode( pred2 ) == nil {
+            if node.NodeState == NODE_STATE_REPLICA {
+                copyNodeData(node.MainReplicaNode, remoteNode)
+                return nil
+            }
             node.GetNodeInfo(node.defaultArgs, remoteNode)
             return nil
         }
 
 
-        if  pred.NodeTraversalLogs != nil{
+        if  pred2.NodeTraversalLogs != nil{
             remoteNode.NodeTraversalLogs = append(remoteNode.NodeTraversalLogs, pred2.NodeTraversalLogs...)
         }
         copyNodeData(pred2, remoteNode)
@@ -136,7 +164,11 @@ func (node *Node) LookUP(nodeId *big.Int, remoteNode *NodeRPC) error {
 // [INTERNAL]
 func  (node *Node)  closestPrecedingNodeLookUp(nodeId *big.Int) *NodeRPC {
     curr := NodeRPC{ NodeTraversalLogs: []NodeRPC{} }
-    node.GetNodeInfo(node.defaultArgs, &curr)
+    if node.NodeState == NODE_STATE_REPLICA {
+        copyNodeData(node.MainReplicaNode,  &curr)
+    }else{
+        node.GetNodeInfo(node.defaultArgs, &curr)
+    }
 
     for i := len(node.fingerTableEntry) - 1; i >= 0; i-- {
         entry := node.fingerTableEntry[i];
