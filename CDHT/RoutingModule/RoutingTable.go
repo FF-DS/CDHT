@@ -111,6 +111,8 @@ func (routingTable *RoutingTable) runStablization() {
 func (routingTable *RoutingTable) runReplicaUpdate() {
 	for {
 		time.Sleep(time.Second * routingTable.RoutingUpdateDelay)
+        // logging
+        routingTable.node.logRoutingTableReport()
         routingTable.node.updateReplicaInfo()
 	}
 }

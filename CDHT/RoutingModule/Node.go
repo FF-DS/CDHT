@@ -204,8 +204,8 @@ func (node *Node) getOutboundIP() {
 func (node *Node) GetNodeInfo(args *Args, nodeRPC *NodeRPC) error {
     nodeRPC.M = node.M
     nodeRPC.Node_address = node.IP_address + ":" + node.Port
-    nodeRPC.Node_id = node.Node_id
     nodeRPC.NodeState = node.NodeState
+    nodeRPC.Node_id = node.Node_id
 
     return nil
 }
@@ -215,6 +215,7 @@ func (node *Node) getLocalNodeInfo() NodeRPC {
         M : node.M,
         Node_address : node.IP_address + ":" + node.Port,
         Node_id : node.Node_id,
+        NodeState : node.NodeState,
     }
 }
 // # ----------------------- [END] node level info ----------------------------- # 

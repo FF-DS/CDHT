@@ -243,8 +243,8 @@ func (node *NodeRPC) resetConnTimeOut() bool {
 		return false
 	}
 
-	node.ticker.Stop()
-	node.ticker = time.NewTicker(time.Second * 10)
+	// node.ticker.Stop()
+	node.ticker.Reset(time.Second * 10) // = time.NewTicker(time.Second * 10)
 	return true
 }
 
