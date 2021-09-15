@@ -7,6 +7,7 @@ import(
 	"context"
     "log"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
     // "go.mongodb.org/mongo-driver/bson/primitive"
     // "time"
 	"net/http"
@@ -16,9 +17,12 @@ type LogController struct{}
 
 func (self LogController) GetLogs(c *gin.Context){
 
+	findOptions := options.Find()
+	findOptions.SetLimit(20)
+
 	logCollection := ConnectDB("logs")
 
-	cursor , err := logCollection.Find(context.TODO() , bson.M{})
+	cursor , err := logCollection.Find(context.TODO() , bson.M{} , findOptions)
 
 	if err != nil{
 		GetError(err , c)
