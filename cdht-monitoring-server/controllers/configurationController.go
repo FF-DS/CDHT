@@ -9,9 +9,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo"
-    // "go.mongodb.org/mongo-driver/bson/primitive"
+    "go.mongodb.org/mongo-driver/bson/primitive"
     // "time"
 	"net/http"
+	"strconv"
 )
 
 
@@ -139,8 +140,8 @@ func (config ConfigurationController) SetNodeSpaceBalancing(c *gin.Context){
 
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 
-	activeConfigId := c.Query("cuurent_active_config_id")
-	newJumpSpace := c.Query("new_jump_space")
+	activeConfigId , _ := primitive.ObjectIDFromHex(c.Query("cuurent_active_config_id"))
+	newJumpSpace , _ := strconv.Atoi(c.Query("new_jump_space"))
 
 	var activeConfigurationProfile core.ConfigurationProfile
 	updateJumpSpace := bson.D{{"$set", bson.D{{"jump_space_balancing", newJumpSpace}}}}
