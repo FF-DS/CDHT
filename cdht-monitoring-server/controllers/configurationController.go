@@ -155,10 +155,7 @@ func (config ConfigurationController) SetNodeSpaceBalancing(c *gin.Context){
 	).Decode(&activeConfigurationProfile); err == nil{
 		c.JSON(http.StatusOK,
 			gin.H{"message": "Current active configuration profile's Jump S[ace Balancing] changed successfuly" ,
-			 "data" : gin.H{
-				"changed_profile" : activeConfigurationProfile , 
-				"new_jump_space_value" : newJumpSpace
-			 } })
+			 "data" : activeConfigurationProfile})
 
 	}else{
 		GetError(err, c)
