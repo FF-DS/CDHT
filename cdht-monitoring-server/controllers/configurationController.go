@@ -34,7 +34,10 @@ func (config ConfigurationController) GetConfigurationProfiles(c *gin.Context){
 	cursor , err := configurationCollection.Find(context.TODO() , bson.M{} )
 
 	if err != nil{
-		GetError(err , c)
+		
+		message := "some error message to be edited later"
+
+		GetError(err , message ,  c)
 		return
 	}
 
@@ -120,11 +123,18 @@ func (config ConfigurationController) SetCurrentConfigurationProfile(c *gin.Cont
 				  "data" : gin.H{"old"  :activeConfigurationProfile , "new" : activeConfigurationProfileToSet}})
 
 		}else{
-			GetError(err, c)
+			
+			message := "some error message to be edited later" 
+
+
+			GetError(err, message , c)
 		}
 
 	}else{
-		GetError(err, c)
+		
+		message := "some error message to be edited later"
+
+		GetError(err, message ,  c)
 	}
    
 }
@@ -158,7 +168,10 @@ func (config ConfigurationController) SetNodeSpaceBalancing(c *gin.Context){
 			 "data" : activeConfigurationProfile})
 
 	}else{
-		GetError(err, c)
+		
+		message := "some error message to be edited later"
+
+		GetError(err, message ,  c)
 	}
 
 }
@@ -176,7 +189,11 @@ func (config ConfigurationController) AddConfigurationProfile(c *gin.Context){
         result, err := configurationCollection.InsertOne(context.TODO(), configurationProfile)
     
         if err != nil {
-            GetError(err, c)
+            
+			message := "some error message to be edited later" 
+
+
+			GetError(err, message , c)
         }
     
         c.JSON(http.StatusOK, gin.H{"message": "Configuration Profile added successfully" , "data" : result})

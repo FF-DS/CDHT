@@ -2,7 +2,7 @@ package services
 
 import (
 	"context"
-	"encoding/json"
+	// "encoding/json"
 	// "fmt"
 	"log"
 	"net/http"
@@ -87,15 +87,9 @@ type ErrorResponse struct {
 
 
 
-func GetError(err error, c *gin.Context) {
+func GetError(err error, message string, c *gin.Context) {
 
-	log.Fatal(err.Error())
-	var response = ErrorResponse{
-		ErrorMessage: err.Error(),
-		StatusCode:   http.StatusInternalServerError,
-	}
+	log.Println(err)
 
-	message, _ := json.Marshal(response)
-
-    c.JSON(response.StatusCode, gin.H{"message": message })
+    c.JSON(http.StatusInternalServerError , gin.H{"message": message , "error" : err })
 }

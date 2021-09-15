@@ -26,7 +26,8 @@ func (h *NodesController) GetNodes(c *gin.Context) {
     }})
 
 	if err != nil {
-		services.GetError(err, c)
+        message := "some error message to edit later"
+		services.GetError(err, message , c)
 		return
 	}
 
@@ -70,7 +71,8 @@ func (h *NodesController) RegisterNode(c *gin.Context) {
         result, err := collection.InsertOne(context.TODO(), node)
     
         if err != nil {
-            services.GetError(err, c)
+            message := "some error message to edit later"
+            services.GetError(err, message , c)
         }
     
         c.JSON(200, gin.H{"message": result})

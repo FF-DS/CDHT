@@ -18,14 +18,16 @@ type LogController struct{}
 func (self LogController) GetLogs(c *gin.Context){
 
 	findOptions := options.Find()
-	findOptions.SetLimit(20)
+	findOptions.SetLimit(RESULT_LIMIT)
 
 	logCollection := ConnectDB("logs")
 
 	cursor , err := logCollection.Find(context.TODO() , bson.M{} , findOptions)
 
 	if err != nil{
-		GetError(err , c)
+		message := "some error message to edit later"
+
+		GetError(err , message , c)
 		return
 	}
 
@@ -61,7 +63,9 @@ func (self LogController) AddLog(c *gin.Context){
         result, err := logCollection.InsertMany(context.TODO(), logEntries)
     
         if err != nil {
-            GetError(err, c)
+            message := "some error message to edit later"
+
+			GetError(err, message , c)
         }
     
         c.JSON(http.StatusOK, gin.H{"message": "Log added successfully" , "data" : result})

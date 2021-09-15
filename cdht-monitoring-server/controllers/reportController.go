@@ -40,7 +40,9 @@ func (report *ReportController) GetPackets(c *gin.Context){
     cursor , err := collection.Find(context.TODO() , bson.M{})
 
     if err != nil{
-        GetError(err , c)
+        message := "some error message to edit later"
+
+        GetError(err , message , c)
         return
     }
 
@@ -72,7 +74,9 @@ func (report *ReportController) GetTestPackets(c *gin.Context){
     cursor , err := collection.Find(context.TODO() , bson.M{})
 
     if err != nil{
-        GetError(err , c)
+        message := "some error message to edit later"
+
+        GetError(err , message , c)
         return
     }
 
@@ -109,7 +113,9 @@ func (report *ReportController) PostPacket(c *gin.Context){
         result, err := collection.InsertOne(context.TODO(), packet)
     
         if err != nil {
-            GetError(err, c)
+            message := "some error message to edit later"
+
+            GetError(err, message , c)
         }
     
         c.JSON(200, gin.H{"data": result})
@@ -131,7 +137,9 @@ func (report ReportController) PostTestPacket(c *gin.Context){
         result, err := collection.InsertOne(context.TODO(), test_packet)
     
         if err != nil {
-            GetError(err, c)
+            message := "some error message to edit later"
+
+            GetError(err, message , c)
         }
     
         c.JSON(200, gin.H{"data": result})
