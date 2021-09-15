@@ -62,6 +62,7 @@ func NodesRoute(route *gin.Engine){
 	commandDispatcherController := new(controllers.CommandDispatcherController)
 	commandDispatcherRoutes.GET("/" , commandDispatcherController.GetPendingCommands)
 	commandDispatcherRoutes.POST("/" , commandDispatcherController.AddPendingCommand)
+	commandDispatcherRoutes.POST("/batch" , commandDispatcherController.AddPendingCommandsByBatch)
 	commandDispatcherRoutes.GET("/result" , commandDispatcherController.GetCommandResultReports)
 	commandDispatcherRoutes.POST("/result" , commandDispatcherController.AddCommandResponseReport)
 	commandDispatcherRoutes.GET("/clear-commands" , commandDispatcherController.ClearCommandsCollection)
