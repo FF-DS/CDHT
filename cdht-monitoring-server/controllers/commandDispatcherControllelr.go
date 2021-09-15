@@ -29,7 +29,8 @@ This function will return a specified number of pending commands from the comman
 func (self CommandDispatcherController) GetPendingCommands(c *gin.Context){
 
 	findOptions := options.Find()
-	findOptions.SetLimit(RESULT_LIMIT)
+	// findOptions.SetLimit(RESULT_LIMIT)
+	findOptions.SetLimit(20)
 
 	commandCollection := ConnectDB(COMMANDS_COLLECTION_NAME)
 
