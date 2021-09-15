@@ -194,16 +194,18 @@ func (config ConfigurationController) DeleteConfigurationProfile(c *gin.Context)
 
 	configurationCollection := ConnectDB("configurations")	
 
-	configId := c.Query("config_id")
+	configId , _ := primitive.ObjectIDFromHex(c.Query("config_id"))
 
 	
 	opts := options.FindOneAndDelete().
 		SetProjection(bson.D{})
 
+	filter := bson.D{{"_id", configId}}
+
 	var deletedConfigProfile core.ConfigurationProfile
 	err := configurationCollection.FindOneAndDelete(
 		context.TODO(),
-		bson.D{{"_id", configId}},
+		filter , 
 		opts,
 	).Decode(&deletedConfigProfile)
 	if err != nil {
