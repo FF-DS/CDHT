@@ -3,14 +3,14 @@ package services
 import (
 	"context"
 	// "encoding/json"
-	// "fmt"
+	"fmt"
 	"log"
-	"net/http"
+	// "net/http"
 	"os"
     "time"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-    "github.com/gin-gonic/gin"
+    // "github.com/gin-gonic/gin"
 )
 
 
@@ -20,7 +20,7 @@ func ConnectDB(collection_name string) *mongo.Collection {
 	clientOptions := options.Client().ApplyURI( os.Getenv("DATABASE_CONN_URL") )
 
 	// Connect to MongoDB
-    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
     defer cancel()
 
 	client, err := mongo.Connect(ctx, clientOptions)
@@ -29,7 +29,7 @@ func ConnectDB(collection_name string) *mongo.Collection {
 		log.Fatal(err)
 	}
 
-	// fmt.Println("Connected to MongoDB!")
+	fmt.Println("Connected to MongoDB!")
 
 	
 	database_name := os.Getenv("DATABASE_NAME")
@@ -39,6 +39,7 @@ func ConnectDB(collection_name string) *mongo.Collection {
 	}
 
 	collection := client.Database( database_name ).Collection(collection_name)
+	fmt.Println(collection)
 	return collection
 }
 
@@ -77,19 +78,3 @@ func DropCollection(collection_name string) bool {
 	return true
 }
 
-
-
-type ErrorResponse struct {
-	StatusCode   int    `json:"status"`
-	ErrorMessage string `json:"message"`
-}
-
-
-
-
-func GetError(err error, message string, c *gin.Context) {
-
-	log.Println(err)
-
-    c.JSON(http.StatusInternalServerError , gin.H{"message": message , "error" : err })
-}

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	. "monitoring-server/services"
+	. "monitoring-server/util"
 	"monitoring-server/core"
     "github.com/gin-gonic/gin"
 	"context"

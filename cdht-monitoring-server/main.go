@@ -5,6 +5,7 @@ import (
     "github.com/gin-gonic/gin"
     "github.com/joho/godotenv"
 	"monitoring-server/routers"
+	. "monitoring-server/middlewares"
     "os"
 )
 
@@ -22,31 +23,32 @@ func init() {
 func main() {
     // Init gin router
     router := gin.Default()
-    router.Use(CORSMiddleware());
-	routers.NodesRoute(router) 
 
-    // Handle error response when a route is not defined
-    router.NoRoute(func(c *gin.Context) {
-        c.JSON(404, gin.H{"message": "Not found"})
-    })
+    initMiddlewares(router)
+
+    initRouters(router)
 
     // Init our server
     router.Run( ":" + os.Getenv("PORT") )
 }
 
-
-func CORSMiddleware() gin.HandlerFunc {
-    return func(c *gin.Context) {
-        c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-        c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-        c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-        c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
-
-        if c.Request.Method == "OPTIONS" {
-            c.AbortWithStatus(204)
-            return
-        }
-
-        c.Next()
-    }
+func initMiddlewares(router *gin.Engine){
+    router.Use(CORSMiddleware());
 }
+
+func initRouters(router *gin.Engine){
+    routers.NodesRoute(router)
+    routers.CommandDispatcherRoute(router) 
+    routers.ConfigurationRoute(router) 
+    routers.LogRoute(router) 
+    routers.MonitoringRoute(router) 
+    routers.ReplicationRoute(router) 
+    routers.ReportRoute(router) 
+    routers.TestRoute(router) 
+    
+    // Handle error response when a route is not defined
+    router.NoRoute(func(c *gin.Context) {
+        c.JSON(404, gin.H{"message": "The specified route is not registered"})
+    })
+}
+

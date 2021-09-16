@@ -3,6 +3,7 @@ package controllers
 import (
     "github.com/gin-gonic/gin"
     . "monitoring-server/services"
+    . "monitoring-server/util"
 	. "monitoring-server/core"
     "go.mongodb.org/mongo-driver/bson"
     "context"

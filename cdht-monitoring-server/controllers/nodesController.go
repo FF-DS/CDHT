@@ -2,6 +2,7 @@ package controllers
 
 import (
     "github.com/gin-gonic/gin"
+    . "monitoring-server/util"
 	"monitoring-server/services"
 	"monitoring-server/core"
     "context"
@@ -27,7 +28,7 @@ func (h *NodesController) GetNodes(c *gin.Context) {
 
 	if err != nil {
         message := "some error message to edit later"
-		services.GetError(err, message , c)
+		GetError(err, message , c)
 		return
 	}
 
@@ -72,7 +73,7 @@ func (h *NodesController) RegisterNode(c *gin.Context) {
     
         if err != nil {
             message := "some error message to edit later"
-            services.GetError(err, message , c)
+            GetError(err, message , c)
         }
     
         c.JSON(200, gin.H{"message": result})
