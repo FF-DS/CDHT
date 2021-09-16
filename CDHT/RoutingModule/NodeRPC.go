@@ -188,7 +188,7 @@ func (node *NodeRPC) NodeReplicaInfo(replicaInfos *ReplicaInfo) (error, *Replica
 func (node *NodeRPC) AddReplica(currNode *NodeRPC) (error, ReplicaInfo) {
 	node.resetConnTimeOut();
 
-	replicaInfos := ReplicaInfo{ SuccessorsTable : Successors{}, FingerTable : map[int]NodeRPC{}, Successor : NodeRPC{}, Predcessor : NodeRPC{},ReplicaAddress : []NodeRPC{}, }	
+	replicaInfos := ReplicaInfo{ SuccessorsTable : Successors{}, FingerTable : map[int]NodeRPC{}, Successor : NodeRPC{}, Predcessor : NodeRPC{},ReplicaAddress : []NodeRPC{},  MasterNode : NodeRPC{}}	
 	err := node.handle.Call("Node.AddReplica", &currNode, &replicaInfos)
 
     if err != nil {
@@ -261,8 +261,10 @@ func (successors *Successors) UpdateSuccessors(newSuccessors Successors) {
 	*successors = newSuccessors
 }
 
-func (successors *Successors) PopFirst() {
+func (successors *Successors) PopFirst() NodeRPC{
+	poped := (*successors)[0]
 	*successors = (*successors)[1:]
+	return poped
 }
 
 // # -------------------- Args -------------------- # //

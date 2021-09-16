@@ -2,6 +2,7 @@ package RoutingModule
 
 import (
 	"fmt"
+	"sort"
 )
 
 const (
@@ -20,12 +21,18 @@ type ReplicaInfo struct {
     SuccessorsTableLength int
 
 	NodeState string
+	MasterNode NodeRPC
     ReplicaAddress []NodeRPC
 }
 
 
 // [Internal]
 func (node *Node) updateReplicaInfo() {
+	if checkNode(node.MainReplicaNode) == nil {
+        fmt.Println("[Replica][Error]: Master node is down!")
+		node.updateRemoteReplica()
+		return
+	}
 	err, _ := node.MainReplicaNode.NodeReplicaInfo( &node.ReplicaInfos )
 
     if err != nil {
@@ -33,12 +40,50 @@ func (node *Node) updateReplicaInfo() {
 		return
     }
 
+	if node.MainReplicaNode.Node_address != node.ReplicaInfos.MasterNode.Node_address {
+		node.MainReplicaNode = &node.ReplicaInfos.MasterNode
+	}
 	node.updateRoutingEntries()
 }
+
+
+func (node *Node) updateRemoteReplica() {
+	sort.SliceStable(node.ReplicaInfos.ReplicaAddress, func(i, j int) bool {
+		return node.ReplicaInfos.ReplicaAddress[i].Node_address < node.ReplicaInfos.ReplicaAddress[j].Node_address
+	})
+
+	for _, replica := range node.ReplicaInfos.ReplicaAddress {
+		replica.DefaultArgs = nil
+		if remoteNode := checkNode(&replica); remoteNode != nil && replica.NodeState == NODE_STATE_ACTIVE {
+			node.MainReplicaNode = remoteNode
+			fmt.Println("[Replica][UPDATE]: Master node changed to ",remoteNode.Node_address)
+			return
+		}
+		
+		if remoteNode := checkNode(&replica); remoteNode != nil {
+			remoteNode.MakeNodeActive(&node.ReplicaInfos)
+			node.MainReplicaNode = remoteNode
+			fmt.Println("[Replica][UPDATE]: Master node changed to ",remoteNode.Node_address)
+			return
+		}
+	}
+}
+
 
 // [RPC]
 func (node *Node) MakeNodeActive(args *Args, currentReplicaInfo  *ReplicaInfo) error {
 	node.NodeState = NODE_STATE_ACTIVE
+	node.GetNodeInfo(node.defaultArgs, node.MainReplicaNode)
+	node.GetNodeInfo(node.defaultArgs, &node.ReplicaInfos.MasterNode)
+
+	currentActive := []NodeRPC{}
+	for _,replica := range node.ReplicaInfos.ReplicaAddress {
+		if replica.Node_address !=  node.MainReplicaNode.Node_address{ 
+			currentActive = append(currentActive, replica)
+		}
+	}
+	node.ReplicaInfos.ReplicaAddress = currentActive
+
 	copyReplicaInfo(&node.ReplicaInfos, currentReplicaInfo)
 	return nil
 }
@@ -51,6 +96,11 @@ func (node *Node) NodeReplicaInfo(args *Args, currentReplicaInfo  *ReplicaInfo) 
 
 // [RPC]
 func (node *Node) AddReplica(remoteNode  *NodeRPC, currentReplicaInfo  *ReplicaInfo) error {
+	if node.NodeState == NODE_STATE_REPLICA {
+		node.MainReplicaNode.AddReplica(remoteNode)
+		return nil
+	}
+
 	if node.ReplicaInfos.ReplicaAddress == nil {
 		node.ReplicaInfos.ReplicaAddress = []NodeRPC{}
 	}
@@ -87,6 +137,9 @@ func (node *Node) currentNodeReplicaInfo() {
 			currentActive = append(currentActive, replica)
 		}
 	}
+	if node.ReplicaInfos.MasterNode.Node_address == "" {
+		node.GetNodeInfo(node.defaultArgs, &node.ReplicaInfos.MasterNode)
+	}
 	node.ReplicaInfos.ReplicaAddress = currentActive
 }
 
@@ -96,6 +149,7 @@ func copyReplicaInfo(old *ReplicaInfo, new *ReplicaInfo) {
 	new.SuccessorsTable = old.SuccessorsTable
 	new.Successor = old.Successor
 	new.Predcessor = old.Predcessor
+	new.MasterNode = old.MasterNode
 	
 	new.SuccessorsTableLength = old.SuccessorsTableLength
 	

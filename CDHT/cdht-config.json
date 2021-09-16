@@ -18,7 +18,7 @@
   "Application_Channel_Size": 100000,
   "Application_Connecting_Port": "",
 
-  "Log_Route_Table_Delay_Value": 10000,
+  "Log_Route_Table_Delay_Value": 100000,
   "Log_Node_Channel_Size_Value": 0,
   "Log_Node_Channel_Delay_Value": 10000,
 

@@ -127,6 +127,12 @@ func (node *Node) makeReplicaOf(mainNode *NodeRPC) {
     
     remoteRep := NodeRPC{}
     node.GetNodeInfo(node.defaultArgs, &remoteRep)
+
+    if checkNode(mainNode) == nil {
+        fmt.Println("[JOIN][Replica][Error]: Main node is not Alive!")
+        return
+    }
+
     err, replicaInfo := mainNode.AddReplica( &remoteRep )
 
     if err == nil {
@@ -167,7 +173,7 @@ func (node *Node) initializeNode() {
     node.currentSuccessors = Successors{}
     node.fingerTableEntry = make(map[int]*NodeRPC)
     node.ReplicaInfos = ReplicaInfo{ SuccessorsTable : Successors{}, FingerTable : map[int]NodeRPC{}, Successor : NodeRPC{}, 
-                            Predcessor : NodeRPC{},ReplicaAddress : []NodeRPC{}, }
+                            Predcessor : NodeRPC{},ReplicaAddress : []NodeRPC{}, MasterNode : NodeRPC{}}
 }
 
 // [INTERNAL]

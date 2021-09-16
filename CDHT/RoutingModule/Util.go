@@ -62,7 +62,7 @@ func checkNode(node *NodeRPC) *NodeRPC {
     }
 
     var nodeRPC *NodeRPC
-    if node.DefaultArgs == nil {
+    if node.DefaultArgs == nil || node.handle == nil{
         // fmt.Println("CHECK connection")
         _, nodeRPC = node.Connect()
     }else{

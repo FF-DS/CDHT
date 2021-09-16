@@ -84,7 +84,7 @@ func (routingTable *RoutingTable) InitReplicaRoutingTable(remoteNode *NodeRPC) {
 
     routingTable.node.makeReplicaOf(remoteNode)
 
-    go routingTable.runReplicaUpdate()
+    go routingTable.runStablization()
 }
 
 // # ------------------------ [END] Main Node INIT ----------------------- #
@@ -96,24 +96,20 @@ func (routingTable *RoutingTable) InitReplicaRoutingTable(remoteNode *NodeRPC) {
 func (routingTable *RoutingTable) runStablization() {
 	for {
 		time.Sleep(time.Second * routingTable.RoutingUpdateDelay)
-		routingTable.node.checkPredecessor()
-		routingTable.node.checkSeccessors()
-		routingTable.node.stablize()
-		routingTable.node.fixFinger()
+
+        if routingTable.node.NodeState == NODE_STATE_ACTIVE {
+            routingTable.node.checkPredecessor()
+            routingTable.node.checkSeccessors()
+            routingTable.node.stablize()
+            routingTable.node.fixFinger()
+            // replica info
+            routingTable.node.currentNodeReplicaInfo()
+
+        }else{
+            routingTable.node.updateReplicaInfo()
+        }
         // logging
         routingTable.node.logRoutingTableReport()
-        // replica info
-        routingTable.node.currentNodeReplicaInfo()
-	}
-}
-
-
-func (routingTable *RoutingTable) runReplicaUpdate() {
-	for {
-		time.Sleep(time.Second * routingTable.RoutingUpdateDelay)
-        // logging
-        routingTable.node.logRoutingTableReport()
-        routingTable.node.updateReplicaInfo()
 	}
 }
 // # ----------------------------- [END] INIT ---------------------------- #
