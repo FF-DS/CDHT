@@ -25,6 +25,8 @@ type RoutingTable struct {
 
     Logger *ReportModule.Logger
 	node *Node
+
+	ReplicationCount int
 }
 
 
@@ -43,6 +45,7 @@ func (routingTable *RoutingTable) CreateRing() {
         M : routingTable.M,
         NetworkTools : routingTable.NetworkTools,
         SuccessorsTableLength : routingTable.SuccessorsTableLength,
+        ReplicationCount : routingTable.ReplicationCount,
     }
 
     routingTable.node.createRing()
@@ -64,6 +67,7 @@ func (routingTable *RoutingTable) RunNode(remoteNode *NodeRPC) {
         M : routingTable.M,
         NetworkTools : routingTable.NetworkTools,
         SuccessorsTableLength : routingTable.SuccessorsTableLength,
+        ReplicationCount : routingTable.ReplicationCount,
     }
 
     routingTable.node.join( remoteNode )
@@ -195,6 +199,10 @@ func (routingTable *RoutingTable) PrintCurrentNodeInfo() {
     routingTable.node.currentNodeInfo()
 }
 
+func (routingTable *RoutingTable) PrintUpdatedNodeInfo() {
+    routingTable.node.updatedNodeInfo()
+}
+
 func (routingTable *RoutingTable) PrintCurrentReplicaInfo() {
     routingTable.node.currentReplicaInfo()
 }
@@ -202,3 +210,4 @@ func (routingTable *RoutingTable) PrintCurrentReplicaInfo() {
 func (routingTable *RoutingTable) PrintRemoteReplicaInfo() {
     routingTable.node.remoteReplicaInfo()
 }
+

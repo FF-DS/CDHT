@@ -83,6 +83,8 @@ type Configuration struct {
 
 	CONFIGURATION_DOWNLOAD_DELAY  time.Duration
 	CONFIGURATION_DOWNLOAD_URL string
+
+	REPLICATION_COUNT int
 }
 
 

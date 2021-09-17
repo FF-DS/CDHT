@@ -46,5 +46,10 @@
   "TEST_APP_UDP_Listener_Port": "",
   "TEST_APP_Net_Channel_Size": 100000,
   "TEST_APP_AppName": "TEST_APP",
-  "TEST_APP_Packet_Delay": 500
+  "TEST_APP_Packet_Delay": 500,
+
+  "CONFIGURATION_DOWNLOAD_DELAY": 5,
+  "CONFIGURATION_DOWNLOAD_URL": "https://cdht-monitoring-api.herokuapp.com/config",
+
+  "REPLICATION_COUNT": 0
 }

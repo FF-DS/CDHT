@@ -38,6 +38,8 @@ func (ui *TerminalUI) UserUI(){
                 ui.uiConfigManager(params)
             case "replica":
                 ui.printReplica(params)
+            case "node":
+                ui.CoreLink.RoutingTableInfo.PrintUpdatedNodeInfo()
         }
 
     }

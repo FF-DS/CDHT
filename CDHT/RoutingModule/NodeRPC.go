@@ -23,10 +23,10 @@ type NodeRPC struct {
 	ticker *time.Ticker
 
 	NodeTraversalLogs []NodeRPC
-
-
+	
 	// replica info's
 	NodeState string
+	ReplicationCount int
 }
 
 

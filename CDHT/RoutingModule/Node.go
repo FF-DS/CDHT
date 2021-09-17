@@ -9,6 +9,7 @@ import (
     "net/rpc"
     "strconv"
     "fmt"
+    "os"
 )
 
 
@@ -39,6 +40,7 @@ type Node struct {
     NodeState string
     ReplicaInfos ReplicaInfo
     MainReplicaNode *NodeRPC
+    ReplicationCount int
 }
 
 
@@ -101,14 +103,28 @@ func (node *Node) createRing() {
 func (node *Node) join(available *NodeRPC) {
     node.initNode()
     
+    if checkNode(available) == nil {
+        fmt.Println("[JOIN][Error]: available node is not Alive!")
+        os.Exit(0)
+        return
+    }
+
     err, succ := available.FindSuccessor(node.Node_id)
     
+    // check replica 
+    if canBeReplica := node.checkIfNodeCanBeReplica(succ); canBeReplica {
+        node.internalReplicaInit(succ)
+        return
+    }
+
+
     succ.NodeTraversalLogs =  []NodeRPC{}
     if err == nil && checkNode(succ) != nil {
         node.successor = succ 
         fmt.Println("[JOIN]: Joined with ", succ.Node_id)
     }else{
         fmt.Println("[JOIN][Error]:", err)
+        os.Exit(0)
     }
 
 
@@ -130,6 +146,7 @@ func (node *Node) makeReplicaOf(mainNode *NodeRPC) {
 
     if checkNode(mainNode) == nil {
         fmt.Println("[JOIN][Replica][Error]: Main node is not Alive!")
+        os.Exit(0)
         return
     }
 
@@ -141,6 +158,7 @@ func (node *Node) makeReplicaOf(mainNode *NodeRPC) {
         fmt.Println("[JOIN][Replica]: Joined as a replica of ", mainNode.Node_id)
     }else{
         fmt.Println("[JOIN][Replica][Error]:", err)
+        os.Exit(0)
     }
 }
 
@@ -212,6 +230,7 @@ func (node *Node) GetNodeInfo(args *Args, nodeRPC *NodeRPC) error {
     nodeRPC.Node_address = node.IP_address + ":" + node.Port
     nodeRPC.NodeState = node.NodeState
     nodeRPC.Node_id = node.Node_id
+    nodeRPC.ReplicationCount = node.ReplicationCount
 
     return nil
 }

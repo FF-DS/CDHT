@@ -41,6 +41,8 @@ func (config *Configuration) DefaultConfig() *Configuration {
 
 		CONFIGURATION_DOWNLOAD_DELAY : 5,
 		CONFIGURATION_DOWNLOAD_URL : "https://cdht-monitoring-api.herokuapp.com/config",
+
+		REPLICATION_COUNT: 0,
 	}
 }
 
@@ -83,6 +85,8 @@ func (config *Configuration) CopyConfiguration(NewConfig *Configuration) {
 
 	config.CONFIGURATION_DOWNLOAD_DELAY = selectTime( NewConfig.CONFIGURATION_DOWNLOAD_DELAY, config.CONFIGURATION_DOWNLOAD_DELAY, defaultConfig.CONFIGURATION_DOWNLOAD_DELAY)
 	config.CONFIGURATION_DOWNLOAD_URL  = selectURL( NewConfig.CONFIGURATION_DOWNLOAD_URL, config.CONFIGURATION_DOWNLOAD_URL, defaultConfig.CONFIGURATION_DOWNLOAD_URL)
+
+	config.REPLICATION_COUNT = NewConfig.REPLICATION_COUNT
 }
 
 
@@ -151,6 +155,8 @@ func (config *Configuration) PrintConfiguration() {
 	fmt.Println()
 	fmt.Println("      [+]: CONFIGURATION_DOWNLOAD_DELAY :  ",  config.CONFIGURATION_DOWNLOAD_DELAY )
 	fmt.Println("      [+]: CONFIGURATION_DOWNLOAD_URL :  ",  config.CONFIGURATION_DOWNLOAD_URL )
+	fmt.Println()
+	fmt.Println("      [+]: REPLICATION_COUNT :  ",  config.REPLICATION_COUNT )
 	fmt.Println()
     fmt.Println("---------------------------------------------------------------------\n")
 }

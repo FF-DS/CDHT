@@ -41,6 +41,7 @@ func copyNodeData(old *NodeRPC, new *NodeRPC) {
     new.Node_id = old.Node_id
     new.DefaultArgs = nil
     new.NodeState = old.NodeState
+    new.ReplicationCount = old.ReplicationCount
 
 }
 
@@ -120,4 +121,18 @@ func (node *Node) logNodeReport(logType string, location string, status string, 
     }
 
     node.Logger.NodeLog(fwdReport)
+}
+
+
+// # ------------------------------------ [Print node Info] ------------------------------------ #
+
+func (node *Node) updatedNodeInfo() {
+    fmt.Printf("------------------Current node Info[%s]------------------\n",node.Node_id.String())
+    fmt.Printf("      [+]: Node ID : %s [%s] \n", node.Node_id.String(), node.NodeState)
+    fmt.Printf("      [+]: M       : %s \n", node.M.String())
+    fmt.Printf("      [+]: Address : %s:%s \n", node.IP_address, node.Port)
+    fmt.Printf("      [+]: Jump Spacing : %d \n", node.JumpSpacing)
+    fmt.Printf("      [+]: Replication Count : %d \n", node.ReplicationCount)
+    fmt.Printf("      [+]: Successors Table Length : %d \n", node.SuccessorsTableLength)
+    fmt.Printf("---------------------------------------------------------\n")
 }

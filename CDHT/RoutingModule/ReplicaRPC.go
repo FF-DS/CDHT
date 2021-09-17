@@ -25,6 +25,53 @@ type ReplicaInfo struct {
     ReplicaAddress []NodeRPC
 }
 
+// ## ------------------------ [init] ------------------------ ## 
+// [INTERNAL-MODULE]
+func (node *Node) checkIfNodeCanBeReplica(mainNode *NodeRPC) bool {
+    replicaInfos := ReplicaInfo{ SuccessorsTable : Successors{}, FingerTable : map[int]NodeRPC{}, Successor : NodeRPC{}, Predcessor : NodeRPC{}, ReplicaAddress : []NodeRPC{},  MasterNode : NodeRPC{}}	
+    
+    if checkNode(mainNode) == nil {
+        return false
+    }
+
+    err, _ := mainNode.NodeReplicaInfo(&replicaInfos)
+
+    if err != nil {
+        return false
+    }
+    return len(replicaInfos.ReplicaAddress) < mainNode.ReplicationCount
+}
+
+
+// [INTERNAL-MODULE]
+func (node *Node) internalReplicaInit(mainNode *NodeRPC){
+    node.MainReplicaNode = mainNode
+
+    node.NodeState = NODE_STATE_REPLICA
+    node.Node_id = node.MainReplicaNode.Node_id
+    node.M = node.MainReplicaNode.M
+
+    remoteRep := NodeRPC{}
+    node.GetNodeInfo(node.defaultArgs, &remoteRep)
+
+    if checkNode(mainNode) == nil {
+        fmt.Println("[JOIN][Replica][Error]: Main node is not Alive!")
+        return
+    }
+
+    err, replicaInfo := mainNode.AddReplica( &remoteRep )
+
+    if err == nil {
+        node.ReplicaInfos = replicaInfo
+
+        fmt.Println("[JOIN][Replica]: Joined as a replica of ", mainNode.Node_id)
+    }else{
+        fmt.Println("[JOIN][Replica][Error]:", err)
+    }
+}
+
+// ## ------------------------ [End - init] ------------------------ ## 
+
 
 // [Internal]
 func (node *Node) updateReplicaInfo() {
@@ -182,6 +229,7 @@ func (node *Node) updateRoutingEntries(){
 	node.FingerTableLength = len(node.ReplicaInfos.FingerTable)
 	node.SuccessorsTableLength = node.ReplicaInfos.SuccessorsTableLength
 	node.JumpSpacing = node.ReplicaInfos.JumpSpacing
+    node.ReplicationCount = node.MainReplicaNode.ReplicationCount
 
 	currentFingerTable := map[int]*NodeRPC{}
 	for key, nodeConn := range node.ReplicaInfos.FingerTable {
