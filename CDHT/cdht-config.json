@@ -51,5 +51,5 @@
   "CONFIGURATION_DOWNLOAD_DELAY": 5,
   "CONFIGURATION_DOWNLOAD_URL": "https://cdht-monitoring-api.herokuapp.com/config",
 
-  "REPLICATION_COUNT": 0
+  "REPLICATION_COUNT": -1
 }

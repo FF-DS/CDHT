@@ -15,6 +15,7 @@ func (config *Configuration) ValidateConfig(){
 	config.validateNodeId()
 	config.validateApplicationPort()
 	config.validateCDHTPort()
+	config.validateReplicaCount()
 }
 
 
@@ -57,6 +58,18 @@ func (config *Configuration) validateNodePort(){
 	config.validateNodePort()
 }	
 
+func (config *Configuration) validateReplicaCount(){
+	if (0 <= config.REPLICATION_COUNT  &&  config.REPLICATION_COUNT <= 10) {
+		return 
+	}
+	count :=  getInput("Enter Valid Replication Count :")
+	userInpt, err :=  strconv.Atoi( count )
+	if err == nil { 
+		config.REPLICATION_COUNT = userInpt
+	}
+
+	config.validateReplicaCount()
+}	
 
 func (config *Configuration) validateNodeM() {
 	if config.Application_Mode == "REPLICA_NODE" {
