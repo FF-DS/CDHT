@@ -1,8 +1,9 @@
 package routers
 
 import (
-    "github.com/gin-gonic/gin"
-    "monitoring-server/controllers"
+	"monitoring-server/controllers"
+
+	"github.com/gin-gonic/gin"
 )
 
 func NodesRoute(route *gin.Engine){

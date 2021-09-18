@@ -1,19 +1,20 @@
 package controllers
 
 import (
-    "github.com/gin-gonic/gin"
-    . "monitoring-server/util"
-	"monitoring-server/services"
+	"context"
+	"log"
 	"monitoring-server/core"
-    "context"
-    "log"
+	"monitoring-server/services"
+	. "monitoring-server/util"
+	"time"
+
+	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
-    "go.mongodb.org/mongo-driver/bson/primitive"
-    "time"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 
-type NodesController struct{}
+
 
 
 func (h *NodesController) GetNodes(c *gin.Context) {

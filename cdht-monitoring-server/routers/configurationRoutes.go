@@ -1,8 +1,9 @@
 package routers
 
 import (
+	"monitoring-server/controllers"
+
 	"github.com/gin-gonic/gin"
-    "monitoring-server/controllers"
 )
 
 func ConfigurationRoute(route *gin.Engine){

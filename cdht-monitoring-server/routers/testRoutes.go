@@ -1,8 +1,9 @@
 package routers
 
 import (
+	"monitoring-server/controllers"
+
 	"github.com/gin-gonic/gin"
-    "monitoring-server/controllers"
 )
 
 func TestRoute(route *gin.Engine){
@@ -11,5 +12,8 @@ func TestRoute(route *gin.Engine){
 	*/
 	testRoutes := route.Group("/test")
 	testController := new(controllers.TestController)
-	testRoutes.GET("/" , testController.Test)
+	testRoutes.POST("/ping" , testController.RunPingTest)
+	testRoutes.POST("/dns-lookup" , testController.RunDNSLookUpTest)
+	testRoutes.POST("/hop-count" , testController.RunHopCountTest)
+	testRoutes.GET("/filter-results" , testController.FilterTestResults)
 }

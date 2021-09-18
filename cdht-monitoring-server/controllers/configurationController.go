@@ -1,87 +1,86 @@
 package controllers
 
 import (
-	. "monitoring-server/services"
-	. "monitoring-server/util"
-	"monitoring-server/core"
-    "github.com/gin-gonic/gin"
 	"context"
-    "log"
+	"monitoring-server/core"
+	"monitoring-server/services"
+	"monitoring-server/util"
+
+	"github.com/gin-gonic/gin"
+
+	// "log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo"
-    "go.mongodb.org/mongo-driver/bson/primitive"
-    // "time"
+
+	// "go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	// "time"
 	"net/http"
-	"strconv"
+	// "strconv"
 )
-
-
-// type NodesController struct{}
-
-type ConfigurationController struct{}
-func (config ConfigurationController) Config(c *gin.Context){
-    var success  = map[string]string{}
-    success["message"] = "this is from configuration"
-    c.JSON(200 , success)
-}
 
 /*
 This function will return all the configuration profiles created and stored in the collection
-  */
+*/
 func (config ConfigurationController) GetConfigurationProfiles(c *gin.Context){
-	configurationCollection := ConnectDB("configurations")
 
-	cursor , err := configurationCollection.Find(context.TODO() , bson.M{} )
+	configurationCollection := services.ConnectDB(CONFIGURATION_COLLECTION_NAME)
 
-	if err != nil{
+	type RequestBody struct{
+		Limit int64 `bson:"limit" json:"limit"`
+	}
+	
+	var request RequestBody
+
+	findOptions := options.Find()
+
+	if err := c.ShouldBindJSON(&request) ; err == nil{
+		findOptions.SetLimit(request.Limit)
+		filter := bson.M{}
+
+		if cursor , err := configurationCollection.Find(context.TODO() , filter , findOptions ) ; err == nil{
+
+			defer cursor.Close(context.TODO())
+			var configurationProfiles []core.ConfigurationProfile
 		
-		message := "some error message to be edited later"
-
-		GetError(err , message ,  c)
-		return
-	}
-
-	defer cursor.Close(context.TODO())
-    var configurationProfiles []core.ConfigurationProfile
-
-
-    for cursor.Next(context.TODO()) {
-		var configurationProfile core.ConfigurationProfile
-		err := cursor.Decode(&configurationProfile)
-
-		if err != nil {
-			log.Fatal(err)
+			for cursor.Next(context.TODO()) {
+				var configurationProfile core.ConfigurationProfile
+				if err := cursor.Decode(&configurationProfile) ; err == nil {
+					configurationProfiles = append(configurationProfiles, configurationProfile)
+				}else{
+					message := "an error occured while trying to decode configuration profile"
+					util.GetError(err , message , c)
+				}
+			}
+			
+			c.JSON(http.StatusOK, gin.H{"message": "All Configuration Profiles retrived successfully", "data": configurationProfiles} )
+		}else {
+			message := "an error occured while trying to fetch configuration profiles"
+			util.GetError(err , message ,  c)
 		}
-
-		configurationProfiles = append(configurationProfiles, configurationProfile)
+	
+	}else {
+		message := "an error occured while trying to bind request object"
+        util.GetError(err , message , c)
 	}
-
-	if err := cursor.Err(); err != nil {
-		log.Fatal(err)
-	}
- 
-    c.JSON(http.StatusOK, gin.H{"message": "All Configuration Profiles retrived successfully", "data": configurationProfiles} )
 }
 
 /* 
 This function will return the currently used configuration profile
 */
 func (config ConfigurationController) GetCurrentConfigurationProfile(c *gin.Context){
-	configurationCollection := ConnectDB("configurations")
+	configurationCollection := services.ConnectDB(CONFIGURATION_COLLECTION_NAME)
 
-  	filter := bson.D{{"config_status", "ACTIVE"}}
+  	filter := bson.D{primitive.E{Key : "config_status", Value: "ACTIVE"}}
 
   	var activeConfigurationProfile core.ConfigurationProfile
 
-  	err := configurationCollection.FindOne(context.TODO() , filter).Decode(&activeConfigurationProfile)
-
-	if err != nil{
-		log.Fatal(err)
+	if err := configurationCollection.FindOne(context.TODO() , filter).Decode(&activeConfigurationProfile) ; err == nil{
+		c.JSON(http.StatusOK, gin.H{"message": "Active Configuration Profile retrived successfully", "data": activeConfigurationProfile} )
+	}else {
+		message := "an error occured while trying to retrive the active profile"
+		util.GetError(err , message , c)
 	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Active Configuration Profile retrived successfully", "data": activeConfigurationProfile} )
-    
 }
 
 /* 
@@ -89,53 +88,51 @@ This function will set a configuration profile selected by the user and notifies
 to propagate the changes accordingly
 */
 func (config ConfigurationController) SetCurrentConfigurationProfile(c *gin.Context){
-    configurationCollection := ConnectDB("configurations")
 
-	opts := options.FindOneAndUpdate().SetUpsert(true)
+    configurationCollection := services.ConnectDB(CONFIGURATION_COLLECTION_NAME)
 
-	activeConfigId , _:= primitive.ObjectIDFromHex(c.Query("cuurent_active_config_id"))
-	newConfigId , _:= primitive.ObjectIDFromHex(c.Query("new_active_config_id"))
+	type RequestBody struct{
+		NewActiveConfigurationId primitive.ObjectID `json:"new_active_configuration_id" bson:"new_active_configuration_id"`
+	}
+
+	var request RequestBody
+
+	findOptions := options.FindOneAndUpdate().SetUpsert(true)
 
 	var activeConfigurationProfile core.ConfigurationProfile
 	var activeConfigurationProfileToSet core.ConfigurationProfile
 
-	updateCurrentToInactive := bson.D{{"$set", bson.D{{"config_status", "INACTIVE"}}}}
-	updateNewToActive := bson.D{{"$set", bson.D{{"config_status", "ACTIVE"}}}}
-
-	currentActiveFilter := bson.D{{"_id", activeConfigId}}
-	newActiveFilter := bson.D{{"_id", newConfigId}}
-
-	if err := configurationCollection.FindOneAndUpdate(
-		context.TODO(),
-		currentActiveFilter,
-		updateCurrentToInactive,
-		opts,
-	).Decode(&activeConfigurationProfile); err == nil{
+	if err := c.ShouldBindJSON(&request) ; err == nil {
+		filter := bson.D{primitive.E{Key : "_id" , Value: request.NewActiveConfigurationId}}
 
 		if err := configurationCollection.FindOneAndUpdate(
 			context.TODO(),
-			newActiveFilter,
-			updateNewToActive,
-			opts,
-		).Decode(&activeConfigurationProfileToSet); err == nil{
-
-			c.JSON(http.StatusOK,
-				 gin.H{"message": "Current active configuration profile changed successfuly" ,
-				  "data" : gin.H{"old"  :activeConfigurationProfile , "new" : activeConfigurationProfileToSet}})
+			bson.D{primitive.E{Key:"config_status" , Value:"ACTIVE"}},
+			bson.D{primitive.E{Key:"$set",Value: bson.D{primitive.E{Key:"config_status", Value: "INACTIVE"}}}} ,
+			findOptions,
+		).Decode(&activeConfigurationProfile); err == nil{
+			if err := configurationCollection.FindOneAndUpdate(
+				context.TODO(),
+				filter,
+				bson.D{primitive.E{Key:"$set",Value: bson.D{primitive.E{Key:"config_status", Value: "ACTIVE"}}}} ,
+				findOptions,
+			).Decode(&activeConfigurationProfileToSet); err == nil{
+				c.JSON(http.StatusOK,
+					gin.H{"message": "Active configuration profile changed successfuly" ,
+					 "data" : gin.H{"old"  :activeConfigurationProfile , "new" : activeConfigurationProfileToSet}})
+			}else{
+				message := "an error occured while trying to activate new configuration profile"
+				util.GetError(err , message , c)
+			}	
 
 		}else{
-			
-			message := "some error message to be edited later" 
-
-
-			GetError(err, message , c)
+			message := "an error occured while trying to deactivate the currently active configuration profile"
+			util.GetError(err , message , c)
 		}
 
 	}else{
-		
-		message := "some error message to be edited later"
-
-		GetError(err, message ,  c)
+		message := "an error occured while trying to bind request object"
+        util.GetError(err , message , c)
 	}
    
 }
@@ -147,59 +144,58 @@ to propagate the changes accordingly
 */
 func (config ConfigurationController) SetNodeSpaceBalancing(c *gin.Context){
     
-	configurationCollection := ConnectDB("configurations")
+	configurationCollection := services.ConnectDB(CONFIGURATION_COLLECTION_NAME)
 
-	opts := options.FindOneAndUpdate().SetUpsert(true)
-
-	activeConfigId , _ := primitive.ObjectIDFromHex(c.Query("cuurent_active_config_id"))
-	newJumpSpace , _ := strconv.Atoi(c.Query("new_jump_space"))
-
-	var activeConfigurationProfile core.ConfigurationProfile
-	updateJumpSpace := bson.D{{"$set", bson.D{{"jump_space_balancing", newJumpSpace}}}}
-	currentActiveFilter := bson.D{{"_id", activeConfigId}}
-
-	if err := configurationCollection.FindOneAndUpdate(
-		context.TODO(),
-		currentActiveFilter,
-		updateJumpSpace,
-		opts,
-	).Decode(&activeConfigurationProfile); err == nil{
-		c.JSON(http.StatusOK,
-			gin.H{"message": "Current active configuration profile's Jump S[ace Balancing] changed successfuly" ,
-			 "data" : activeConfigurationProfile})
-
-	}else{
-		
-		message := "some error message to be edited later"
-
-		GetError(err, message ,  c)
+	type RequestBody struct{
+		NewJumpSpace int `json:"new_jump_space" bson:"new_jump_space"`
 	}
 
+	var request RequestBody
+
+	var activeConfigurationProfile core.ConfigurationProfile
+
+	findOptions := options.FindOneAndUpdate().SetUpsert(true)
+
+	if err := c.ShouldBindJSON(&request) ; err == nil{
+		if err := configurationCollection.FindOneAndUpdate(
+			context.TODO(),
+			bson.D{primitive.E{Key : "config_status" ,Value: "ACTIVE"}},
+			bson.D{primitive.E{Key : "$set" ,Value: bson.D{primitive.E{Key:"jump_space_balancing" , Value :request.NewJumpSpace}}}},
+			findOptions,
+		).Decode(&activeConfigurationProfile); err == nil{
+			c.JSON(http.StatusOK,
+				gin.H{"message": "Current active configuration profile's Jump Space Balancing changed successfuly" ,
+				 "data" : activeConfigurationProfile})
+		}else{
+			message := "an error occured while trying to change the jump space of the current configuration profile"
+			util.GetError(err, message ,  c)
+		}
+	}else {
+		message := "an error occured while trying to bind request object "
+        util.GetError(err , message , c)
+	}
 }
 
 /* 
 This function will store an newly created configuration profile by the user
 */
 func (config ConfigurationController) AddConfigurationProfile(c *gin.Context){
-    configurationCollection := ConnectDB("configurations")
+    configurationCollection := services.ConnectDB(CONFIGURATION_COLLECTION_NAME)
 
 	var configurationProfile core.ConfigurationProfile
 
 	if err := c.ShouldBindJSON(&configurationProfile) ; err == nil{
 	
-        result, err := configurationCollection.InsertOne(context.TODO(), configurationProfile)
-    
-        if err != nil {
+        if result, err := configurationCollection.InsertOne(context.TODO(), configurationProfile) ; err == nil{
+			c.JSON(http.StatusOK, gin.H{"message": "Configuration Profile added successfully" , "data" : result})
+		}else{
             
-			message := "some error message to be edited later" 
-
-
-			GetError(err, message , c)
+			message := "an error occured while trying to insert the new configuration profile" 
+			util.GetError(err, message , c)
         }
-    
-        c.JSON(http.StatusOK, gin.H{"message": "Configuration Profile added successfully" , "data" : result})
     } else {
-        c.JSON(401, gin.H{"error": err.Error()})
+        message := "an error occured while trying to bind request object "
+        util.GetError(err , message , c)
     }
 }
 
@@ -210,36 +206,34 @@ profile
 */
 func (config ConfigurationController) DeleteConfigurationProfile(c *gin.Context){
 
-	configurationCollection := ConnectDB("configurations")	
+	configurationCollection := services.ConnectDB(CONFIGURATION_COLLECTION_NAME)	
 
-	configId , _ := primitive.ObjectIDFromHex(c.Query("config_id"))
-
-	
-	opts := options.FindOneAndDelete().
-		SetProjection(bson.D{})
-
-	filter := bson.D{{"_id", configId}}
-
-	var deletedConfigProfile core.ConfigurationProfile
-	err := configurationCollection.FindOneAndDelete(
-		context.TODO(),
-		filter , 
-		opts,
-	).Decode(&deletedConfigProfile)
-	if err != nil {
-		// ErrNoDocuments means that the filter did not match any documents in
-		// the collection.
-		if err == mongo.ErrNoDocuments {
-			// notify the user the obj has not been founded
-			return
-		}
-		log.Fatal(err)
+	type RequestBody struct{
+		ConfigurationId primitive.ObjectID `json:"configuration_id" bson:"configuration_id"`
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Configuration Profile deleted successfully" , "data" : deletedConfigProfile})
+	var request RequestBody
+	var deletedConfigProfile core.ConfigurationProfile
 
+	deleteOptions := options.FindOneAndDelete().
+		SetProjection(bson.D{})
 
-    
+	if err := c.ShouldBindJSON(&request) ; err == nil {
+
+		if err := configurationCollection.FindOneAndDelete(
+			context.TODO(),
+			bson.D{primitive.E{Key :"_id" , Value : request.ConfigurationId}}, 
+			deleteOptions,
+		).Decode(&deletedConfigProfile) ; err == nil {
+			c.JSON(http.StatusOK, gin.H{"message": "Configuration Profile deleted successfully" , "data" : deletedConfigProfile})
+		}else{
+			message := "an error occured while trying to delete the specified configuration profile"
+        util.GetError(err , message , c)
+		}
+	}else{
+		message := "an error occured while trying to bind request object "
+        util.GetError(err , message , c)
+	}    
 }
 
 /* 

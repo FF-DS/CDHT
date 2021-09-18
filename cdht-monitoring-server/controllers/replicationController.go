@@ -5,10 +5,7 @@ import (
 	// . "monitoring-server/util"
 )
 
-
-type ReplicationController struct{}
-
-/* 
+/*
 This function will get all the existing replicas of a given node
 */
 func (replica ReplicationController) GetReplicasForNode(c *gin.Context){

@@ -1,11 +1,11 @@
 package tests
 
 import (
-	"os"
-	"net/http/httptest"
-	"testing"
 	"bytes"
 	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
 )
 
 

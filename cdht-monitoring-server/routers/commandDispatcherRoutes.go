@@ -1,8 +1,9 @@
 package routers
 
 import (
+	"monitoring-server/controllers"
+
 	"github.com/gin-gonic/gin"
-    "monitoring-server/controllers"
 )
 
 func CommandDispatcherRoute(route *gin.Engine){
@@ -11,7 +12,7 @@ func CommandDispatcherRoute(route *gin.Engine){
 	*/
 	commandDispatcherRoutes := route.Group("/command-dispatcher")
 	commandDispatcherController := new(controllers.CommandDispatcherController)
-	commandDispatcherRoutes.GET("/" , commandDispatcherController.GetPendingCommands)
+	commandDispatcherRoutes.GET("/all" , commandDispatcherController.GetPendingCommands)
 	commandDispatcherRoutes.GET("/single-command" , commandDispatcherController.GetCommand)
 	commandDispatcherRoutes.POST("/" , commandDispatcherController.AddPendingCommand)
 	commandDispatcherRoutes.POST("/batch" , commandDispatcherController.AddPendingCommandsByBatch)

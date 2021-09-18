@@ -1,30 +1,28 @@
 package core
 
 import (
-    "go.mongodb.org/mongo-driver/bson/primitive"
-    "time"
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const (
-	PRIORITY_HIGH string = "HIGH"
-	PRIORITY_MEDIUM = "MEDIUM"
-	PRIORITY_LOW = "LOW"
+	COMMAND_OPERATION_STATUS_SUCCESS 	string = "SUCCESS"
+	COMMAND_OPERATION_STATUS_FAILED     string = "FIALED"
+
+	COMMAND_TYPE_HOP_COUNT		      	string = "COMMAND_TYPE_HOP_COUNT"
+	COMMAND_TYPE_LOOK_UP            	string = "COMMAND_TYPE_LOOK_UP"
+	COMMAND_TYPE_PING               	string = "COMMAND_TYPE_PING"
+	COMMAND_TYPE_CLOSE_TOOL         	string = "COMMAND_TYPE_CLOSE_TOOL"
+
 )
-
-type Command struct {
-	ID primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+type ToolCommand struct {
+	ID primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
 	CreatedDate time.Time `json:"created_date" bson:"created_date,omitempty"`
-	CommandString string `json:"command_string" bson:"command_string,omitempty"`
-	CommandDestinationNodeId string `json:"command_destination_node_id" bson:"command_destination_node_id,omitempty"`
-	CommandSourceNodeId string `json:"command_source_node_id" bson:"command_source_node_id,omitempty"`
-	CommandPriority string `json:"command_priority" bson:"command_priority,omitempty"`
+	Type  string `bson:"type" json:"type"`
+	OperationID primitive.ObjectID `bson:"operation_id" json:"operation_id"`
+	OperationStatus  string `bson:"operation_status" json:"operation_status"`
+	NodeId string `bson:"node_id" json:"node_id"`
+	NodeAddress string `bson:"node_address" json:"node_address"`
+	Body interface{} `bson:"body" json:"body"`
 }
-
-type CommandResult struct{
-	ID primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	CreatedDate time.Time `json:"created_date" bson:"created_date,omitempty"`
-	CommandId primitive.ObjectID `json:"command_id,omitempty" bson:"command_id,omitempty"`
-	ResultMessage string `json:"result_message,omitempty" bson:"result_message,omitempty"`
-}
-
-

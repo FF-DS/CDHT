@@ -1,8 +1,9 @@
 package routers
 
 import (
+	"monitoring-server/controllers"
+
 	"github.com/gin-gonic/gin"
-    "monitoring-server/controllers"
 )
 
 func MonitoringRoute(route *gin.Engine){
@@ -11,5 +12,5 @@ func MonitoringRoute(route *gin.Engine){
 	*/
 	monitoringRouttes := route.Group("/monitoring")
 	monitoringController := new(controllers.MonitoringController)
-	monitoringRouttes.GET("/" , monitoringController.Monitor)
+	monitoringRouttes.GET("/stats" , monitoringController.GetStatisticsForNode)
 }
