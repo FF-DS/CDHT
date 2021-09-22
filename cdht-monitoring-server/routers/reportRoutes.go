@@ -12,6 +12,6 @@ func ReportRoute(route *gin.Engine){
 	*/
 	reportRoutes := route.Group("/report")
 	rpeortController := new(controllers.ReportController)
-	reportRoutes.GET("/all" , rpeortController.GetReportEntries)
+	reportRoutes.POST("/all" , rpeortController.GetReportEntries)
 	reportRoutes.GET("/filtered" , rpeortController.GetFilteredReportEntries)
 }

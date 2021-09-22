@@ -15,9 +15,9 @@ export default {
     return {};
   },
   computed: {
-    ...mapGetters(["getReport"]),
+    ...mapGetters(["getAllReports"]),
     report: function() {
-      return this.getReport;
+      return this.getAllReports;
     },
   },
   methods: {

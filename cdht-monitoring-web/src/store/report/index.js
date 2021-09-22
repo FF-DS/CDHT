@@ -1,23 +1,21 @@
 import reportAPI from "@/api/report";
 
 const state = {
-  normalReportPackets: [],
-  testReportpackets: [],
+  allReports: [],
 };
 
 const getters = {
-  getNormalReportPackets: (state) => state.normalReportPackets,
-  getTestReportPackets: (state) => state.testReportPackets,
+  getAllReports: (state) => state.allReports,
 };
 
 const actions = {
   fetchReports({ commit }) {
     reportAPI
-      .getReports()
+      .getAllReports()
       .then((res) => {
         console.log("the request to the report end point is successfull");
         console.log(res);
-        commit("setReport", res.data);
+        commit("setAllReports", res.data);
       })
       .catch((err) => {
         console.log("something is wrong");
@@ -93,8 +91,7 @@ const actions = {
 };
 
 const mutations = {
-  setNormalReportPackets: (state, normalReportPackets) =>
-    (state.normalReportPackets = normalReportPackets),
+  setAllReports: (state, allReports) => (state.allReports = allReports),
   seTestReportPackets: (state, testReportPackets) =>
     (state.testReportPackets = testReportPackets),
 };
