@@ -9,9 +9,10 @@ const getters = {
 };
 
 const actions = {
-  fetchReports({ commit }) {
+  fetchReports({ commit }, requestBody) {
+    console.log(requestBody);
     reportAPI
-      .getAllReports()
+      .getAllReports(requestBody)
       .then((res) => {
         console.log("the request to the report end point is successfull");
         console.log(res);
@@ -19,7 +20,8 @@ const actions = {
       })
       .catch((err) => {
         console.log("something is wrong");
-        console.log(err);
+        console.log(err.response.data.error);
+        console.log(err.response.data.message);
       });
   },
 

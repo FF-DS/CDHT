@@ -6,6 +6,7 @@ import (
 	"monitoring-server/core"
 	"monitoring-server/services"
 	"monitoring-server/util"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -33,7 +34,7 @@ func (report ReportController) GetReportEntries(c *gin.Context){
     logCollection := services.ConnectDB(LOG_COLLECTION_NAME)
 
 	type RequestBody struct{
-		Limit int64 `bson:"limit" json:"limit"`
+		Limit string `bson:"limit" json:"limit"`
 	}
 	
 	var request RequestBody
@@ -42,7 +43,8 @@ func (report ReportController) GetReportEntries(c *gin.Context){
 	findOptions.SetSort(bson.D{primitive.E{Key:"created_date",Value:  -1}})
 
 	if err := c.ShouldBindJSON(&request) ; err == nil{
-		findOptions.SetLimit(request.Limit)
+		limit , _ := strconv.ParseInt(request.Limit, 10, 64)
+		findOptions.SetLimit(limit)
 
 		
 		if cursor , err := logCollection.Find(context.TODO() , bson.M{} , findOptions) ; err == nil{

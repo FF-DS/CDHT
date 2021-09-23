@@ -2,8 +2,8 @@ import API from "@/services/api";
 
 const rootPath = "/report";
 
-const getAllReports = () => {
-  return API.get(`${rootPath}/all/`, { limit: 20 });
+const getAllReports = (requestBody) => {
+  return API.post(`${rootPath}/all`, requestBody);
 };
 
 const reportAPI = {
