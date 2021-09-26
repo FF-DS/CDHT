@@ -10,6 +10,7 @@ import (
 const (
 	MODE_CREATE_RING = "FIRST_NODE"
 	MODE_JOIN_RING = "SECOND_NODE"
+	MODE_REPLICA_NODE = "REPLICA_NODE"
 )
 
 
@@ -82,6 +83,8 @@ type Configuration struct {
 
 	CONFIGURATION_DOWNLOAD_DELAY  time.Duration
 	CONFIGURATION_DOWNLOAD_URL string
+
+	REPLICATION_COUNT int
 }
 
 

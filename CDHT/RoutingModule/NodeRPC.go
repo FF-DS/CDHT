@@ -9,6 +9,7 @@ import (
 	"fmt"
 )
 
+
 // # -------------------- NodeRPC -------------------- # //
 
 type NodeRPC struct {
@@ -22,6 +23,10 @@ type NodeRPC struct {
 	ticker *time.Ticker
 
 	NodeTraversalLogs []NodeRPC
+	
+	// replica info's
+	NodeState string
+	ReplicationCount int
 }
 
 
@@ -151,10 +156,57 @@ func (node *NodeRPC) Notify(predecessor *NodeRPC) (error, *Successors) {
 }
 
 
+
+
+
+// # ---------------  replica methods -------------------------- # //
+
+func (node *NodeRPC) MakeNodeActive(replicaInfos *ReplicaInfo) (error, *ReplicaInfo) {
+	node.resetConnTimeOut();
+
+	err := node.handle.Call("Node.MakeNodeActive", node.DefaultArgs, &replicaInfos)
+    if err != nil {
+        log.Println("Node.MakeNodeActive:", err)
+		return err, nil
+    }
+	return nil, replicaInfos
+}
+
+
+func (node *NodeRPC) NodeReplicaInfo(replicaInfos *ReplicaInfo) (error, *ReplicaInfo) {
+	node.resetConnTimeOut();
+
+	err := node.handle.Call("Node.NodeReplicaInfo", node.DefaultArgs, replicaInfos)
+    if err != nil {
+        log.Println("Node.NodeReplicaInfo:", err)
+		return err, nil
+    }
+	return nil, replicaInfos
+}
+
+
+func (node *NodeRPC) AddReplica(currNode *NodeRPC) (error, ReplicaInfo) {
+	node.resetConnTimeOut();
+
+	replicaInfos := ReplicaInfo{ SuccessorsTable : Successors{}, FingerTable : map[int]NodeRPC{}, Successor : NodeRPC{}, Predcessor : NodeRPC{},ReplicaAddress : []NodeRPC{},  MasterNode : NodeRPC{}}	
+	err := node.handle.Call("Node.AddReplica", &currNode, &replicaInfos)
+
+    if err != nil {
+        log.Println("Node.AddReplica:", err)
+		return err, ReplicaInfo{}
+    }
+	return nil, replicaInfos
+}
+
+
+
+
+
+
 // # ---------------  print statemets -------------------------- # //
 func (node *NodeRPC) PrintNodeInfo() {
 	fmt.Printf("------------------Remote Node Info------------------\n")
-    fmt.Printf("      [+]: Node ID : %s \n", node.Node_id.String())
+    fmt.Printf("      [+]: Node ID : %s [%s] \n", node.Node_id.String(), node.NodeState)
     fmt.Printf("      [+]: M       : %s \n", node.M.String())
     fmt.Printf("      [+]: Address : %s \n", node.Node_address)
     fmt.Printf("----------------------------------------------------\n")
@@ -180,7 +232,9 @@ func (node *NodeRPC) autoClose(){
 	defer node.ticker.Stop()
 
 	<-node.ticker.C
-	node.handle.Close()
+	if node.handle != nil {
+		node.handle.Close()
+	}
 	node.DefaultArgs = nil
 }
 
@@ -189,10 +243,13 @@ func (node *NodeRPC) resetConnTimeOut() bool {
 		return false
 	}
 
-	node.ticker.Stop()
-	node.ticker = time.NewTicker(time.Second * 10)
+	// node.ticker.Stop()
+	node.ticker.Reset(time.Second * 10) // = time.NewTicker(time.Second * 10)
 	return true
 }
+
+
+
 
 
 
@@ -204,8 +261,10 @@ func (successors *Successors) UpdateSuccessors(newSuccessors Successors) {
 	*successors = newSuccessors
 }
 
-func (successors *Successors) PopFirst() {
+func (successors *Successors) PopFirst() NodeRPC{
+	poped := (*successors)[0]
 	*successors = (*successors)[1:]
+	return poped
 }
 
 // # -------------------- Args -------------------- # //

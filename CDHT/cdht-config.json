@@ -6,7 +6,7 @@
   "RUN_NETWORK_TEST_APPLICATION": false,
 
   "Node_Port": "",
-  "Node_IP": "127.0.0.1",
+  "Node_IP": "",
   "Node_ID": "",
   "Node_M": "4",
   "Jump_Spacing": 2,
@@ -18,15 +18,15 @@
   "Application_Channel_Size": 100000,
   "Application_Connecting_Port": "",
 
-  "Log_Route_Table_Delay_Value": 0,
+  "Log_Route_Table_Delay_Value": 100000,
   "Log_Node_Channel_Size_Value": 0,
-  "Log_Node_Channel_Delay_Value": 0,
+  "Log_Node_Channel_Delay_Value": 10000,
 
   "Log_Network_Channel_Size_Value": 0,
-  "Log_Network_Channel_Delay_Value": 0,
+  "Log_Network_Channel_Delay_Value": 10000,
 
   "Log_Configuration_Channel_Size_Value": 0,
-  "Log_Configuration_Channel_Delay_Value": 0,
+  "Log_Configuration_Channel_Delay_Value": 10000,
 
   "Log_URL_Send_Route_Table": "https://cdht-monitoring-api.herokuapp.com/logs",
   "Log_URL_Send_Node_Info": "https://cdht-monitoring-api.herokuapp.com/logs",
@@ -35,7 +35,7 @@
 
   "Network_Tool_Channel_Size": 100000,
 
-  "CDHT_Ping_Tool_Listening_Port": "2244",
+  "CDHT_Ping_Tool_Listening_Port": "",
   "CDHT_API_Communication_Delay": 5,
   "CDHT_Command_Channel_Size": 100000,
   "CDHT_URL_Get_Command_From_Server": "https://cdht-monitoring-api.herokuapp.com/network-tools",
@@ -46,5 +46,10 @@
   "TEST_APP_UDP_Listener_Port": "",
   "TEST_APP_Net_Channel_Size": 100000,
   "TEST_APP_AppName": "TEST_APP",
-  "TEST_APP_Packet_Delay": 500
+  "TEST_APP_Packet_Delay": 500,
+
+  "CONFIGURATION_DOWNLOAD_DELAY": 5,
+  "CONFIGURATION_DOWNLOAD_URL": "https://cdht-monitoring-api.herokuapp.com/config",
+
+  "REPLICATION_COUNT": -1
 }

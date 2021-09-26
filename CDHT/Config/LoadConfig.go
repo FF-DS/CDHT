@@ -49,6 +49,8 @@ func (config *Config) UpdateFromFile() *Configuration {
 	configuration := Configuration{}
 	gonfig.GetConf("./cdht-config.json", &configuration)
 	config.configuration.CopyConfiguration( &configuration )
+	config.configuration.ValidateConfig()
+
 	return config.configuration
 }
 
@@ -59,12 +61,12 @@ func (config *Config) UpdateFromFile() *Configuration {
 func (config *Config) downloadFromServer()  *Configuration {
 	resp, err := http.Get( config.configuration.CONFIGURATION_DOWNLOAD_URL )
     if err != nil {
-		return &Configuration{}
+		return nil
     }
 
     body, err := ioutil.ReadAll(resp.Body)
     if err != nil {
-		return &Configuration{}
+		return nil
     }
 
     var remoteConfig Configuration

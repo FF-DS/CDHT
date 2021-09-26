@@ -51,7 +51,13 @@ func (core *Core) UpdateCdhtTestApplicationConfig() {
 	core.CdhtTestApplication.PacketDelay = core.Config.TEST_APP_Packet_Delay
 }
 
-
+func (core *Core) UpdateReplicationCountInfoConfig() {
+	if core.RoutingTableInfo == nil {
+		return
+	}
+	core.RoutingTableInfo.ReplicationCount = core.Config.REPLICATION_COUNT
+	core.RoutingTableInfo.NodeInfo().ReplicationCount = core.Config.REPLICATION_COUNT
+}
 
 
 
@@ -63,6 +69,7 @@ func (core *Core) UpdateApplicationConfiguration(){
 		core.UpdateRoutingTableInfoConfig()
 		core.UpdateCdhtNetworkToolsConfig()
 		core.UpdateCdhtTestApplicationConfig()
+		core.UpdateReplicationCountInfoConfig()
 	}
 }
 
