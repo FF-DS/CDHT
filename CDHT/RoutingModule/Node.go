@@ -226,6 +226,11 @@ func (node *Node) getOutboundIP() {
 
 // [RPC]
 func (node *Node) GetNodeInfo(args *Args, nodeRPC *NodeRPC) error {
+    if nodeRPC ==  nil || node == nil {
+        fmt.Println("[Network][Error]: it seems you got disconnected!")
+        os.Exit(0)
+    }
+
     nodeRPC.M = node.M
     nodeRPC.Node_address = node.IP_address + ":" + node.Port
     nodeRPC.NodeState = node.NodeState
@@ -253,6 +258,8 @@ func (node *Node) getLocalNodeInfo() NodeRPC {
 
 // [RPC]
 func (node *Node) ResolvePacket(requestObject *Util.RequestObject, responseObject *Util.RequestObject) error {
+    node.sendacketToReplicas(requestObject)
+
     if requestObject.Type == Util.PACKET_TYPE_NETWORK {
         node.NetworkTools <- *requestObject
 
@@ -287,6 +294,23 @@ func (node *Node) ResolvePacket(requestObject *Util.RequestObject, responseObjec
 }
 
 
+
+func (node *Node) sendacketToReplicas(requestObject *Util.RequestObject) bool {
+    if !requestObject.SendToReplicas {
+        return true
+    }
+
+    success := true
+    for _, replicas := range node.ReplicaInfos.ReplicaAddress {
+        err, _ := replicas.ResolvePacket( *requestObject )
+
+        if err != nil {
+            success = false
+        }
+    }
+
+    return success
+}
 // # ------------------ [END] NODE FUNCTIONALITIES ----------------------------- # 
 
 

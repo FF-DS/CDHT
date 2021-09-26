@@ -38,6 +38,7 @@ type RequestObject struct {
 	Type string
 	RequestID string
 	AppName string
+	SendToReplicas bool
 	AppID int
 	SenderNodeId *big.Int
 	ReceiverNodeId *big.Int

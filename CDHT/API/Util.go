@@ -1,8 +1,10 @@
 package API
 
 import (
-	"math/big"
     "crypto/sha1"
+	"hash/crc32"
+	"math/big"
+    "fmt"
 )
 
 
@@ -32,4 +34,11 @@ func (api *ApiCommunication) DataToNodeIDTranslator(data []byte) *big.Int {
 
     modulo := base.Exp( base, m, nil)
     return hashedID.Mod(hashedID, modulo)
+}
+
+
+
+func (api *ApiCommunication) CalculateCRCchecksum(data interface{}) uint32 {	
+    crc32q := crc32.MakeTable(0xD5828281)
+	return crc32.Checksum([]byte(fmt.Sprintf("%v", data)), crc32q)
 }

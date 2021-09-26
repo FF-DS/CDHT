@@ -6,7 +6,7 @@
   "RUN_NETWORK_TEST_APPLICATION": false,
 
   "Node_Port": "",
-  "Node_IP": "127.0.0.1",
+  "Node_IP": "",
   "Node_ID": "",
   "Node_M": "4",
   "Jump_Spacing": 2,
