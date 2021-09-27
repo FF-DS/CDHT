@@ -40,7 +40,7 @@ func (config *Configuration) DefaultConfig() *Configuration {
 		TEST_APP_RUNNING_TIME : 300, // minute 
 
 		CONFIGURATION_DOWNLOAD_DELAY : 5,
-		CONFIGURATION_DOWNLOAD_URL : "https://cdht-monitoring-api.herokuapp.com/config",
+		CONFIGURATION_DOWNLOAD_URL : "https://cdht-monitoring-api.herokuapp.com/configuration/current",
 
 		REPLICATION_COUNT: 0,
 	}

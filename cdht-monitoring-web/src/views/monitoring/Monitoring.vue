@@ -181,7 +181,7 @@ export default {
           ],
         },
       ],
-      SetNodeSpaceBalancing,
+      // SetNodeSpaceBalancing,
     };
   },
   computed: {

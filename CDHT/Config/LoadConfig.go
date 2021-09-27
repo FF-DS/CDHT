@@ -7,6 +7,7 @@ import (
     "io/ioutil"
     "encoding/json"
 	"cdht/ReportModule"
+	"fmt"
 )
 
 
@@ -51,6 +52,8 @@ func (config *Config) DownloadConfiguration() {
 				})
 			}
 			config.configuration.CopyConfiguration( serverConfig )
+		}else{
+			fmt.Println("EROR Download")
 		}
 	}
 }
@@ -84,13 +87,15 @@ func (config *Config) downloadFromServer()  *Configuration {
     if err != nil {
 		return nil
     }
-
+	
     body, err := ioutil.ReadAll(resp.Body)
     if err != nil {
 		return nil
     }
-
+	
     var remoteConfig Configuration
     err = json.Unmarshal(body, &remoteConfig)
+	fmt.Println("found body", remoteConfig)
+	fmt.Println("found error", err)
 	return &remoteConfig
 }

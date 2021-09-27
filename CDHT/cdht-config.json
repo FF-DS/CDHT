@@ -9,7 +9,7 @@
   "Node_IP": "",
   "Node_ID": "",
   "Node_M": "4",
-  "Jump_Spacing": 2,
+  "Jump_Spacing": 3,
   "Routing_Update_Delay": 1,
   "Successors_Table_Length": 5,
 
@@ -48,7 +48,7 @@
   "TEST_APP_AppName": "TEST_APP",
   "TEST_APP_Packet_Delay": 500,
 
-  "CONFIGURATION_DOWNLOAD_DELAY": 100,
+  "CONFIGURATION_DOWNLOAD_DELAY": 1,
   "CONFIGURATION_DOWNLOAD_URL": "https://cdht-monitoring-api.herokuapp.com/configuration/current",
 
   "REPLICATION_COUNT": -1

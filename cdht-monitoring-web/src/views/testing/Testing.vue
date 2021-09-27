@@ -1,8 +1,18 @@
 <template>
-  <div>
-    <h1>Dise ist eine testing</h1>
-    <div>The result from the API is :- {{ test }}</div>
-  </div>
+  <v-container fluid class="my-5">
+    <v-layout row>
+      <v-flex xs12 sm6>
+        <v-layout row class="mx-2">
+          <v-divider></v-divider>
+        </v-layout>
+      </v-flex>
+      <v-flex xs12 sm6>
+        <v-layout row class="mx-2">
+          <v-divider></v-divider>
+        </v-layout>
+      </v-flex>
+    </v-layout>
+  </v-container>
 </template>
 
 <script>
