@@ -1,11 +1,11 @@
 import API from "@/services/api";
 
-const getMonitoring = () => {
-  return API.get("/monitoring/");
+const getMonitoringStats = (requestBody) => {
+  return API.get("/monitoring/stats", requestBody);
 };
 
 const monitoringAPI = {
-  getMonitoring,
+  getMonitoringStats,
 };
 
 export default monitoringAPI;
