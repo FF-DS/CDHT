@@ -336,10 +336,10 @@ export default {
         log_location: this.filterParameteres.log_location,
         start_date: `${this.filterParameteres.date.start_date
           .split(" ")
-          .join("T")}:00.000000000`,
+          .join("T")}:00`,
         end_date: `${this.filterParameteres.date.end_date
           .split(" ")
-          .join("T")}:00.000000000`,
+          .join("T")}:00`,
       };
 
       console.log(filterRequestBody);

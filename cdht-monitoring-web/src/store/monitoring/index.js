@@ -13,7 +13,7 @@ const actions = {
     monitoringAPI
       .getMonitoringStats(requestBody)
       .then((res) => {
-        commit("setMonitoringStats", res.message);
+        commit("setMonitoringStats", res.data);
       })
       .catch((err) => {
         console.log(err);

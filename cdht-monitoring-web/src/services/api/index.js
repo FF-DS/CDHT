@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const apiUrl = "http://cdht-monitoring-api.herokuapp.com";
-// const apiUrl = "http://localhost:9090";
+// const apiUrl = "http://cdht-monitoring-api.herokuapp.com";
+const apiUrl = "http://localhost:9090";
 
 const axiosAPI = axios.create({
   baseURL: apiUrl,
