@@ -65,7 +65,7 @@
           <div class="card-body">
             Log type {{ filterParameteres.log_location }}
             <v-radio-group v-model="filterParameteres.log_location" row>
-              <v-radio label="Self" value="SELF"></v-radio>
+              <v-radio label="Self" value="LOCATION_TYPE_SELF"></v-radio>
               <v-radio
                 label="Incoming"
                 value="INCOMING"
@@ -338,8 +338,8 @@ export default {
         node_id: this.filterParameteres.node_id,
         operation_status: this.filterParameteres.operation_status,
         log_location: this.filterParameteres.log_location,
-        start_date: this.filterParameteres.date.start_date.split(" ").join("T"),
-        end_date: this.filterParameteres.date.end_date.split(" ").join("T"),
+        start_date: `${this.filterParameteres.date.start_date.split(" ").join("T")}:00.00000000Z`,
+        end_date: `${this.filterParameteres.date.end_date.split(" ").join("T")}:00.00000000Z`,
       };
 
       console.log(filterRequestBody);
