@@ -1,19 +1,19 @@
 import monitoringAPI from "@/api/monitoring";
 
 const state = {
-  monitor: "",
+  monitoringStats: "",
 };
 
 const getters = {
-  getMonitor: (state) => state.monitor,
+  getMonitoringStats: (state) => state.monitoringStats,
 };
 
 const actions = {
-  fetchMonitor({ commit }) {
+  fetchMonitoringStats({ commit }, requestBody) {
     monitoringAPI
-      .getMonitoring()
+      .getMonitoringStats(requestBody)
       .then((res) => {
-        commit("setMonitor", res.message);
+        commit("setMonitoringStats", res.message);
       })
       .catch((err) => {
         console.log(err);
@@ -22,7 +22,8 @@ const actions = {
 };
 
 const mutations = {
-  setMonitor: (state, monitor) => (state.monitor = monitor),
+  setMonitoringStats: (state, monitoringStats) =>
+    (state.monitoringStats = monitoringStats),
 };
 
 export default {
