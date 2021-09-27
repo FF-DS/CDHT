@@ -11,10 +11,7 @@
               class="ma-2 white--text"
               @click="prepareAndGenerateReport"
             >
-              Download or whatever
-              <v-icon right dark>
-                mdi-cloud-upload
-              </v-icon>
+              Generate PDF
             </v-btn>
             <v-btn
               :loading="false"
@@ -23,10 +20,7 @@
               class="ma-2 white--text"
               @click="toggleExpandCollapse"
             >
-              Toggle Expand Collapse
-              <v-icon right dark>
-                mdi-cloud-upload
-              </v-icon>
+              Expand Log Detail
             </v-btn>
 
             <v-btn
@@ -36,18 +30,15 @@
               class="ma-2 white--text"
               @click="getFilteredRports"
             >
-              filter
-              <v-icon right dark>
-                mdi-cloud-upload
-              </v-icon>
+              Perform Filter
             </v-btn>
           </div>
         </div>
 
         <div class="card">
-          filter all? {{ filterParameteres.selectAllNodesAndApplyFilters }}
+          <!-- filter all? {{ filterParameteres.selectAllNodesAndApplyFilters }}
           <br />
-          node ID {{ filterParameteres.node_id }}
+          node ID {{ filterParameteres.node_id }} -->
           <div class="card-body">
             <v-checkbox
               v-model="filterParameteres.selectAllNodesAndApplyFilters"
@@ -63,7 +54,7 @@
 
         <div class="card">
           <div class="card-body">
-            Log type {{ filterParameteres.log_location }}
+            <!-- Log type {{ filterParameteres.log_location }} -->
             <v-radio-group v-model="filterParameteres.log_location" row>
               <v-radio label="Self" value="LOCATION_TYPE_SELF"></v-radio>
               <v-radio
@@ -79,7 +70,7 @@
 
         <div class="card">
           <div class="card-body">
-            operation status {{ filterParameteres.operation_status }}
+            <!-- operation status {{ filterParameteres.operation_status }} -->
             <v-radio-group v-model="filterParameteres.operation_status" row>
               <v-radio label="SUCCESS" value="SUCCESS"></v-radio>
               <v-radio label="FAILURE" value="FAILURE"></v-radio
@@ -90,39 +81,44 @@
         <div class="card">
           <div class="card-body">
             <v-container fluid>
-              <p>{{ filterParameteres.metrics_to_show }}</p>
-              <v-checkbox
-                v-model="filterParameteres.metrics_to_show"
-                label="Latency"
-                value="LATENCY"
-              ></v-checkbox>
-              <v-checkbox
-                v-model="filterParameteres.metrics_to_show"
-                label="RTT"
-                value="RTT"
-              ></v-checkbox>
-
-              <v-checkbox
-                v-model="filterParameteres.metrics_to_show"
-                label="SRT"
-                value="SRT"
-              ></v-checkbox>
-              <v-checkbox
-                v-model="filterParameteres.metrics_to_show"
-                label="Packet Loss"
-                value="PACKET_LOSS"
-              ></v-checkbox>
+              <div class="row">
+                <div class="col-6">
+                  <v-checkbox
+                    v-model="filterParameteres.metrics_to_show"
+                    label="Latency"
+                    value="LATENCY"
+                  ></v-checkbox>
+                  <v-checkbox
+                    v-model="filterParameteres.metrics_to_show"
+                    label="RTT"
+                    value="RTT"
+                  ></v-checkbox>
+                </div>
+                <div class="col-6">
+                  <v-checkbox
+                    v-model="filterParameteres.metrics_to_show"
+                    label="SRT"
+                    value="SRT"
+                  ></v-checkbox>
+                  <v-checkbox
+                    v-model="filterParameteres.metrics_to_show"
+                    label="Packet Loss"
+                    value="PACKET_LOSS"
+                  ></v-checkbox>
+                </div>
+              </div>
+              <!-- <p>{{ filterParameteres.metrics_to_show }}</p> -->
             </v-container>
           </div>
         </div>
 
         <div class="card">
           <div class="card-body">
-            start date
+            <!-- start date
             {{ filterParameteres.date.start_date.split(" ").join("T") }}
             <br />
             end date
-            {{ filterParameteres.date.end_date }}
+            {{ filterParameteres.date.end_date }} -->
             <custom-date-picker
               type="datetime"
               v-model="filterParameteres.date.start_date"
@@ -136,7 +132,7 @@
         </div>
       </div>
 
-      <div class="col-8" style="max-height:90vh ; overflow-y:scroll">
+      <div class="col-8" style="max-height:95vh ; overflow-y:scroll">
         <div class="row py-2 my-2">
           <div class="col-12 mt-4 " style="">
             <v-slider
@@ -200,7 +196,7 @@
                                 value
                               ></v-checkbox>
                             </div>
-                            <div class="col-6"># {{ index }}</div>
+                            <div class="col-6"># {{ index + 1 }}</div>
                             <div class="col-6">
                               {{ model.created_date }}
                             </div>
@@ -340,10 +336,10 @@ export default {
         log_location: this.filterParameteres.log_location,
         start_date: `${this.filterParameteres.date.start_date
           .split(" ")
-          .join("T")}:00.000000000+03:00`,
+          .join("T")}:00.000000000`,
         end_date: `${this.filterParameteres.date.end_date
           .split(" ")
-          .join("T")}:00.000000000+03:00`,
+          .join("T")}:00.000000000`,
       };
 
       console.log(filterRequestBody);

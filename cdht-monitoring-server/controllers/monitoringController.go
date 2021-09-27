@@ -5,6 +5,7 @@ import (
 	"monitoring-server/core"
 	"monitoring-server/services"
 	"monitoring-server/util"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -31,7 +32,7 @@ func (mon MonitoringController) GetStatisticsForNode(c *gin.Context){
         the data type of node_id must be primitive.ObjectId in production mode
         */
         NodeId string  `bson:"node_id" json:"node_id"`
-		Limit int64 `bson:"limit" json:"limit"`
+		Limit string `bson:"limit" json:"limit"`
 	}
 	
 	var request RequestBody
@@ -40,7 +41,8 @@ func (mon MonitoringController) GetStatisticsForNode(c *gin.Context){
 	findOptions.SetSort(bson.D{primitive.E{Key:"created_date",Value:  -1}})
 
 	if err := c.ShouldBindJSON(&request) ; err == nil{
-		findOptions.SetLimit(request.Limit)
+		limit , _ := strconv.ParseInt(request.Limit, 10, 64)
+		findOptions.SetLimit(limit)
 
 		
 		if cursor , err := logCollection.Find(context.TODO() , bson.D{primitive.E{Key: "node_id" , Value: request.NodeId} , primitive.E{Key: "type" , Value: core.LOG_TYPE_NODE_INFORMATION}} , findOptions) ; err == nil{
