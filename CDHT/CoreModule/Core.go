@@ -50,6 +50,7 @@ func (core *Core) InitalizeLogManager(){
     logMngr.Init()
 	
 	core.LogManager = &logMngr
+	core.ConfigMngr.Logger = &logMngr
 }
 
 

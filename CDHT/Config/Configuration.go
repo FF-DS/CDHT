@@ -15,7 +15,7 @@ const (
 
 
 type Configuration struct {
-	ConfigID int
+	ConfigID string
 	
 	// mode of the application
 	Application_Mode string

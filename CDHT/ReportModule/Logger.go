@@ -117,7 +117,7 @@ func (logger *Logger) reportNodeLogChannel() {
 		}
 		if len(logs) > 0 {
 			if sent:= sendLogToAPI(logs, logger.config.URLSendNodeInfoLog() ); sent {
-				logger.nodeLogChannel = logger.nodeLogChannel[ len(logs) - 1: ]
+				logger.nodeLogChannel = logger.nodeLogChannel[ len(logs) : ]
 			}
 		}
 	}
@@ -134,7 +134,7 @@ func (logger *Logger) reportNetToolInfo() {
 		}
 		if len(logs) > 0 {
 			if sent:= sendLogToAPI(logs, logger.config.URLSendNetworkToolLog() ); sent {
-				logger.networkToolChannel = logger.networkToolChannel[ len(logs) - 1: ]
+				logger.networkToolChannel = logger.networkToolChannel[ len(logs): ]
 			}
 		}
 	}
@@ -151,7 +151,7 @@ func (logger *Logger) reportConfigInfo() {
 		}
 		if len(logs) > 0 {
 			if sent:= sendLogToAPI(logs, logger.config.URLSendConfigToolLog() ); sent {
-				logger.configurationToolChannel = logger.configurationToolChannel[ len(logs) - 1: ]
+				logger.configurationToolChannel = logger.configurationToolChannel[ len(logs): ]
 			}
 		}
 	}

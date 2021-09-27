@@ -217,6 +217,26 @@ func (ui *TerminalUI) printReplica(params []string){
 
 // # ------------------  [Helper]  ------------------ #
 
+func help(){
+    fmt.Println("===================== [Help] ======================")
+    fmt.Println("    [+]close :  close the application")
+    fmt.Println("    [+]route :  show the current successor, predecessor & finger tables")
+    fmt.Println("           ==>  route number:  show the tables the amount of provided (number) times with 2 second delay")
+    fmt.Println("    [+]lookup:  conducts a lookup by providing node id")
+    fmt.Println("           ==>  node_id: it should be a valid node id")
+    fmt.Println("    [+]log:  print out logs that haven't yet sent to server")
+    fmt.Println("           ==>  log route: routing table logs")
+    fmt.Println("           ==>  log node: node forwarding activity logs")
+    fmt.Println("           ==>  log network: network tools log data")
+    fmt.Println("           ==>  log config: configuration changes log")
+    fmt.Println("    [+]tool:  if the CDHT tool is running on the system this command used to do the following things")
+    fmt.Println("           ==>  tool hop: do hop count")
+    fmt.Println("           ==>  tool lookup: do lookup count")
+    fmt.Println("           ==>  tool ping: do node ping ")
+    fmt.Println("           ==>  tool log: check CDHT log info")
+
+}
+
 func getInput(inputStr string) []string {
     fmt.Print(inputStr)
     scanner := bufio.NewScanner(os.Stdin)

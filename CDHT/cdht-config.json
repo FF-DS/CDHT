@@ -18,15 +18,15 @@
   "Application_Channel_Size": 100000,
   "Application_Connecting_Port": "",
 
-  "Log_Route_Table_Delay_Value": 100000,
-  "Log_Node_Channel_Size_Value": 0,
-  "Log_Node_Channel_Delay_Value": 10000,
+  "Log_Route_Table_Delay_Value": 10,
+  "Log_Node_Channel_Size_Value": 100,
+  "Log_Node_Channel_Delay_Value": 5,
 
-  "Log_Network_Channel_Size_Value": 0,
-  "Log_Network_Channel_Delay_Value": 10000,
+  "Log_Network_Channel_Size_Value": 100,
+  "Log_Network_Channel_Delay_Value": 10,
 
-  "Log_Configuration_Channel_Size_Value": 0,
-  "Log_Configuration_Channel_Delay_Value": 10000,
+  "Log_Configuration_Channel_Size_Value": 100,
+  "Log_Configuration_Channel_Delay_Value": 5,
 
   "Log_URL_Send_Route_Table": "https://cdht-monitoring-api.herokuapp.com/logs",
   "Log_URL_Send_Node_Info": "https://cdht-monitoring-api.herokuapp.com/logs",
@@ -48,8 +48,8 @@
   "TEST_APP_AppName": "TEST_APP",
   "TEST_APP_Packet_Delay": 500,
 
-  "CONFIGURATION_DOWNLOAD_DELAY": 5,
-  "CONFIGURATION_DOWNLOAD_URL": "https://cdht-monitoring-api.herokuapp.com/config",
+  "CONFIGURATION_DOWNLOAD_DELAY": 100,
+  "CONFIGURATION_DOWNLOAD_URL": "https://cdht-monitoring-api.herokuapp.com/configuration/current",
 
   "REPLICATION_COUNT": -1
 }
