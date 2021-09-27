@@ -2,6 +2,7 @@ package Util
 
 import (
 	"math/big"
+	"fmt"
 )
 // # --------------------------- eunm --------------------------- # //
 
@@ -36,15 +37,26 @@ type Packet struct {
 
 type RequestObject struct {
 	Type string
+	
 	RequestID string
 	AppName string
-	SendToReplicas bool
 	AppID int
+	UdpAddress string
+	
 	SenderNodeId *big.Int
 	ReceiverNodeId *big.Int
+	
 	ResponseStatus string
-	UdpAddress string
 	RequestBody interface{}
+	
+	SendToReplicas bool
+	
+	TranslateName bool
+	TranslateNameID []byte
+
+	ValidityCheck bool
+	ValidityCheckResult bool
+	ValidationCRCchecksum uint32
 }
 
 
@@ -61,4 +73,23 @@ func (reqObj *RequestObject) GetResponseObject() RequestObject {
 }
 
 
-
+func  (reqObj *RequestObject) ToString() string {
+	str := "---------------- Request Object Data ----------------\n"  
+	str += fmt.Sprintf(" [+] Type : %s\n", reqObj.Type )
+	str += fmt.Sprintf(" [+] RequestID : %s\n", reqObj.RequestID )
+	str += fmt.Sprintf(" [+] AppName : %s\n", reqObj.AppName )
+	str += fmt.Sprintf(" [+] AppID : %d\n", reqObj.AppID )
+	str += fmt.Sprintf(" [+] UdpAddress : %s\n", reqObj.UdpAddress ) 
+	str += fmt.Sprintf(" [+] SenderNodeId : %s\n", reqObj.SenderNodeId.String() )
+	str += fmt.Sprintf(" [+] ReceiverNodeId : %s\n", reqObj.ReceiverNodeId.String() )
+	str += fmt.Sprintf(" [+] ResponseStatus : %s\n", reqObj.ResponseStatus )
+	str += fmt.Sprintf(" [+] RequestBody : %s\n", reqObj.RequestBody )
+	str += fmt.Sprintf(" [+] SendToReplicas : %s\n", reqObj.SendToReplicas )
+	str += fmt.Sprintf(" [+] TranslateName : %s\n", reqObj.TranslateName )
+	str += fmt.Sprintf(" [+] TranslateNameID : %s\n", reqObj.TranslateNameID )
+	str += fmt.Sprintf(" [+] ValidityCheck : %s\n", reqObj.ValidityCheck )
+	str += fmt.Sprintf(" [+] ValidityCheckResult : %s\n", reqObj.ValidityCheckResult )
+	str += fmt.Sprintf(" [+] ValidationCRCchecksum : %d\n", reqObj.ValidationCRCchecksum )
+	str += "------------------------------------------\n"  
+	return str;
+}
