@@ -1,8 +1,9 @@
 package core
 
 import (
-    "go.mongodb.org/mongo-driver/bson/primitive"
-    "time"
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const (

@@ -10,7 +10,7 @@ func MonitoringRoute(route *gin.Engine){
 	/* 
 	Monitoring related routes
 	*/
-	monitoringRouttes := route.Group("/monitoring")
+	monitoringRoutes := route.Group("/monitoring")
 	monitoringController := new(controllers.MonitoringController)
-	monitoringRouttes.POST("/stats" , monitoringController.GetStatisticsForNode)
+	monitoringRoutes.POST("/stats" , monitoringController.GetStatisticsForNode)
 }
