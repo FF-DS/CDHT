@@ -25,6 +25,22 @@ const actions = {
       });
   },
 
+  fetchFilteredReports({ commit }, filterRequestBody) {
+    console.log(filterRequestBody);
+    reportAPI
+      .getFilteredReports(filterRequestBody)
+      .then((res) => {
+        console.log("the request to  filter is successfull");
+        console.log(res);
+        commit("setAllReports", res.data);
+      })
+      .catch((err) => {
+        console.log("something is wrong");
+        console.log(err.response.data.error);
+        console.log(err.response.data.message);
+      });
+  },
+
   fetchNormalReports({ commit }) {
     reportAPI
       .getNormalReports()

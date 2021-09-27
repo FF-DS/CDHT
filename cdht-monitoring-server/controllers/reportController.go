@@ -17,7 +17,7 @@ import (
 	"net/http"
 )
 type FilterRequestBody struct{
-    Limit int64 `bson:"limit" json:"limit"`
+    Limit string `bson:"limit" json:"limit"`
     NodeId string `bson:"node_id" json:"node_id"`
     OperationStatus string `bson:"operation_status" json:"operation_status"`
     LogLocation string `bson:"log_location" json:"log_location"`
@@ -95,8 +95,9 @@ func (report ReportController) GetFilteredReportEntries(c *gin.Context){
        if message :=  validateFilter(request , c); message != "VALID" {
            return
        }
+	   limit , _ := strconv.ParseInt(request.Limit, 10, 64)
 
-		findOptions.SetLimit(request.Limit)
+		findOptions.SetLimit(limit)
          filter := bson.D{ primitive.E{Key: "node_id", Value : request.NodeId } ,
           primitive.E{Key: "operation_status", Value : request.OperationStatus } ,
            primitive.E{Key: "log_location", Value : request.LogLocation } , 
