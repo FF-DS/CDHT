@@ -5,6 +5,7 @@ import (
 	"monitoring-server/core"
 	"monitoring-server/services"
 	"monitoring-server/util"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -160,7 +161,7 @@ func (config ConfigurationController) SetNodeSpaceBalancing(c *gin.Context){
 		if err := configurationCollection.FindOneAndUpdate(
 			context.TODO(),
 			bson.D{primitive.E{Key : "config_status" ,Value: "ACTIVE"}},
-			bson.D{primitive.E{Key : "$set" ,Value: bson.D{primitive.E{Key:"jump_space_balancing" , Value :request.NewJumpSpace}}}},
+			bson.D{primitive.E{Key : "$set" ,Value: bson.D{primitive.E{Key:"jump_spacing" , Value :request.NewJumpSpace}}}},
 			findOptions,
 		).Decode(&activeConfigurationProfile); err == nil{
 			c.JSON(http.StatusOK,
@@ -172,6 +173,92 @@ func (config ConfigurationController) SetNodeSpaceBalancing(c *gin.Context){
 		}
 	}else {
 		message := "an error occured while trying to bind request object "
+        util.GetError(err , message , c)
+	}
+}
+
+func (config ConfigurationController) SetReplicationLevel(c *gin.Context){
+    
+	configurationCollection := services.ConnectDB(CONFIGURATION_COLLECTION_NAME)
+
+	type RequestBody struct{
+		NewReplicationLevel int `json:"new_replication_level" bson:"new_replication_level"`
+	}
+
+	var request RequestBody
+
+	var activeConfigurationProfile core.ConfigurationProfile
+
+	findOptions := options.FindOneAndUpdate().SetUpsert(true)
+
+	if err := c.ShouldBindJSON(&request) ; err == nil{
+		if err := configurationCollection.FindOneAndUpdate(
+			context.TODO(),
+			bson.D{primitive.E{Key : "config_status" ,Value: "ACTIVE"}},
+			bson.D{primitive.E{Key : "$set" ,Value: bson.D{primitive.E{Key:"replication_count" , Value :request.NewReplicationLevel}}}},
+			findOptions,
+		).Decode(&activeConfigurationProfile); err == nil{
+			c.JSON(http.StatusOK,
+				gin.H{"message": "Current active configuration profile's replication level changed successfuly" ,
+				 "data" : activeConfigurationProfile})
+		}else{
+			message := "an error occured while trying to change the replication level of the current configuration profile"
+			util.GetError(err, message ,  c)
+		}
+	}else {
+		message := "an error occured while trying to bind request object "
+        util.GetError(err , message , c)
+	}
+}
+
+func (config ConfigurationController) GetConfigurationReportEntries(c *gin.Context){
+    /* 
+    this function will return everything as it is called with out any filters
+
+    but appropriate filter must be applied as all log types are not relevant for the front end
+    */
+    logCollection := services.ConnectDB(LOG_COLLECTION_NAME)
+
+	type RequestBody struct{
+		Limit string `bson:"limit" json:"limit"`
+	}
+	
+	var request RequestBody
+
+	findOptions := options.Find()
+	findOptions.SetSort(bson.D{primitive.E{Key:"created_date",Value:  -1}})
+
+	if err := c.ShouldBindJSON(&request) ; err == nil{
+		limit , _ := strconv.ParseInt(request.Limit, 10, 64)
+		findOptions.SetLimit(limit)
+
+		
+		if cursor , err := logCollection.Find(context.TODO() , bson.M{"type" : "TYPE_CONFIGURATION_SERVICE"} , findOptions) ; err == nil{
+
+			defer cursor.Close(context.TODO())
+			var logs []core.LogEntry
+		
+		
+			for cursor.Next(context.TODO()) {
+				var logEntry core.LogEntry
+				if err := cursor.Decode(&logEntry) ; err == nil{
+
+					logs = append(logs, logEntry)
+				}else{
+					message := "an error occured while trying to decode report entry"
+					util.GetError(err , message , c)
+				}
+			}
+
+			c.JSON(http.StatusOK, gin.H{"message": "Reports retrived succesfully", "data": logs} )
+
+		}else{
+			message := "an error occured while trying to fetch report entries"
+			util.GetError(err , message , c)
+		}
+	
+	}else{
+		message := "an error occured while trying to bind request object"
         util.GetError(err , message , c)
 	}
 }
