@@ -1,149 +1,167 @@
 package controllers
 
 import (
-    "github.com/gin-gonic/gin"
-    . "monitoring-server/services"
-	. "monitoring-server/core"
-    "go.mongodb.org/mongo-driver/bson"
-    "context"
-    "go.mongodb.org/mongo-driver/bson/primitive"
-    "time"
-    "log"
+	"context"
+	"fmt"
+	"monitoring-server/core"
+	"monitoring-server/services"
+	"monitoring-server/util"
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	// "time"
+	"net/http"
 )
-
-
-// type NodesController struct{}
-
-type ReportController struct{}
-
-func (report ReportController) Report(c *gin.Context){
-    var success  = map[string]string{}
-    success["message"] = "this is from report"
-    c.JSON(200 , success)
+type FilterRequestBody struct{
+    Limit string `bson:"limit" json:"limit"`
+    NodeId string `bson:"node_id" json:"node_id"`
+    OperationStatus string `bson:"operation_status" json:"operation_status"`
+    LogLocation string `bson:"log_location" json:"log_location"`
+    StartDate string `bson:"start_date" json:"start_date"`
+    EndDate string `bson:"end_date" json:"end_date"`
 }
 
-/* 
-this function will accept some filter params and will 
-return the number of specified reports after applying the required filter
- */
-func (report *ReportController) GetPackets(c *gin.Context){
-    // TODO
+func (report ReportController) GetReportEntries(c *gin.Context){
     /* 
-        inquire mongodb for the specified number of requests and return them sorted by time
+    this function will return everything as it is called with out any filters
 
-        This function must filter value by :- date  , message type , node_id | filter values will be
-        encoded in the request body
+    but appropriate filter must be applied as all log types are not relevant for the front end
+    */
+    logCollection := services.ConnectDB(LOG_COLLECTION_NAME)
+
+	type RequestBody struct{
+		Limit string `bson:"limit" json:"limit"`
+	}
+	
+	var request RequestBody
+
+	findOptions := options.Find()
+	findOptions.SetSort(bson.D{primitive.E{Key:"created_date",Value:  -1}})
+
+	if err := c.ShouldBindJSON(&request) ; err == nil{
+		limit , _ := strconv.ParseInt(request.Limit, 10, 64)
+		findOptions.SetLimit(limit)
+
+		
+		if cursor , err := logCollection.Find(context.TODO() , bson.M{} , findOptions) ; err == nil{
+
+			defer cursor.Close(context.TODO())
+			var logs []core.LogEntry
+		
+		
+			for cursor.Next(context.TODO()) {
+				var logEntry core.LogEntry
+				if err := cursor.Decode(&logEntry) ; err == nil{
+
+					logs = append(logs, logEntry)
+				}else{
+					message := "an error occured while trying to decode report entry"
+					util.GetError(err , message , c)
+				}
+			}
+
+			c.JSON(http.StatusOK, gin.H{"message": "Reports retrived succesfully", "data": logs} )
+
+		}else{
+			message := "an error occured while trying to fetch report entries"
+			util.GetError(err , message , c)
+		}
+	
+	}else{
+		message := "an error occured while trying to bind request object"
+        util.GetError(err , message , c)
+	}
+}
+
+func (report ReportController) GetFilteredReportEntries(c *gin.Context){
+    /* 
+    this function takes various filters like nodeId , messageType , date , report count
+    and return the result to the user
     */
 
-    collection := ConnectDB("packets")
+    logCollection := services.ConnectDB(LOG_COLLECTION_NAME)
 
-    cursor , err := collection.Find(context.TODO() , bson.M{})
+	var request FilterRequestBody
 
-    if err != nil{
-        GetError(err , c)
-        return
-    }
+	findOptions := options.Find()
+	findOptions.SetSort(bson.D{primitive.E{Key:"created_date",Value:  -1}})
 
-    defer cursor.Close(context.TODO())
-    var packets []NormalPacket
+	if err := c.ShouldBindJSON(&request) ; err == nil{
 
-    for cursor.Next(context.TODO()){
-        var packet NormalPacket
+       if message :=  validateFilter(request , c); message != "VALID" {
+           return
+       }
+	   limit , _ := strconv.ParseInt(request.Limit, 10, 64)
 
-        cursor.Decode(&packet)
-    }
+		findOptions.SetLimit(limit)
+         filter := bson.D{ primitive.E{Key: "node_id", Value : request.NodeId } ,
+          primitive.E{Key: "operation_status", Value : request.OperationStatus } ,
+           primitive.E{Key: "log_location", Value : request.LogLocation } , 
+            primitive.E{Key: "created_date", Value : bson.M{ "$gt" : request.StartDate}} ,
+             primitive.E{Key: "created_date", Value : bson.M{ "$lt" : request.EndDate}}  }
 
-    if err := cursor.Err(); err != nil {
-		log.Fatal(err)
+
+		fmt.Println("The filter is : ")
+        fmt.Println(filter)
+
+		
+		if cursor , err := logCollection.Find(context.TODO() , filter, findOptions) ; err == nil{
+
+			defer cursor.Close(context.TODO())
+			var logs []core.LogEntry
+		
+		
+			for cursor.Next(context.TODO()) {
+				var logEntry core.LogEntry
+				if err := cursor.Decode(&logEntry) ; err == nil{
+
+					logs = append(logs, logEntry)
+				}else{
+					message := "an error occured while trying to decode report entry"
+					util.GetError(err , message , c)
+				}
+			}
+
+			c.JSON(http.StatusOK, gin.H{"message": "Reports retrived succesfully", "data": logs} )
+
+		}else{
+			message := "an error occured while trying to fetch report entries"
+			util.GetError(err , message , c)
+		}
+	
+	}else{
+		message := "an error occured while trying to bind request object"
+        util.GetError(err , message , c)
 	}
- 
-    c.JSON(200, packets )
 
 }
 
-func (report *ReportController) GetTestPackets(c *gin.Context){
-    // TODO
-    /* 
-        inquire mongodb for the specified number of requests and return them sorted by time
-    */
-
-    collection := ConnectDB("test_packets")
-
-    cursor , err := collection.Find(context.TODO() , bson.M{})
-
-    if err != nil{
-        GetError(err , c)
-        return
+func validateFilter(requestObject FilterRequestBody , c *gin.Context) string{
+    if requestObject.NodeId == "" {
+        message := "Please select a specific node before trying to filter reports"
+        util.SendWarning( message , c)
+        return message 
+    }else if requestObject.OperationStatus == "" {
+        message := "Please select operation status before trying to filter reports"
+        util.SendWarning( message , c)
+        return message
+    }else if requestObject.LogLocation == "" {
+        message := "Please select report location before trying to filter reports"
+        util.SendWarning( message , c)
+        return message
+    }else if requestObject.StartDate == "" {
+        message := "Please select a start date before trying to filter reports"
+        util.SendWarning( message , c)
+        return message
+    }else if requestObject.EndDate == "" {
+        message := "Please select an end date before trying to filter reports"
+        util.SendWarning( message , c)
+        return message
     }
 
-    defer cursor.Close(context.TODO())
-    var test_packets []NormalPacket
-
-    for cursor.Next(context.TODO()){
-        var test_packet NormalPacket
-
-        cursor.Decode(&test_packet)
-    }
-
-    if err := cursor.Err(); err != nil {
-		log.Fatal(err)
-	}
- 
-    c.JSON(200, test_packets )
-
-}
-
-/* 
-this function takes a packekt and send it to the mongo instance
-
-*/
-func (report *ReportController) PostPacket(c *gin.Context){
-    collection := ConnectDB("packets")
-
-    var packet NormalPacket
-
-    if err := c.ShouldBindJSON(&packet); err == nil {
-        packet.ID = primitive.NewObjectID()
-        packet.CreatedDate = time.Now()
-
-        result, err := collection.InsertOne(context.TODO(), packet)
-    
-        if err != nil {
-            GetError(err, c)
-        }
-    
-        c.JSON(200, gin.H{"data": result})
-    } else {
-        c.JSON(401, gin.H{"error": err.Error()})
-    }
-    
-}
-
-func (report ReportController) PostTestPacket(c *gin.Context){
-    collection := ConnectDB("test_packets")
-
-    var test_packet NormalPacket
-
-    if err := c.ShouldBindJSON(&test_packet); err == nil {
-        test_packet.ID = primitive.NewObjectID()
-        test_packet.CreatedDate = time.Now()
-
-        result, err := collection.InsertOne(context.TODO(), test_packet)
-    
-        if err != nil {
-            GetError(err, c)
-        }
-    
-        c.JSON(200, gin.H{"data": result})
-    } else {
-        c.JSON(401, gin.H{"error": err.Error()})
-    }
-}
-
-func (report ReportController) ClearNormalPacketsCollection(c *gin.Context){
-
-}
-
-func (report ReportController) ClearTestPacketsCollection(c *gin.Context){
-    
+    return "VALID"
 }

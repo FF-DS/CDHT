@@ -2,27 +2,17 @@ import API from "@/services/api";
 
 const rootPath = "/report";
 
-const getNormalReports = () => {
-  return API.get(`${rootPath}/normal`);
+const getAllReports = (requestBody) => {
+  return API.post(`${rootPath}/all`, requestBody);
 };
 
-const getTestReports = () => {
-  return API.get(`${rootPath}/test`);
-};
-
-const clearNormalReportCollection = () => {
-  return API.get(`${rootPath}/clear-normal`);
-};
-
-const clearTestReportCollection = () => {
-  return API.get(`${rootPath}/clear-test`);
+const getFilteredReports = (filterRequestBody) => {
+  return API.post(`${rootPath}/filtered`, filterRequestBody);
 };
 
 const reportAPI = {
-  getNormalReports,
-  getTestReports,
-  clearNormalReportCollection,
-  clearTestReportCollection,
+  getAllReports,
+  getFilteredReports,
 };
 
 export default reportAPI;
