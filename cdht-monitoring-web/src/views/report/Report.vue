@@ -338,8 +338,12 @@ export default {
         node_id: this.filterParameteres.node_id,
         operation_status: this.filterParameteres.operation_status,
         log_location: this.filterParameteres.log_location,
-        start_date: `${this.filterParameteres.date.start_date.split(" ").join("T")}:00.00000000Z`,
-        end_date: `${this.filterParameteres.date.end_date.split(" ").join("T")}:00.00000000Z`,
+        start_date: `${this.filterParameteres.date.start_date
+          .split(" ")
+          .join("T")}:00.000000000+03:00`,
+        end_date: `${this.filterParameteres.date.end_date
+          .split(" ")
+          .join("T")}:00.000000000+03:00`,
       };
 
       console.log(filterRequestBody);

@@ -102,7 +102,7 @@ func (report ReportController) GetFilteredReportEntries(c *gin.Context){
           primitive.E{Key: "operation_status", Value : request.OperationStatus } ,
            primitive.E{Key: "log_location", Value : request.LogLocation } , 
             primitive.E{Key: "created_date", Value : bson.M{ "$gt" : request.StartDate}} ,
-             primitive.E{Key: "end_date", Value : bson.M{ "$lt" : request.EndDate}}  }
+             primitive.E{Key: "created_date", Value : bson.M{ "$lt" : request.EndDate}}  }
 
 
 		fmt.Println("The filter is : ")
