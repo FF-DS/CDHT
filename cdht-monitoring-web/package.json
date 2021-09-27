@@ -9,12 +9,19 @@
     "start": "NODE_ENV=production node server.js"
   },
   "dependencies": {
+    "apexcharts": "^3.28.3",
     "axios": "^0.21.1",
     "core-js": "^3.6.5",
     "express": "^4.17.1",
     "path": "^0.12.7",
     "serve-static": "^1.14.1",
     "vue": "^2.6.11",
+    "vue-apexcharts": "^1.6.2",
+    "vue-date-time-picker-js": "^1.0.2",
+    "vue-html2pdf": "^1.8.0",
+    "vue-json-component": "^0.4.1",
+    "vue-json-tree-view": "^2.1.6",
+    "vue-json-viewer": "^2.2.19",
     "vue-router": "^3.5.2",
     "vuetify": "^2.4.0",
     "vuex": "^3.6.2"

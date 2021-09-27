@@ -1,18 +1,20 @@
 package controllers
 
 import (
-    "github.com/gin-gonic/gin"
-	"monitoring-server/services"
+	"context"
+	"log"
 	"monitoring-server/core"
-    "context"
-    "log"
+	"monitoring-server/services"
+	"monitoring-server/util"
+	"time"
+
+	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
-    "go.mongodb.org/mongo-driver/bson/primitive"
-    "time"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 
-type NodesController struct{}
+
 
 
 func (h *NodesController) GetNodes(c *gin.Context) {
@@ -26,7 +28,8 @@ func (h *NodesController) GetNodes(c *gin.Context) {
     }})
 
 	if err != nil {
-		services.GetError(err, c)
+        message := "some error message to edit later"
+		util.GetError(err, message , c)
 		return
 	}
 
@@ -70,7 +73,8 @@ func (h *NodesController) RegisterNode(c *gin.Context) {
         result, err := collection.InsertOne(context.TODO(), node)
     
         if err != nil {
-            services.GetError(err, c)
+            message := "some error message to edit later"
+            util.GetError(err, message , c)
         }
     
         c.JSON(200, gin.H{"message": result})

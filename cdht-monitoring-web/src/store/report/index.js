@@ -1,27 +1,43 @@
 import reportAPI from "@/api/report";
 
 const state = {
-  normalReportPackets: [],
-  testReportpackets: [],
+  allReports: [],
 };
 
 const getters = {
-  getNormalReportPackets: (state) => state.normalReportPackets,
-  getTestReportPackets: (state) => state.testReportPackets,
+  getAllReports: (state) => state.allReports,
 };
 
 const actions = {
-  fetchReports({ commit }) {
+  fetchReports({ commit }, requestBody) {
+    console.log(requestBody);
     reportAPI
-      .getReports()
+      .getAllReports(requestBody)
       .then((res) => {
         console.log("the request to the report end point is successfull");
         console.log(res);
-        commit("setReport", res.data);
+        commit("setAllReports", res.data);
       })
       .catch((err) => {
         console.log("something is wrong");
-        console.log(err);
+        console.log(err.response.data.error);
+        console.log(err.response.data.message);
+      });
+  },
+
+  fetchFilteredReports({ commit }, filterRequestBody) {
+    console.log(filterRequestBody);
+    reportAPI
+      .getFilteredReports(filterRequestBody)
+      .then((res) => {
+        console.log("the request to  filter is successfull");
+        console.log(res);
+        commit("setAllReports", res.data);
+      })
+      .catch((err) => {
+        console.log("something is wrong");
+        console.log(err.response.data.error);
+        console.log(err.response.data.message);
       });
   },
 
@@ -93,8 +109,7 @@ const actions = {
 };
 
 const mutations = {
-  setNormalReportPackets: (state, normalReportPackets) =>
-    (state.normalReportPackets = normalReportPackets),
+  setAllReports: (state, allReports) => (state.allReports = allReports),
   seTestReportPackets: (state, testReportPackets) =>
     (state.testReportPackets = testReportPackets),
 };
