@@ -50,7 +50,7 @@
                   color="success"
                   elevation="2"
                   class="mr-4"
-                  @click="runPing"
+                  @click="runDNSLookup"
                 >
                   Run DNS lookup
                   <v-icon right dark>
@@ -83,7 +83,7 @@
                   color="success"
                   elevation="2"
                   class="mr-4"
-                  @click="runPing"
+                  @click="runHopCount"
                 >
                   Run Hop Count
                   <v-icon right dark>
@@ -96,6 +96,18 @@
         </v-layout>
       </v-flex>
       <v-flex xs12 sm7>
+        <v-btn
+          :loading="false"
+          :disabled="false"
+          color="blue-grey"
+          class="ma-2 white--text"
+          @click="fetchResultsForActiveOperation"
+        >
+          Refresh Results
+        </v-btn>
+
+        {{ activeOperationResults }}
+        {{ activeOperationId }}
         <v-card class="mx-0" elevation="2">
           <div class="">
             <v-layout row class="mx-2" fluid>
@@ -306,7 +318,6 @@
 
 <script>
 import { mapGetters, mapActions } from "vuex";
-
 export default {
   name: "testing",
   componenets: {},
@@ -383,14 +394,51 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(["getTest"]),
+    ...mapGetters(["getActiveOperationId", "getActiveOperationResults"]),
     test: function() {
       return this.getTest;
     },
+    activeOperationId: function() {
+      return this.getActiveOperationId;
+    },
+    activeOperationResults: function() {
+      return this.getActiveOperationResults;
+    },
   },
   methods: {
-    ...mapActions(["fetchTest"]),
-    runPing() {},
+    ...mapActions([
+      "sendPingRequest",
+      "sendDNSRequest",
+      "sendHopCountRequest",
+      "getCurrentActiveOperationReport",
+    ]),
+    runPing() {
+      this.sendPingRequest({
+        body: {
+          node_id: this.pingNodeId,
+        },
+      });
+    },
+    runDNSLookup() {
+      this.sendDNSRequest({
+        body: {
+          node_id: this.lookupNodeId,
+        },
+      });
+    },
+    runHopCount() {
+      this.sendHopCountRequest({
+        body: {
+          node_id_1: this.hopNodeId1,
+          node_id_2: this.hopNodeId2,
+        },
+      });
+    },
+    fetchResultsForActiveOperation() {
+      this.getCurrentActiveOperationReport({
+        operation_id: this.getActiveOperationId,
+      });
+    },
   },
   created() {
     this.fetchTest;

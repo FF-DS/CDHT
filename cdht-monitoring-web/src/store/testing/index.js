@@ -1,19 +1,54 @@
 import testingAPI from "@/api/testing";
 
 const state = {
-  test: "",
+  activeOperationId: "",
+  activeOperationResults: [],
 };
 
 const getters = {
-  getTest: (state) => state.test,
+  getActiveOperationId: (state) => state.activeOperationId,
+  getActiveOperationResults: (state) => state.activeOperationResults,
 };
 
 const actions = {
-  fetchTest({ commit }) {
+  sendPingRequest({ commit }, requestBody) {
     testingAPI
-      .getTest()
+      .postPingRequest(requestBody)
       .then((res) => {
-        commit("setTest", res.message);
+        commit("setActiveOperationId", res.data.operation_id);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  },
+
+  sendDNSRequest({ commit }, requestBody) {
+    testingAPI
+      .postDNSRequest(requestBody)
+      .then((res) => {
+        commit("setActiveOperationId", res.data.operation_id);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  },
+
+  sendHopCountRequest({ commit }, requestBody) {
+    testingAPI
+      .postHopCountRequest(requestBody)
+      .then((res) => {
+        commit("setActiveOperationId", res.data.operation_id);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  },
+
+  getCurrentActiveOperationReport({ commit }, requestBody) {
+    testingAPI
+      .getCurrentActiveOperationReport(requestBody)
+      .then((res) => {
+        commit("setActiveOperationResults", res.data);
       })
       .catch((err) => {
         console.log(err);
@@ -22,7 +57,11 @@ const actions = {
 };
 
 const mutations = {
-  setTest: (state, test) => (state.test = test),
+  setActiveOperationId: (state, activeOperationId) =>
+    (state.activeOperationId = activeOperationId),
+
+  setActiveOperationResults: (state, activeOperationResults) =>
+    (state.activeOperationResults = activeOperationResults),
 };
 
 export default {
