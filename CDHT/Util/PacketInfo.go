@@ -70,6 +70,7 @@ func (reqObj *RequestObject) GetResponseObject() RequestObject {
 		ResponseStatus: PACKET_STATUS_SUCCESS,
 		SenderNodeId: reqObj.ReceiverNodeId,
 		ReceiverNodeId: reqObj.SenderNodeId,
+		ValidityCheck: reqObj.ValidityCheck,
 	}
 }
 

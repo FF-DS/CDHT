@@ -78,6 +78,7 @@ func (dns *DnsApp) FindRecord(record Database.DnsRecord) {
 		RecordData: record,
 		Command: Util.FIND_RECORD_COMMAND,
 		SendToAll: false,
+		DoValidityCheck: true,
 	}
 }
 

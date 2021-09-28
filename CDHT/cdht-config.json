@@ -9,7 +9,7 @@
   "Node_IP": "",
   "Node_ID": "",
   "Node_M": "4",
-  "Jump_Spacing": 3,
+  "Jump_Spacing": 2,
   "Routing_Update_Delay": 1,
   "Successors_Table_Length": 5,
 
@@ -51,5 +51,5 @@
   "CONFIGURATION_DOWNLOAD_DELAY": 1,
   "CONFIGURATION_DOWNLOAD_URL": "https://cdht-monitoring-api.herokuapp.com/configuration/current",
 
-  "REPLICATION_COUNT": -1
+  "REPLICATION_COUNT": 2
 }
