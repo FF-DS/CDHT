@@ -40,6 +40,8 @@ func (ui *TerminalUI) UserUI(){
                 ui.printReplica(params)
             case "node":
                 ui.CoreLink.RoutingTableInfo.PrintUpdatedNodeInfo()
+            case "help":
+                help()
         }
 
     }
@@ -218,7 +220,7 @@ func (ui *TerminalUI) printReplica(params []string){
 // # ------------------  [Helper]  ------------------ #
 
 func help(){
-    fmt.Println("===================== [Help] ======================")
+    fmt.Println("=========================================== [Help] ===========================================")
     fmt.Println("    [+]close :  close the application")
     fmt.Println("    [+]route :  show the current successor, predecessor & finger tables")
     fmt.Println("           ==>  route number:  show the tables the amount of provided (number) times with 2 second delay")
@@ -234,6 +236,12 @@ func help(){
     fmt.Println("           ==>  tool lookup: do lookup count")
     fmt.Println("           ==>  tool ping: do node ping ")
     fmt.Println("           ==>  tool log: check CDHT log info")
+    fmt.Println("    [+]config:  loads the current configuration profile")
+    fmt.Println("           ==>  config load: loads the current configuration profile from a file")
+    fmt.Println("    [+]node: current node profile information")
+    fmt.Println("    [+]replica: this command will list the replica's connected to the current node")
+    fmt.Println("           ==>  replica remote: this will list all the routing information of the remote Main node.")
+    fmt.Println("==============================================================================================")
 
 }
 

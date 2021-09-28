@@ -258,7 +258,9 @@ func (node *Node) getLocalNodeInfo() NodeRPC {
 
 // [RPC]
 func (node *Node) ResolvePacket(requestObject *Util.RequestObject, responseObject *Util.RequestObject) error {
-    node.sendacketToReplicas(requestObject)
+    if node.NodeState == NODE_STATE_ACTIVE {
+        node.sendacketToReplicas(requestObject)
+    }
 
     if requestObject.Type == Util.PACKET_TYPE_NETWORK {
         node.NetworkTools <- *requestObject
@@ -302,6 +304,9 @@ func (node *Node) sendacketToReplicas(requestObject *Util.RequestObject) bool {
 
     success := true
     for _, replicas := range node.ReplicaInfos.ReplicaAddress {
+        if checkNode(&replicas) == nil {
+            continue
+        }
         err, _ := replicas.ResolvePacket( *requestObject )
 
         if err != nil {

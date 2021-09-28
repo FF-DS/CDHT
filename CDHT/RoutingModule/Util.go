@@ -103,6 +103,7 @@ func (node *Node) logRoutingTableReport() {
             "FingerTable" : node.getFingerTableRouteEnty() ,
             "SuccessorsTable": node.getSuccessorsRouteEnty() ,
             "SuccPredTable": node.getSuccPredRouteEnty() ,
+            "Replicas": node.getReplicas() ,
         },
     }
 

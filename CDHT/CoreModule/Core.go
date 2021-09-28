@@ -103,6 +103,11 @@ func (core *Core) InitalizeRoutingTable(){
 
 
 func (core *Core) InitalizeCDHTNetworkTools(){
+	if core.RoutingTableInfo.NodeInfo().IP_address == "" {
+		time.Sleep(time.Second)
+		core.InitalizeCDHTNetworkTools()
+		return 
+	}
 	cdhtTools := CDHTNetworkTools.CDHTNetworkTool{
         AppServerIP: core.RoutingTableInfo.NodeInfo().IP_address,
         AppServerPort: core.Config.Application_Connecting_Port,

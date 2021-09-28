@@ -62,6 +62,7 @@ func (Api *ApiCommunication) appRequestHandlerTCP(connection interface{}) {
 					}
 
 					netReqObj.SenderNodeId = Api.NodeRoutingTable.NodeInfo().Node_id
+					netReqObj.SenderNodeAddress = Api.NodeRoutingTable.NodeInfo().IP_address+":"+Api.NodeRoutingTable.NodeInfo().Port
 					
 					if netReqObj.ReceiverNodeId != nil {
 						Api.NodeRoutingTable.ForwardPacket( netReqObj )

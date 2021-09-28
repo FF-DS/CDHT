@@ -3,6 +3,7 @@ package RoutingModule
 import (
 	"fmt"
 	"sort"
+	"time"
 )
 
 const (
@@ -283,6 +284,28 @@ func (node *Node) currentReplicaInfo() {
 		printNodeRPC(&replicaNode, true)
 	}
 	fmt.Printf("----------------------------------------------------------\n")
+}
+
+
+func (node *Node) getReplicas() [][]string {
+	replicas := [][]string{}
+	for _, replicaNode := range node.ReplicaInfos.ReplicaAddress {
+		start := time.Now()
+		if node.NodeState == NODE_STATE_REPLICA {
+			replicaNode.DefaultArgs = nil
+		}
+		status := "Alive"
+		if checkNode(&replicaNode) == nil {
+			status = "Down"
+		}
+		replicas = append(replicas, []string{ 
+			replicaNode.Node_address,
+			status,
+			time.Since(start).String(),
+		})
+	}
+
+	return replicas
 }
 
 

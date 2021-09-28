@@ -36,7 +36,7 @@
   "Network_Tool_Channel_Size": 100000,
 
   "CDHT_Ping_Tool_Listening_Port": "",
-  "CDHT_API_Communication_Delay": 15,
+  "CDHT_API_Communication_Delay": 5,
   "CDHT_Command_Channel_Size": 100000,
   "CDHT_URL_Get_Command_From_Server": "https://cdht-monitoring-api.herokuapp.com/network-tools",
   "CDHT_URL_Send_Command_Result": "https://cdht-monitoring-api.herokuapp.com/network-tools",

@@ -7,7 +7,6 @@ import (
     "io/ioutil"
     "encoding/json"
 	"cdht/ReportModule"
-	"fmt"
 )
 
 
@@ -52,8 +51,6 @@ func (config *Config) DownloadConfiguration() {
 				})
 			}
 			config.configuration.CopyConfiguration( serverConfig )
-		}else{
-			fmt.Println("EROR Download")
 		}
 	}
 }
