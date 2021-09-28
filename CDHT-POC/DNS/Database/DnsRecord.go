@@ -27,11 +27,10 @@ type DnsRecord struct {
 
 // #--------------------------------- string log ---------------------------------# //
 func  (record *DnsRecord) ToString() string {
-	str := "   ---------------- Record Data ----------------\n"  
-	str += fmt.Sprintf("    [+] Record Type : %s\n", record.RecordType )
-	str += fmt.Sprintf("    [+] Record Key : %s\n", record.RecordKey )
-	str += fmt.Sprintf("    [+] Record Value : %s\n", record.RecordValue )
-	str += "   ---------------------------------------------\n"  
+	str := "    Record Data\n"  
+	str += fmt.Sprintf("        [+] Record Type : %s\n", record.RecordType )
+	str += fmt.Sprintf("        [+] Record Key : %s\n", record.RecordKey )
+	str += fmt.Sprintf("        [+] Record Value : %s\n", record.RecordValue )
 	return str;
 }
 

@@ -11,6 +11,7 @@ import (
 type DnsApp struct {
 	DnsApplicationResponseChannel chan Util.RequestObject
 	DnsApplicationRequestChannel chan Util.AppCommand
+	DnsApplicationRequestResponseChannel chan Util.RequestObject
 
 	DnsApplicationResult chan Util.AppCommand
 
@@ -28,10 +29,11 @@ type DnsApp struct {
 func (dns *DnsApp) InitApp() *DnsApp{
 	dns.DnsApplicationResponseChannel = make(chan Util.RequestObject, dns.ApplicationSize)
 	dns.DnsApplicationRequestChannel = make(chan Util.AppCommand, dns.ApplicationSize)
+	dns.DnsApplicationRequestResponseChannel = make(chan Util.RequestObject, dns.ApplicationSize)
 
 	conn := Connection{
 		DnsApplicationResponseChannel: dns.DnsApplicationResponseChannel,  DnsApplicationRequestChannel: dns.DnsApplicationRequestChannel,
-		IPAddress: dns.IPAddress, Port: dns.Port, NetChannelSize: dns.ApplicationSize, 
+		IPAddress: dns.IPAddress, Port: dns.Port, NetChannelSize: dns.ApplicationSize, DnsApplicationRequestResponseChannel: dns.DnsApplicationRequestResponseChannel,
 	}
 	dns.conn = conn.Init()
 
@@ -65,8 +67,8 @@ func (dns *DnsApp) AddRecordsToCurrentNode(command Util.AppCommand, reqObj Util.
 		respObj.ResponseStatus = Util.PACKET_STATUS_FAILED
 	}
 
-	command.Command = Util.RESPONSE_RECORD_COMMAND
-	respObj.RequestBody = command
+	command.Command = Util.RESPONSE_ADD_RECORD_COMMAND
+	respObj.RequestBody = command.ToMap()
 	return respObj
 }
 
@@ -87,8 +89,9 @@ func (dns *DnsApp) FindRecordFromCurrentNode(command Util.AppCommand, reqObj Uti
 		respObj.ResponseStatus = Util.PACKET_STATUS_FAILED
 	}
 
-	command.Command = Util.RESPONSE_RECORD_COMMAND
-	respObj.RequestBody = record
+	command.Command = Util.RESPONSE_FIND_RECORD_COMMAND
+	command.RecordData = record
+	respObj.RequestBody = command.ToMap()
 	return respObj
 }
 
@@ -108,8 +111,8 @@ func (dns *DnsApp) UpdateRecordOnCurrentNode(command Util.AppCommand, reqObj Uti
 		respObj.ResponseStatus = Util.PACKET_STATUS_FAILED
 	}
 
-	command.Command = Util.RESPONSE_RECORD_COMMAND
-	respObj.RequestBody = command
+	command.Command = Util.RESPONSE_UPDATE_RECORD_COMMAND
+	respObj.RequestBody = command.ToMap()
 	return respObj
 }
 
@@ -129,8 +132,8 @@ func (dns *DnsApp) RemoveRecordFromCurrentNode(command Util.AppCommand, reqObj U
 		respObj.ResponseStatus = Util.PACKET_STATUS_FAILED
 	}
 
-	command.Command = Util.RESPONSE_RECORD_COMMAND
-	respObj.RequestBody = command
+	command.Command = Util.RESPONSE_DELETE_RECORD_COMMAND
+	respObj.RequestBody = command.ToMap()
 	return respObj
 }
 
@@ -139,19 +142,20 @@ func (dns *DnsApp) RemoveRecordFromCurrentNode(command Util.AppCommand, reqObj U
 func (dns *DnsApp) executeRequests() {
 	for {
 		reqObj := <- dns.DnsApplicationResponseChannel
-
 		if appCmdMap, ok := reqObj.RequestBody.(map[string]interface{}); ok { 
 			appCmd := Util.ToAppCommand(appCmdMap, reqObj)
 			switch (appCmd.Command) {
 				case Util.INSERT_RECORD_COMMAND:
-					dns.AddRecordsToCurrentNode(appCmd, reqObj)
+					dns.DnsApplicationRequestResponseChannel <- dns.AddRecordsToCurrentNode(appCmd, reqObj)
 				case Util.FIND_RECORD_COMMAND:
-					dns.AddRecordsToCurrentNode(appCmd, reqObj)
+					dns.DnsApplicationRequestResponseChannel <- dns.FindRecordFromCurrentNode(appCmd, reqObj)
 				case Util.UPDATE_RECORD_COMMAND:
-					dns.AddRecordsToCurrentNode(appCmd, reqObj)
+					dns.DnsApplicationRequestResponseChannel <- dns.UpdateRecordOnCurrentNode(appCmd, reqObj)
 				case Util.DELETE_RECORD_COMMAND:
-					dns.AddRecordsToCurrentNode(appCmd, reqObj)
-				case Util.RESPONSE_RECORD_COMMAND:
+					dns.DnsApplicationRequestResponseChannel <- dns.RemoveRecordFromCurrentNode(appCmd, reqObj)  // 
+				default:
+					appCmd.NodeID = reqObj.SenderNodeId.String()
+					appCmd.NodeAddress = reqObj.SenderNodeAddress
 					dns.DnsApplicationResult <- appCmd
 			}
 		}else{

@@ -20,7 +20,7 @@ func (ui *TerminalUI) Init(){
 	if len(address) != 2 {
 		ui.Init()
 	}
-	app := DnsApp{ IPAddress: address[0], Port: address[1], ApplicationSize: 100000, DatabaseName: "dns_app.sql", DnsApplicationResult: ui.DnsApplicationResult}
+	app := DnsApp{ IPAddress: address[0], Port: address[1], ApplicationSize: 100000, DatabaseName: "dns_app2.sql", DnsApplicationResult: ui.DnsApplicationResult}
 	ui.app = app.InitApp()
 }
 
@@ -31,6 +31,7 @@ func (ui *TerminalUI) UserUI(){
 
         switch params[0] {
             case "close" : 
+				ui.app.CloseApp()
                 return
             case "find" :
                 ui.findRecord(params)
@@ -44,6 +45,8 @@ func (ui *TerminalUI) UserUI(){
                 ui.deleteRecords(params)
 			case "results":
                 ui.resultRecords()
+			case "help":
+				help()
         }
 
     }
@@ -110,7 +113,7 @@ func (ui *TerminalUI) deleteRecords(commands []string) {
 func (ui *TerminalUI) resultRecords(){
     for len(ui.DnsApplicationResult) > 0 {
 		appCommand := <- ui.DnsApplicationResult
-		fmt.Println(appCommand.RecordData.ToString())
+		fmt.Println(appCommand.ToString())
 	}
 }
 
@@ -129,3 +132,15 @@ func getInput(inputStr string) []string {
     return strings.Split(strInput, " ")
 }
 
+
+func help(){
+    fmt.Println("=========================================== [Help] ===========================================")
+    fmt.Println("    [+]close :  close the application")
+    fmt.Println("    [+]find :  find DNS records by specifying d/t parameters")
+    fmt.Println("    [+]list local :  list the current node DNS records")
+    fmt.Println("    [+]update :  do an update operation on DNS records")
+    fmt.Println("    [+]add :  add a DNS records")
+    fmt.Println("    [+]delete :  delete a DNS records")
+    fmt.Println("    [+]results : this will print all the dns queries of the applications")
+    fmt.Println("==============================================================================================")
+}

@@ -23,6 +23,7 @@ type SqlDB struct {
 	updateStatement  *sql.Stmt
 	deleteStatement  *sql.Stmt
 	tx *sql.Tx
+	tried bool
 }
 
 
@@ -127,6 +128,8 @@ func (sqlDB *SqlDB) InsertRecord(record DnsRecord) bool {
 	_, err := sqlDB.insertStatement.Exec(record.RecordType, record.RecordKey, record.RecordValue)
 	if err != nil {
 		log.Println(err)
+		sqlDB.initPS()
+		sqlDB.InsertRecord(record)
 		return false
 	}
 	sqlDB.tx.Commit()

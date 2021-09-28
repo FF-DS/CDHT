@@ -11,6 +11,7 @@ import (
 type Connection struct {
 	DnsApplicationResponseChannel chan Util.RequestObject
 	DnsApplicationRequestChannel chan Util.AppCommand
+	DnsApplicationRequestResponseChannel chan Util.RequestObject
 
 	IPAddress string
 	Port string
@@ -61,6 +62,11 @@ func (conn  *Connection) handlePacketTransaction(netChannel NetworkModule.Networ
 
 			case apiReqObj := <-conn.DnsApplicationRequestChannel:
 				if status := netChannel.SendToSocket( conn.constructRequestObject( apiReqObj ) ); !status {
+					fmt.Println("[DNS-APP] Unable to send")
+				}
+
+			case apiReqResObj := <-conn.DnsApplicationRequestResponseChannel:
+				if status := netChannel.SendToSocket( apiReqResObj ); !status {
 					fmt.Println("[DNS-APP] Unable to send")
 				}
 		}

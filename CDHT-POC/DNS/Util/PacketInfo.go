@@ -43,6 +43,7 @@ type RequestObject struct {
 	AppID int
 	UdpAddress string
 	
+	SenderNodeAddress string
 	SenderNodeId *big.Int
 	ReceiverNodeId *big.Int
 	
