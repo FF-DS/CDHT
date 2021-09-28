@@ -1,11 +1,31 @@
 <template>
   <v-app>
-    <v-app-bar app color="primary" dark>
-      <v-btn href="http://localhost:8080" target="_blank" text>
-        <span class="mr-2">CDHT</span>
-        <v-icon>mdi-open-in-new</v-icon>
-      </v-btn>
-    </v-app-bar>
+    <div id="nav">
+      <nav class="container navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">CDHT</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-toggle="collapse"
+          data-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <div class="navbar-nav ml-auto">
+            <router-link to="/report" class="nav-link">Report</router-link>
+            <router-link to="/monitoring" class="nav-item nav-link"
+              >Monitoring</router-link
+            >
+            <router-link to="/testing" class="nav-link">Testing</router-link>
+          </div>
+        </div>
+      </nav>
+    </div>
 
     <v-main> <router-view /></v-main>
   </v-app>

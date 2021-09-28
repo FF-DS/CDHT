@@ -6,6 +6,7 @@ import (
 	"monitoring-server/services"
 	"monitoring-server/util"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -132,8 +133,8 @@ func (tst TestController) FilterTestResults(c *gin.Context){
     commandResultsCollection := services.ConnectDB(RESULTS_COLLECTION_NAME)
 
 	type RequestBody struct{
-        Limit int64 `bson:"limit" json:"limit"`
-		OperationId primitive.ObjectID `json:"operation_id" bson:"operation_id"`
+        Limit string `bson:"limit" json:"limit"`
+		OperationId string `json:"operation_id" bson:"operation_id"`
 	}
 
 	
@@ -142,10 +143,12 @@ func (tst TestController) FilterTestResults(c *gin.Context){
 
     findOptions := options.Find()
     findOptions.SetSort(bson.D{primitive.E{Key:"created_date",Value:  -1}})
-    findOptions.SetLimit(request.Limit)
+	limit , _ := strconv.ParseInt(request.Limit, 10, 64)
+    findOptions.SetLimit(limit)
 	
 	if err := c.ShouldBindJSON(&request) ; err == nil{
-		filter := bson.D{primitive.E{Key:"operation_id" , Value :request.OperationId}}
+		operation_id , _ := primitive.ObjectIDFromHex( request.OperationId);
+		filter := bson.D{primitive.E{Key:"operation_id" , Value : operation_id}}
 		if err := commandResultsCollection.FindOne(context.TODO() , filter).Decode(&command) ; err == nil{
 			c.JSON(http.StatusOK , gin.H{"message" : "successfuly retrived the specified command" , "data" : command})
 		}else{

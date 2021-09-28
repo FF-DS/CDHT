@@ -2,38 +2,15 @@
   <div>
     <div class="row">
       <div class="col-4">
-        <div class="card">
-          <div class="card-body">
-            <v-btn
-              :loading="false"
-              :disabled="false"
-              color="blue-grey"
-              class="ma-2 white--text"
-              @click="prepareAndGenerateReport"
-            >
-              Generate PDF
-            </v-btn>
-            <v-btn
-              :loading="false"
-              :disabled="false"
-              color="blue-grey"
-              class="ma-2 white--text"
-              @click="toggleExpandCollapse"
-            >
-              Expand Log Detail
-            </v-btn>
-
-            <v-btn
-              :loading="false"
-              :disabled="false"
-              color="blue-grey"
-              class="ma-2 white--text"
-              @click="getFilteredRports"
-            >
-              Perform Filter
-            </v-btn>
-          </div>
-        </div>
+        <v-btn
+          :loading="false"
+          :disabled="false"
+          color="blue-grey"
+          class="ma-2 white--text"
+          @click="prepareAndGenerateReport"
+        >
+          Generate PDF
+        </v-btn>
 
         <div class="card">
           <!-- filter all? {{ filterParameteres.selectAllNodesAndApplyFilters }}
@@ -130,9 +107,19 @@
             ></custom-date-picker>
           </div>
         </div>
+
+        <v-btn
+          :loading="false"
+          :disabled="false"
+          color="blue-grey"
+          class="ma-2 white--text float-right"
+          @click="getFilteredRports"
+        >
+          Perform Filter
+        </v-btn>
       </div>
 
-      <div class="col-8" style="max-height:95vh ; overflow-y:scroll">
+      <div class="col-8" style="max-height:95vh ; overflow-y:scroll ; ">
         <div class="row py-2 my-2">
           <div class="col-12 mt-4 " style="">
             <v-slider
@@ -153,8 +140,8 @@
           </div>
         </div>
 
-        <div class="row justify-content-center">
-          <div class="col-11">
+        <div class="row">
+          <div class="col-12">
             <vue-html2pdf
               :show-layout="true"
               :float-layout="false"
@@ -178,73 +165,53 @@
               ref="html2Pdf"
             >
               <section slot="pdf-content">
-                <div class="row">
-                  <div
-                    v-for="(model, index) in report"
-                    :key="index"
-                    :style="'cursor:pointer'"
-                    class="col-12"
-                  >
+                <div
+                  v-for="(model, index) in report"
+                  :key="index"
+                  :style="'cursor:pointer'"
+                  class="row"
+                >
+                  <div class="col-12">
                     <div class="card my-2">
                       <div class="card-body">
-                        <div class="card-title">
-                          <div class="row">
-                            <div class="col-12" v-show="checkBoxToggle">
-                              <v-checkbox
-                                class="reportCheckCheckBox"
-                                input-value=""
-                                value
-                              ></v-checkbox>
-                            </div>
-                            <div class="col-6"># {{ index + 1 }}</div>
-                            <div class="col-6">
-                              {{ model.created_date }}
-                            </div>
-                          </div>
-                        </div>
                         <div class="row">
-                          <div class="col-6">Node ID=> {{ model.node_id }}</div>
-                          <div class="col-6">
-                            Report Type => {{ model.type }}
+                          <div class="col-3">
+                            <div class="row">
+                              <div class="col-11">
+                                <p>Node ID : {{ model.node_id }}</p>
+
+                                <p>Report Type : {{ model.type }}</p>
+
+                                <p>
+                                  Operation Status :
+                                  {{ model.operation_status }}
+                                </p>
+                              </div>
+                            </div>
                           </div>
-                          <div class="row justify-content-center">
-                            <!-- <div class="col-2">
-                              <v-container>
-                                <v-row>
-                                  <v-slider
-                                    v-model="jsonViewerDepthRange"
-                                    step="1"
-                                    vertical
-                                    label="Range"
-                                  ></v-slider>
-                                </v-row>
-                              </v-container>
-                            </div> -->
-                            <div class="col-10">
-                              <v-expansion-panels flat light multiple>
-                                <v-expansion-panel :key="index">
-                                  <v-expansion-panel-header
-                                    class="expansion-pannel-header"
-                                  >
-                                    Detailed Information
-                                  </v-expansion-panel-header>
-                                  <v-expansion-panel-content>
+                          <div class="col-8">
+                            <div class="row justify-content-center">
+                              <div class="col-12">
+                                Log Body
+                                <div class="card">
+                                  <div class="card-body">
                                     <json-viewer
-                                      :value="model"
+                                      :value="model.log_body"
                                       :expand-depth="jsonViewerDepthRange"
                                       copyable
                                       sort
+                                      root="LogBody"
                                       theme="themetheme"
                                     ></json-viewer>
-                                  </v-expansion-panel-content>
-                                </v-expansion-panel>
-                              </v-expansion-panels>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
+                      <!-- <div v-for="(value, key) in awards[index]" :key="key"> -->
                     </div>
-                    <!-- <div v-for="(value, key) in awards[index]" :key="key"> -->
                   </div>
                 </div>
               </section>
@@ -282,7 +249,7 @@ export default {
       },
       checkBoxToggle: true,
       expansionToggle: false,
-      jsonViewerDepthRange: 2,
+      jsonViewerDepthRange: 1,
       rules: [(value) => (value || "").length <= 20 || "Max 20 characters"],
     };
   },

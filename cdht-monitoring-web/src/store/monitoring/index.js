@@ -1,7 +1,7 @@
 import monitoringAPI from "@/api/monitoring";
 
 const state = {
-  monitoringStats: "",
+  monitoringStats: [],
 };
 
 const getters = {
