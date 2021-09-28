@@ -95,7 +95,5 @@ func (config *Config) downloadFromServer()  *Configuration {
 	
     var remoteConfig Configuration
     err = json.Unmarshal(body, &remoteConfig)
-	fmt.Println("found body", remoteConfig)
-	fmt.Println("found error", err)
 	return &remoteConfig
 }
