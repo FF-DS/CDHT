@@ -2,12 +2,13 @@ package RoutingModule
 
 import (
     "net/rpc"
-    "log"
+    // "log"
 	"math/big"
 	"time"
 	"cdht/Util"
 	"fmt"
 )
+
 
 // # -------------------- NodeRPC -------------------- # //
 
@@ -22,6 +23,10 @@ type NodeRPC struct {
 	ticker *time.Ticker
 
 	NodeTraversalLogs []NodeRPC
+	
+	// replica info's
+	NodeState string
+	ReplicationCount int
 }
 
 
@@ -29,7 +34,7 @@ type NodeRPC struct {
 func (node *NodeRPC) Connect() (error, *NodeRPC) {
 	client, err := rpc.Dial("tcp", node.Node_address)
     if err != nil {
-		log.Println("[NODE-CONNECT] dialing:", err)
+		// log.Println("[NODE-CONNECT] dialing:", err)
 		return err, nil
     } 
 	
@@ -39,7 +44,7 @@ func (node *NodeRPC) Connect() (error, *NodeRPC) {
 	err = node.handle.Call("Node.GetNodeInfo", node.DefaultArgs, &node)
     
 	if err != nil {
-		log.Println("Node.GetNodeInfo:", err)
+		// log.Println("Node.GetNodeInfo:", err)
 		return err, nil
     }
 	
@@ -55,7 +60,7 @@ func (node *NodeRPC) GetNodeInfo() (error, *NodeRPC) {
 	err := node.handle.Call("Node.GetNodeInfo", node.DefaultArgs, node)
     
 	if err != nil {
-        log.Println("Node.GetNodeInfo:", err)
+        // log.Println("Node.GetNodeInfo:", err)
 		return err, nil
     }
 	return nil, node
@@ -69,7 +74,7 @@ func (node *NodeRPC) ResolvePacket(reqObj Util.RequestObject) (error, Util.Reque
 
 	err := node.handle.Call("Node.ResolvePacket", &reqObj, &responseObject)
     if err != nil {
-        log.Println("Node.ResolvePacket:", err)
+        // log.Println("Node.ResolvePacket:", err)
 
 		resp := reqObj.GetResponseObject()
     	resp.ResponseStatus = Util.PACKET_STATUS_FAILED
@@ -86,7 +91,7 @@ func (node *NodeRPC) FindSuccessor(nodeId *big.Int) (error, *NodeRPC) {
 
 	err := node.handle.Call("Node.FindSuccessor", nodeId, &successor)
     if err != nil {
-        log.Println("Node.FindSuccessor:", err)
+        // log.Println("Node.FindSuccessor:", err)
 		return err, nil
     }
 	return nil, &successor
@@ -100,7 +105,7 @@ func (node *NodeRPC) LookUP(nodeId *big.Int) (error, *NodeRPC) {
 
 	err := node.handle.Call("Node.LookUP", nodeId, &successor)
     if err != nil {
-        log.Println("Node.LookUP:", err)
+        // log.Println("Node.LookUP:", err)
 		return err, nil
     }
 	return nil, &successor
@@ -114,7 +119,7 @@ func (node *NodeRPC) GetSuccessor() (error, *NodeRPC) {
 
 	err := node.handle.Call("Node.GetSuccessor", node.DefaultArgs, &successor)
     if err != nil {
-        log.Println("Node.GetSuccessor:", err)
+        // log.Println("Node.GetSuccessor:", err)
 		return err, nil
     }
 	return nil, &successor
@@ -128,7 +133,7 @@ func (node *NodeRPC) GetPredecessor() (error, *NodeRPC) {
 
 	err := node.handle.Call("Node.GetPredecessor", node.DefaultArgs, &predecessor)
     if err != nil {
-        log.Println("Node.GetPredecessor:", err)
+        // log.Println("Node.GetPredecessor:", err)
 		return err,  nil
     }
 
@@ -143,7 +148,7 @@ func (node *NodeRPC) Notify(predecessor *NodeRPC) (error, *Successors) {
 
 	err := node.handle.Call("Node.Notify", predecessor, &successors)
     if err != nil {
-        log.Println("Node.Notify:", err)
+        // log.Println("Node.Notify:", err)
 		return err, nil
     }
 
@@ -151,10 +156,57 @@ func (node *NodeRPC) Notify(predecessor *NodeRPC) (error, *Successors) {
 }
 
 
+
+
+
+// # ---------------  replica methods -------------------------- # //
+
+func (node *NodeRPC) MakeNodeActive(replicaInfos *ReplicaInfo) (error, *ReplicaInfo) {
+	node.resetConnTimeOut();
+
+	err := node.handle.Call("Node.MakeNodeActive", node.DefaultArgs, &replicaInfos)
+    if err != nil {
+        // log.Println("Node.MakeNodeActive:", err)
+		return err, nil
+    }
+	return nil, replicaInfos
+}
+
+
+func (node *NodeRPC) NodeReplicaInfo(replicaInfos *ReplicaInfo) (error, *ReplicaInfo) {
+	node.resetConnTimeOut();
+
+	err := node.handle.Call("Node.NodeReplicaInfo", node.DefaultArgs, replicaInfos)
+    if err != nil {
+        // log.Println("Node.NodeReplicaInfo:", err)
+		return err, nil
+    }
+	return nil, replicaInfos
+}
+
+
+func (node *NodeRPC) AddReplica(currNode *NodeRPC) (error, ReplicaInfo) {
+	node.resetConnTimeOut();
+
+	replicaInfos := ReplicaInfo{ SuccessorsTable : Successors{}, FingerTable : map[int]NodeRPC{}, Successor : NodeRPC{}, Predcessor : NodeRPC{},ReplicaAddress : []NodeRPC{},  MasterNode : NodeRPC{}}	
+	err := node.handle.Call("Node.AddReplica", &currNode, &replicaInfos)
+
+    if err != nil {
+        // log.Println("Node.AddReplica:", err)
+		return err, ReplicaInfo{}
+    }
+	return nil, replicaInfos
+}
+
+
+
+
+
+
 // # ---------------  print statemets -------------------------- # //
 func (node *NodeRPC) PrintNodeInfo() {
 	fmt.Printf("------------------Remote Node Info------------------\n")
-    fmt.Printf("      [+]: Node ID : %s \n", node.Node_id.String())
+    fmt.Printf("      [+]: Node ID : %s [%s] \n", node.Node_id.String(), node.NodeState)
     fmt.Printf("      [+]: M       : %s \n", node.M.String())
     fmt.Printf("      [+]: Address : %s \n", node.Node_address)
     fmt.Printf("----------------------------------------------------\n")
@@ -180,7 +232,9 @@ func (node *NodeRPC) autoClose(){
 	defer node.ticker.Stop()
 
 	<-node.ticker.C
-	node.handle.Close()
+	if node.handle != nil {
+		node.handle.Close()
+	}
 	node.DefaultArgs = nil
 }
 
@@ -189,10 +243,13 @@ func (node *NodeRPC) resetConnTimeOut() bool {
 		return false
 	}
 
-	node.ticker.Stop()
-	node.ticker = time.NewTicker(time.Second * 10)
+	// node.ticker.Stop()
+	node.ticker.Reset(time.Second * 10) // = time.NewTicker(time.Second * 10)
 	return true
 }
+
+
+
 
 
 
@@ -204,8 +261,10 @@ func (successors *Successors) UpdateSuccessors(newSuccessors Successors) {
 	*successors = newSuccessors
 }
 
-func (successors *Successors) PopFirst() {
+func (successors *Successors) PopFirst() NodeRPC{
+	poped := (*successors)[0]
 	*successors = (*successors)[1:]
+	return poped
 }
 
 // # -------------------- Args -------------------- # //

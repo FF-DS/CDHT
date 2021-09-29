@@ -3,6 +3,7 @@ module cdht
 go 1.12
 
 require (
+	github.com/aws/aws-sdk-go v1.29.15 // indirect
 	github.com/creack/pty v1.1.14 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0
@@ -14,7 +15,10 @@ require (
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/tkanos/gonfig v0.0.0-20210106201359-53e13348de2f
+	github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c // indirect
+	github.com/xdg/stringprep v0.0.0-20180714160509-73f8eece6fdc // indirect
 	github.com/yuin/goldmark v1.4.0 // indirect
+	go.mongodb.org/mongo-driver v1.7.2 // indirect
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
 	golang.org/x/net v0.0.0-20210726213435-c6fcb2dbf985 // indirect
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect

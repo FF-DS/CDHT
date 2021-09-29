@@ -50,6 +50,7 @@ func (core *Core) InitalizeLogManager(){
     logMngr.Init()
 	
 	core.LogManager = &logMngr
+	core.ConfigMngr.Logger = &logMngr
 }
 
 
@@ -89,14 +90,24 @@ func (core *Core) InitalizeRoutingTable(){
 	// [CREATE RING] or [JOIN RING]
 	if core.Config.Application_Mode == Config.MODE_CREATE_RING {
 		core.RoutingTableInfo.CreateRing()    
+
 	}else if core.Config.Application_Mode == Config.MODE_JOIN_RING {
 		core.ConnectWithNode()
 		core.RoutingTableInfo.RunNode( core.RemoteNode )    
+
+	}else if core.Config.Application_Mode == Config.MODE_REPLICA_NODE {
+		core.ConnectWithNode()
+		core.RoutingTableInfo.InitReplicaRoutingTable( core.RemoteNode )    
 	}
 }
 
 
 func (core *Core) InitalizeCDHTNetworkTools(){
+	if core.RoutingTableInfo.NodeInfo().IP_address == "" {
+		time.Sleep(time.Second)
+		core.InitalizeCDHTNetworkTools()
+		return 
+	}
 	cdhtTools := CDHTNetworkTools.CDHTNetworkTool{
         AppServerIP: core.RoutingTableInfo.NodeInfo().IP_address,
         AppServerPort: core.Config.Application_Connecting_Port,

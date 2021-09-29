@@ -104,13 +104,18 @@ func (node *Node) checkPredecessor() {
 
 // [ROUTING-MODULE]
 func (node *Node) checkSeccessors() {
-    if checkNode(node.successor) != nil {
+    node.successor = checkNode(node.successor)
+    if node.successor != nil {
         return
     }
 
-    for  checkNode(node.successor) == nil && len(node.currentSuccessors) > 1 {
-        node.currentSuccessors.PopFirst()
-        node.successor = &node.currentSuccessors[0]
+    for  checkNode(node.successor) == nil && len(node.currentSuccessors) > 0 {
+        poped := node.currentSuccessors.PopFirst()
+        node.successor = &poped
+    }
+
+    if len(node.currentSuccessors) == 0 {
+        node.GetNodeInfo(node.defaultArgs, node.successor)
     }
 }
 

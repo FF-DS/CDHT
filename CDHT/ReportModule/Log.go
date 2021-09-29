@@ -2,8 +2,10 @@ package ReportModule
 
 
 import (
+	// "go.mongodb.org/mongo-driver/bson/primitive"
 	"math/big"
 	"fmt"
+	"time"
 )
 // # --------------------------- eunm --------------------------- # //
 
@@ -15,6 +17,7 @@ const (
 	LOG_TYPE_NODE_INFORMATION        string = "TYPE_NODE_INFORMATION"
 	LOG_TYPE_NETWORK_TOOL            string = "TYPE_NETWORK_TOOL"
 	LOG_TYPE_APP_SERVICE             string = "TYPE_APP_SERVICE"
+	LOG_TYPE_CONFIGURATION_SERVICE   string = "TYPE_CONFIGURATION_SERVICE"
 
 
 	LOG_LOCATION_TYPE_INCOMMING      string = "LOCATION_TYPE_INCOMMING"
@@ -32,12 +35,14 @@ const (
 // #--------------------------------- Log Object ---------------------------------# //
 
 type Log struct {
-	Type  string
-	OperationStatus  string
-	LogLocation  string
-	NodeId *big.Int
-	NodeAddress string
-	LogBody interface{}
+	Type  string  `json:"type" bson:"type,omitempty"`
+	OperationStatus  string `json:"operation_status" bson:"operation_status,omitempty"`
+	LogLocation  string `json:"log_location" bson:"log_location,omitempty"`
+	NodeId *big.Int  `json:"node_id_double" bson:"node_id_double,omitempty"`
+	NodeIdString string  `json:"node_id" bson:"node_id,omitempty"`
+	NodeAddress string `json:"node_address" bson:"node_address,omitempty"`
+	LogBody interface{} `json:"log_body" bson:"log_body,omitempty"`
+	CreatedDate time.Time `json:"created_date" bson:"created_date,omitempty"`
 }
 
 

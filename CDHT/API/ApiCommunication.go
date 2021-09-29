@@ -52,12 +52,27 @@ func (Api *ApiCommunication) appRequestHandlerTCP(connection interface{}) {
 						connection.Close()
 						delete(Api.Application, netReqObj.AppName);
 						return 
-					}else {
-						netReqObj.SenderNodeId = Api.NodeRoutingTable.NodeInfo().Node_id
+					}
+						
+					if netReqObj.TranslateName {
+						netReqObj.ReceiverNodeId = Api.DataToNodeIDTranslator(netReqObj.TranslateNameID)
+					}
+					if netReqObj.ValidityCheck{
+						netReqObj.ValidationCRCchecksum = Api.CalculateCRCchecksum(netReqObj.RequestBody)
+					}
+
+					netReqObj.SenderNodeId = Api.NodeRoutingTable.NodeInfo().Node_id
+					netReqObj.SenderNodeAddress = Api.NodeRoutingTable.NodeInfo().IP_address+":"+Api.NodeRoutingTable.NodeInfo().Port
+					
+					if netReqObj.ReceiverNodeId != nil {
 						Api.NodeRoutingTable.ForwardPacket( netReqObj )
 					}
-					
+										
 				case chanReqObj := <- currReqChannel:
+					if chanReqObj.ValidityCheck{
+						checksumValue := Api.CalculateCRCchecksum(chanReqObj.RequestBody)
+						chanReqObj.ValidityCheckResult = checksumValue == chanReqObj.ValidationCRCchecksum
+					}
 					netChannel.SendToSocket( chanReqObj )
 			}
 		}

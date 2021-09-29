@@ -148,10 +148,9 @@ func (netTool *CDHTNetworkTool)  sendReportToServer(){
     responseBody := bytes.NewBuffer(postBody)
     resp, err := http.Post( netTool.getCommandResultPostingURL() , "application/json", responseBody)
     
-    if err != nil {
+    if err != nil || resp.StatusCode != 200{
 		netTool.ResultChannel <- command
 		return 
     }
-    
    resp.Body.Close();
 }

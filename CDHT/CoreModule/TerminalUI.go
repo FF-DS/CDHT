@@ -3,6 +3,7 @@ package CoreModule
 import (
     "cdht/Applications/CDHTNetworkTools"
     "cdht/ReportModule"
+    // "cdht/Config"
 
     "strconv"
     "strings"
@@ -35,6 +36,12 @@ func (ui *TerminalUI) UserUI(){
                 ui.testCDHTtool(params)
             case "config":
                 ui.uiConfigManager(params)
+            case "replica":
+                ui.printReplica(params)
+            case "node":
+                ui.CoreLink.RoutingTableInfo.PrintUpdatedNodeInfo()
+            case "help":
+                help()
         }
 
     }
@@ -200,9 +207,43 @@ func (ui *TerminalUI) loadFromFile(){
 }
 
 
+func (ui *TerminalUI) printReplica(params []string){
+    if len(params) == 2 && params[1] == "remote" { // && ui.CoreLink.Config.Application_Mode == Config.MODE_REPLICA_NODE
+        ui.CoreLink.RoutingTableInfo.PrintRemoteReplicaInfo()
+    }else {
+        ui.CoreLink.RoutingTableInfo.PrintCurrentReplicaInfo()
+    }
+
+}
 
 
 // # ------------------  [Helper]  ------------------ #
+
+func help(){
+    fmt.Println("=========================================== [Help] ===========================================")
+    fmt.Println("    [+]close :  close the application")
+    fmt.Println("    [+]route :  show the current successor, predecessor & finger tables")
+    fmt.Println("           ==>  route number:  show the tables the amount of provided (number) times with 2 second delay")
+    fmt.Println("    [+]lookup:  conducts a lookup by providing node id")
+    fmt.Println("           ==>  node_id: it should be a valid node id")
+    fmt.Println("    [+]log:  print out logs that haven't yet sent to server")
+    fmt.Println("           ==>  log route: routing table logs")
+    fmt.Println("           ==>  log node: node forwarding activity logs")
+    fmt.Println("           ==>  log network: network tools log data")
+    fmt.Println("           ==>  log config: configuration changes log")
+    fmt.Println("    [+]tool:  if the CDHT tool is running on the system this command used to do the following things")
+    fmt.Println("           ==>  tool hop: do hop count")
+    fmt.Println("           ==>  tool lookup: do lookup count")
+    fmt.Println("           ==>  tool ping: do node ping ")
+    fmt.Println("           ==>  tool log: check CDHT log info")
+    fmt.Println("    [+]config:  loads the current configuration profile")
+    fmt.Println("           ==>  config load: loads the current configuration profile from a file")
+    fmt.Println("    [+]node: current node profile information")
+    fmt.Println("    [+]replica: this command will list the replica's connected to the current node")
+    fmt.Println("           ==>  replica remote: this will list all the routing information of the remote Main node.")
+    fmt.Println("==============================================================================================")
+
+}
 
 func getInput(inputStr string) []string {
     fmt.Print(inputStr)

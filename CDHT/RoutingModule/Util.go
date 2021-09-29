@@ -40,6 +40,9 @@ func copyNodeData(old *NodeRPC, new *NodeRPC) {
     new.Node_address = old.Node_address
     new.Node_id = old.Node_id
     new.DefaultArgs = nil
+    new.NodeState = old.NodeState
+    new.ReplicationCount = old.ReplicationCount
+
 }
 
 
@@ -60,7 +63,7 @@ func checkNode(node *NodeRPC) *NodeRPC {
     }
 
     var nodeRPC *NodeRPC
-    if node.DefaultArgs == nil {
+    if node.DefaultArgs == nil || node.handle == nil{
         // fmt.Println("CHECK connection")
         _, nodeRPC = node.Connect()
     }else{
@@ -70,6 +73,21 @@ func checkNode(node *NodeRPC) *NodeRPC {
     return nodeRPC
 }
 
+func CheckNode(node *NodeRPC) *NodeRPC {
+    if node == nil || node.Node_id == nil {
+        return nil
+    }
+
+    var nodeRPC *NodeRPC
+    if node.DefaultArgs == nil {
+        // fmt.Println("CHECK connection")
+        _, nodeRPC = node.Connect()
+    }else{
+        _, nodeRPC = node.GetNodeInfo()
+    }
+    
+    return nodeRPC
+}
 
 
 
@@ -85,6 +103,7 @@ func (node *Node) logRoutingTableReport() {
             "FingerTable" : node.getFingerTableRouteEnty() ,
             "SuccessorsTable": node.getSuccessorsRouteEnty() ,
             "SuccPredTable": node.getSuccPredRouteEnty() ,
+            "Replicas": node.getReplicas() ,
         },
     }
 
@@ -103,4 +122,18 @@ func (node *Node) logNodeReport(logType string, location string, status string, 
     }
 
     node.Logger.NodeLog(fwdReport)
+}
+
+
+// # ------------------------------------ [Print node Info] ------------------------------------ #
+
+func (node *Node) updatedNodeInfo() {
+    fmt.Printf("------------------Current node Info[%s]------------------\n",node.Node_id.String())
+    fmt.Printf("      [+]: Node ID : %s [%s] \n", node.Node_id.String(), node.NodeState)
+    fmt.Printf("      [+]: M       : %s \n", node.M.String())
+    fmt.Printf("      [+]: Address : %s:%s \n", node.IP_address, node.Port)
+    fmt.Printf("      [+]: Jump Spacing : %d \n", node.JumpSpacing)
+    fmt.Printf("      [+]: Replication Count : %d \n", node.ReplicationCount)
+    fmt.Printf("      [+]: Successors Table Length : %d \n", node.SuccessorsTableLength)
+    fmt.Printf("---------------------------------------------------------\n")
 }
