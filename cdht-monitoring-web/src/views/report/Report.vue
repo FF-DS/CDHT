@@ -164,7 +164,7 @@
               "
               ref="html2Pdf"
             >
-              <section slot="pdf-content">
+              <section slot="pdf-content" class="report-list">
                 <div
                   v-for="(model, index) in report"
                   :key="index"
