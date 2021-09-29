@@ -296,7 +296,7 @@ func (config ConfigurationController) DeleteConfigurationProfile(c *gin.Context)
 	configurationCollection := services.ConnectDB(CONFIGURATION_COLLECTION_NAME)	
 
 	type RequestBody struct{
-		ConfigurationId primitive.ObjectID `json:"configuration_id" bson:"configuration_id"`
+		ConfigurationId string `json:"configuration_id" bson:"configuration_id"`
 	}
 
 	var request RequestBody
@@ -307,9 +307,10 @@ func (config ConfigurationController) DeleteConfigurationProfile(c *gin.Context)
 
 	if err := c.ShouldBindJSON(&request) ; err == nil {
 
+		id , _ := primitive.ObjectIDFromHex( request.ConfigurationId)
 		if err := configurationCollection.FindOneAndDelete(
 			context.TODO(),
-			bson.D{primitive.E{Key :"_id" , Value : request.ConfigurationId}}, 
+			bson.D{primitive.E{Key :"_id" , Value : id}}, 
 			deleteOptions,
 		).Decode(&deletedConfigProfile) ; err == nil {
 			c.JSON(http.StatusOK, gin.H{"message": "Configuration Profile deleted successfully" , "data" : deletedConfigProfile})

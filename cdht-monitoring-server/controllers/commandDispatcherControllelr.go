@@ -73,7 +73,7 @@ func (cmd CommandDispatcherController) GetCommand(c *gin.Context){
 	commandCollection := services.ConnectDB(COMMANDS_COLLECTION_NAME)
 
 	type RequestBody struct{
-		CommandId primitive.ObjectID `json:"command_id" bson:"command_id"`
+		CommandId string `json:"command_id" bson:"command_id"`
 	}
 
 	
@@ -82,7 +82,8 @@ func (cmd CommandDispatcherController) GetCommand(c *gin.Context){
 	var command core.ToolCommand
 	
 	if err := c.ShouldBindJSON(&request) ; err == nil{
-		filter := bson.D{primitive.E{Key:"_id" , Value :request.CommandId}}
+		id , _ := primitive.ObjectIDFromHex( request.CommandId)
+		filter := bson.D{primitive.E{Key:"_id" , Value :id}}
 		if err := commandCollection.FindOne(context.TODO() , filter).Decode(&command) ; err == nil{
 			c.JSON(http.StatusOK , gin.H{"message" : "successfuly retrived the specified command" , "data" : command})
 		}else{
